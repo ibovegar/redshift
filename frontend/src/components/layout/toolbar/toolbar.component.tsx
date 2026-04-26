@@ -1,53 +1,46 @@
 import React from 'react';
-// import { Grid } from '@material-ui/core';
-import {
-  createStyles,
-  WithStyles,
-  withStyles,
-  Theme
-} from '@material-ui/core/styles';
+import { styled } from '@mui/material/styles';
 import Nav from '../nav/nav.component';
-// import CreditsIcon from '@material-ui/icons/AttachMoney';
-import { Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
 import { formatCurrency } from 'utils/helpers';
 
-const styles = (theme: Theme) =>
-  createStyles({
-    root: {
-      borderStyle: 'solid',
-      borderWidth: '1px 0 1px 0',
-      borderColor: theme.palette.grey[800],
-      display: 'flex',
-      alignItems: 'center',
-      height: 60
-    },
-    left: { flex: '1' },
-    right: {
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      paddingLeft: theme.spacing(5),
-      paddingRight: theme.spacing(5),
-      backgroundColor: theme.palette.background.paper
-    }
-  });
+const Root = styled('div')(({ theme }) => ({
+  borderStyle: 'solid',
+  borderWidth: '1px 0 1px 0',
+  borderColor: theme.palette.grey[800],
+  display: 'flex',
+  alignItems: 'center',
+  height: 60
+}));
 
-interface Props extends WithStyles<typeof styles> {
+const Left = styled('div')({
+  flex: '1'
+});
+
+const Right = styled('div')(({ theme }) => ({
+  height: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  paddingLeft: theme.spacing(5),
+  paddingRight: theme.spacing(5),
+  backgroundColor: theme.palette.background.paper
+}));
+
+interface Props {
   credits: number;
 }
 
-const Toolbar: React.FC<Props> = ({ classes, credits }) => {
+const Toolbar: React.FC<Props> = ({ credits }) => {
   return (
-    <div className={classes.root}>
-      <div className={classes.left}>
+    <Root>
+      <Left>
         <Nav />
-      </div>
-      <div className={classes.right}>
-        {/* <CreditsIcon /> */}
+      </Left>
+      <Right>
         <Typography variant="h6">{formatCurrency(credits)}</Typography>
-      </div>
-    </div>
+      </Right>
+    </Root>
   );
 };
 
-export default withStyles(styles)(Toolbar);
+export default Toolbar;

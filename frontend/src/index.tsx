@@ -1,13 +1,13 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import { Provider } from 'react-redux';
 import { createStore, applyMiddleware, compose } from 'redux';
 import rootReducer from 'store';
-import thunk from 'redux-thunk';
+import { thunk } from 'redux-thunk';
 
-import { ThemeProvider } from '@material-ui/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import ThemeDark from './ui/theme/dark.theme';
 // import ThemeLight from './ui/theme/light.theme';
 
@@ -16,7 +16,7 @@ import * as serviceWorker from './serviceWorker';
 
 import 'normalize.css';
 import './assets/css/styles.css';
-import { CssBaseline } from '@material-ui/core';
+import { CssBaseline } from '@mui/material';
 
 const middleware = [thunk];
 const composeEnhancers =
@@ -41,5 +41,6 @@ const app = (
   </Provider>
 );
 
-ReactDOM.render(app, document.getElementById('root'));
+const root = createRoot(document.getElementById('root')!);
+root.render(app);
 serviceWorker.unregister();

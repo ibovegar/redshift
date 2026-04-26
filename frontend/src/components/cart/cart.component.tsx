@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Typography, Box, Divider } from '@material-ui/core';
+import { Button, Typography, Box, Divider } from '@mui/material';
 import { Spacecraft, Upgrade } from 'models';
 import { formatCurrency } from 'utils/helpers';
 
@@ -21,21 +21,25 @@ const Cart: React.FC<Props> = (props) => {
 
   return (
     <Box
-      border={1}
-      borderColor="grey.800"
-      p={2}
-      display="flex"
-      flexDirection="column"
+      sx={{
+        border: 1,
+        borderColor: 'grey.800',
+        p: 2,
+        display: 'flex',
+        flexDirection: 'column'
+      }}
     >
       {cart.map((product, index) => (
         <React.Fragment key={index}>
           <Box
-            display="flex"
-            alignItems="center"
-            p={2}
-            justifyContent="space-between"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              p: 2,
+              justifyContent: 'space-between'
+            }}
           >
-            <Box flex="1">
+            <Box sx={{ flex: '1' }}>
               <Typography variant="h6">{product.name}</Typography>
             </Box>
             <Button variant="contained" onClick={() => onRemove(index)}>
@@ -46,11 +50,13 @@ const Cart: React.FC<Props> = (props) => {
         </React.Fragment>
       ))}
       <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        px={2}
-        py={3}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 2,
+          py: 3
+        }}
       >
         <Typography variant="subtitle1">TOTAL PRICE</Typography>
         <Typography variant="h6">{formatCurrency(totalPrice)}</Typography>

@@ -1,33 +1,31 @@
 import React, { ReactNode } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
+import { styled } from '@mui/material/styles';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 
-const useStyles = makeStyles(() => ({
-  card: {
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  cardContent: {
-    flex: 1,
-    position: 'relative'
-  }
-}));
+const StyledCard = styled(Card)({
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column'
+});
+
+const StyledCardContent = styled(CardContent)({
+  flex: 1,
+  position: 'relative'
+});
 
 interface Props {
   children: ReactNode;
 }
 
 const Widget: React.FC<Props> = (props) => {
-  const classes = useStyles();
   const { children } = props;
 
   return (
-    <Card className={classes.card}>
-      <CardContent className={classes.cardContent}>{children}</CardContent>
-    </Card>
+    <StyledCard>
+      <StyledCardContent>{children}</StyledCardContent>
+    </StyledCard>
   );
 };
 

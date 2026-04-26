@@ -5,12 +5,7 @@ import { toArray } from 'utils/helpers';
 
 const getspacecraftsEnities = (state: AppState) => state.spacecrafts.entities;
 
-export const getAllspacecrafts: Selector<
-  AppState,
-  Spacecraft[]
-> = createSelector(
-  getspacecraftsEnities,
-  entities => {
+export const getAllspacecrafts: Selector<AppState, Spacecraft[]> =
+  createSelector(getspacecraftsEnities, (entities) => {
     return toArray(entities);
-  }
-);
+  });

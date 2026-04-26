@@ -1,10 +1,12 @@
-import { createMuiTheme } from '@material-ui/core';
-import { PaletteOptions } from '@material-ui/core/styles/createPalette';
-import { Overrides } from '@material-ui/core/styles/overrides';
-import createSpacing, { Spacing } from '@material-ui/core/styles/createSpacing';
-// import { ThemeStyle } from '@material-ui/core/styles/createTypography';
+import {
+  createTheme,
+  PaletteOptions,
+  Components,
+  Theme
+} from '@mui/material/styles';
+// import { ThemeStyle } from '@mui/material/styles';
 
-const spacing: Spacing = createSpacing(4);
+const spacing = 4;
 
 // const typography: ThemeStyle = {
 //   h1: {
@@ -13,7 +15,7 @@ const spacing: Spacing = createSpacing(4);
 // };
 
 const palette: PaletteOptions = {
-  type: 'dark',
+  mode: 'dark',
   primary: {
     light: '#ff6b60',
     main: '#f44336', // AppBar
@@ -63,57 +65,69 @@ const palette: PaletteOptions = {
   }
 };
 
-const overrides: Overrides = {
+const components: Components<Theme> = {
   MuiCard: {
-    root: {
-      // boxShadow: 'none'
+    styleOverrides: {
+      root: {
+        // boxShadow: 'none'
+      }
     }
   },
   MuiAppBar: {
-    root: {
-      boxShadow: 'none'
+    styleOverrides: {
+      root: {
+        boxShadow: 'none'
+      }
     }
   },
   MuiButton: {
-    root: {
-      // boxShadow: 'none',
-      borderRadius: 2,
-      clipPath: `polygon(
-        0 0, 0 0, /* top-left */
-        100% 0%, 100% 0, /* top-right */ 
-        100% 100%, 100% 100%, /* bottom-right */
-        10px 100%, 0% calc(100% - 10px)) /* bottom-left */`
+    styleOverrides: {
+      root: {
+        // boxShadow: 'none',
+        borderRadius: 2,
+        clipPath: `polygon(
+          0 0, 0 0, /* top-left */
+          100% 0%, 100% 0, /* top-right */ 
+          100% 100%, 100% 100%, /* bottom-right */
+          10px 100%, 0% calc(100% - 10px)) /* bottom-left */`
+      }
     }
   },
   MuiLinearProgress: {
-    root: {
-      height: 2
+    styleOverrides: {
+      root: {
+        height: 2
+      }
     }
   },
   MuiPopover: {
-    paper: {
-      backgroundColor: '#202b37',
-      borderRadius: '2px'
-      // boxShadow: 'none'
+    styleOverrides: {
+      paper: {
+        backgroundColor: '#202b37',
+        borderRadius: '2px'
+        // boxShadow: 'none'
+      }
     }
   }
 
   // MuiMenuItem: {
-  //   root: {
-  //     '&:hover': {
-  //       backgroundColor: palette.grey![100]
-  //     },
-  //     '&$selected': {
-  //       backgroundColor: palette.grey![500]
+  //   styleOverrides: {
+  //     root: {
+  //       '&:hover': {
+  //         backgroundColor: palette.grey![100]
+  //       },
+  //       '&.Mui-selected': {
+  //         backgroundColor: palette.grey![500]
+  //       }
   //     }
   //   }
   // }
 };
 
-export default createMuiTheme({
+export default createTheme({
   spacing,
   palette,
-  overrides,
+  components,
   typography: {
     h1: {
       fontSize: '3.5rem'

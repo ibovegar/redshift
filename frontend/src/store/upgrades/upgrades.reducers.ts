@@ -42,7 +42,7 @@ export function reducer(
 
     case 'DETACH_UPGRADE_SUCCESS':
     case 'ATTACH_UPGRADE_SUCCESS': {
-      let entities: any = { ...state.entities };
+      const entities: any = { ...state.entities };
       entities[action.upgrade.id] = action.upgrade;
 
       return {

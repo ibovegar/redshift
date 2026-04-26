@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { withStyles, createStyles, WithStyles } from '@material-ui/core/styles';
+import { styled } from '@mui/material/styles';
 import {
   loadStore,
   addToCart,
@@ -10,25 +10,23 @@ import {
 import { AppState } from 'store';
 import { Upgrade, Spacecraft } from 'models';
 import { Products, Cart } from 'components';
-import { Grid } from '@material-ui/core';
+import { Grid } from '@mui/material';
 // import CategoryFilter from './category-filter/category-filter.component';
 import SpacecraftFilter from './spacecraft-filter/spacecraft-filter.component';
 import StoreTypeFilter from './store-type-filter/store-type-filter.component';
 import { filterObjArr } from 'utils/helpers';
 
-const styles = () =>
-  createStyles({
-    grid: {
-      position: 'relative'
-    },
-    sticky: {
-      height: '100%',
-      position: 'sticky',
-      top: 0
-    }
-  });
+const StyledGrid = styled(Grid)({
+  position: 'relative'
+});
 
-interface Props extends WithStyles<typeof styles> {
+const StickyGrid = styled(Grid)({
+  height: '100%',
+  position: 'sticky',
+  top: 0
+});
+
+interface Props {
   products: (Spacecraft | Upgrade)[];
   cart: (Spacecraft | Upgrade)[];
   credits: number;
@@ -78,7 +76,7 @@ class Marketplace extends React.Component<Props, State> {
   };
 
   public render() {
-    const { products, cart, credits, classes } = this.props;
+    const { products, cart, credits } = this.props;
     const { productTypeFilter, spacecraftFilter } = this.state;
 
     let filtered: (Spacecraft | Upgrade)[] = products;
@@ -86,24 +84,24 @@ class Marketplace extends React.Component<Props, State> {
     filtered = filterObjArr(filtered, productTypeFilter, 'storeType');
 
     return (
-      <Grid container spacing={6} className={classes.grid}>
-        <Grid item xs className={classes.sticky}>
+      <StyledGrid container spacing={6}>
+        <StickyGrid size="grow">
           {/* <CategoryFilter onFilterClick={this.handleCategoryFilter} /> */}
           <SpacecraftFilter onFilterClick={this.handleSpacecraftFilter} />
           <StoreTypeFilter onFilterClick={this.handleUpgradeFilter} />
-        </Grid>
-        <Grid item xs={8}>
+        </StickyGrid>
+        <Grid size={8}>
           <Products onAddClick={this.handleAddToCart} products={filtered} />
         </Grid>
-        <Grid item xs className={classes.sticky}>
+        <StickyGrid size="grow">
           <Cart
             credits={credits}
             cart={cart}
             onRemove={this.handleRemoveFromCart}
             onPurchase={this.handlePurchase}
           />
-        </Grid>
-      </Grid>
+        </StickyGrid>
+      </StyledGrid>
     );
   }
 }
@@ -121,6 +119,4 @@ export const mapDispatchToProps = {
   purchase
 };
 
-export default withStyles(styles)(
-  connect(mapStateToProps, mapDispatchToProps)(Marketplace)
-);
+export default connect(mapStateToProps, mapDispatchToProps)(Marketplace);

@@ -8,7 +8,7 @@ const selectMissionId = (_state: AppState, missionId: string) => missionId;
 
 export const getAllMissions: Selector<AppState, Mission[]> = createSelector(
   getMissionEnities,
-  entities => toArray(entities)
+  (entities) => toArray(entities)
 );
 
 export const getMissionById = createSelector(

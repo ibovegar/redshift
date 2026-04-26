@@ -1,28 +1,32 @@
 import React from 'react';
 import { Upgrade } from 'models';
-import { Box, Typography, Popover, Divider, Avatar } from '@material-ui/core';
-import { withStyles, WithStyles } from '@material-ui/core/styles';
-import clsx from 'clsx';
-import styles from './upgrade-select.styles';
-import RemoveIcon from '@material-ui/icons/IndeterminateCheckBox';
-import { PopoverOrigin } from '@material-ui/core/Popover';
+import { Box, Typography, Popover, Divider } from '@mui/material';
+import {
+  Input,
+  ActiveInput,
+  Dropdown,
+  GainAvatar
+} from './upgrade-select.styles';
+import RemoveIcon from '@mui/icons-material/IndeterminateCheckBox';
+import { PopoverOrigin } from '@mui/material/Popover';
 
-interface Props extends WithStyles<typeof styles> {
+interface Props {
   value: Upgrade;
   options: Upgrade[];
   type: string;
   onSelect: (option: Upgrade) => void;
   onDeselect: () => void;
+  onHover?: (option: Upgrade) => void;
+  onHoverEnd?: () => void;
 }
 
 const UpgradeSelect: React.FC<Props> = (props) => {
-  const { classes, value, options, type, onSelect, onDeselect } = props;
+  const { value, options, type, onSelect, onDeselect, onHover, onHoverEnd } =
+    props;
   const [anchorEl, setAnchorEl]: [any, any] = React.useState(null);
 
-  const className = clsx({
-    [classes.disabled]: !value && options.length === 0,
-    [classes.active]: value
-  });
+  const isDisabled = !value && options.length === 0;
+  const isActive = !!value;
 
   const handleOpen = (event: React.MouseEvent) => {
     setAnchorEl(event.currentTarget);
@@ -30,6 +34,7 @@ const UpgradeSelect: React.FC<Props> = (props) => {
 
   const handleClose = () => {
     setAnchorEl(null);
+    onHoverEnd?.();
   };
 
   const handleSelect = (option: Upgrade) => {
@@ -47,29 +52,26 @@ const UpgradeSelect: React.FC<Props> = (props) => {
   const placeholder = value ? value.name : options.length + ' available';
   const popoverOrigin: PopoverOrigin = { vertical: 'top', horizontal: 'left' };
 
+  const InputComponent = isActive ? ActiveInput : Input;
+
   return (
-    <div className={className}>
+    <div style={isDisabled ? { opacity: 0.4, pointerEvents: 'none' } : {}}>
       <Typography variant="overline">{type}</Typography>
-      <Box
-        className={classes.input}
-        py={1}
-        px={4}
-        mb={4}
-        display="flex"
-        alignItems="center"
+      <InputComponent
+        sx={{
+          py: 1,
+          px: 4,
+          mb: 4,
+          display: 'flex',
+          alignItems: 'center'
+        }}
         onClick={handleOpen}
       >
-        <Box flex={1}>
+        <Box sx={{ flex: 1 }}>
           <Typography variant="overline">{placeholder}</Typography>
         </Box>
-        {value && (
-          <RemoveIcon
-            fontSize="small"
-            className={classes.icon}
-            onClick={handleDeselect}
-          />
-        )}
-      </Box>
+        {value && <RemoveIcon fontSize="small" onClick={handleDeselect} />}
+      </InputComponent>
       <Popover
         id={id}
         open={open}
@@ -78,24 +80,31 @@ const UpgradeSelect: React.FC<Props> = (props) => {
         anchorOrigin={popoverOrigin}
         transformOrigin={popoverOrigin}
       >
-        <ul className={classes.dropdown}>
+        <Dropdown>
           {!options.length ? (
-            <Box py={3} px={8}>
+            <Box sx={{ py: 3, px: 8 }}>
               <Typography variant="subtitle1">NO AVAILABLE UPGRADES</Typography>
             </Box>
           ) : (
             options.map((option: Upgrade, index) => (
-              <li key={option.id} onClick={() => handleSelect(option)}>
-                <Box display="flex">
+              <li
+                key={option.id}
+                onClick={() => handleSelect(option)}
+                onMouseEnter={() => onHover?.(option)}
+                onMouseLeave={() => onHoverEnd?.()}
+              >
+                <Box sx={{ display: 'flex' }}>
                   <Box
-                    width="80px"
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
+                    sx={{
+                      width: '80px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}
                   >
-                    <Avatar className="gain">{option.gain}</Avatar>
+                    <GainAvatar>{option.gain}</GainAvatar>
                   </Box>
-                  <Box pr={8} py={3}>
+                  <Box sx={{ pr: 8, py: 3 }}>
                     <Typography style={{ whiteSpace: 'nowrap' }} variant="h6">
                       {option.name}
                     </Typography>
@@ -111,10 +120,10 @@ const UpgradeSelect: React.FC<Props> = (props) => {
               </li>
             ))
           )}
-        </ul>
+        </Dropdown>
       </Popover>
     </div>
   );
 };
 
-export default withStyles(styles)(UpgradeSelect);
+export default UpgradeSelect;

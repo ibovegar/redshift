@@ -1,59 +1,50 @@
 import React from 'react';
-import {
-  WithStyles,
-  withStyles,
-  createStyles,
-  Theme
-} from '@material-ui/core/styles';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import { CardActions, Typography } from '@material-ui/core';
+import { styled } from '@mui/material/styles';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import { CardActions, Typography } from '@mui/material';
 
-const styles = (theme: Theme) =>
-  createStyles({
-    root: {
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    },
-    card: {
-      padding: theme.spacing(4)
-    },
-    cardContent: {
-      '&:last-child': {
-        paddingBottom: theme.spacing(4)
-      }
-    },
-    cardActions: {
-      display: 'flex',
-      justifyContent: 'center'
-    }
-  });
+const Root = styled('div')({
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+});
 
-interface Props extends WithStyles<typeof styles> {
-  action?: JSX.Element;
+const StyledCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(4)
+}));
+
+const StyledCardContent = styled(CardContent)(({ theme }) => ({
+  '&:last-child': {
+    paddingBottom: theme.spacing(4)
+  }
+}));
+
+const StyledCardActions = styled(CardActions)({
+  display: 'flex',
+  justifyContent: 'center'
+});
+
+interface Props {
+  action?: React.JSX.Element;
   message: string;
 }
 
 const Placeholder: React.FC<Props> = (props) => {
-  const { classes, action } = props;
+  const { action } = props;
 
   return (
-    <div className={classes.root}>
-      <Card className={classes.card}>
-        <CardContent className={classes.cardContent}>
+    <Root>
+      <StyledCard>
+        <StyledCardContent>
           <Typography variant="h6">{props.message}</Typography>
-        </CardContent>
-        {action && (
-          <CardActions className={classes.cardActions}>
-            {props.action}
-          </CardActions>
-        )}
-      </Card>
-    </div>
+        </StyledCardContent>
+        {action && <StyledCardActions>{props.action}</StyledCardActions>}
+      </StyledCard>
+    </Root>
   );
 };
 
-export default withStyles(styles)(Placeholder);
+export default Placeholder;

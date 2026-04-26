@@ -1,67 +1,66 @@
 import React from 'react';
-import { Theme, makeStyles } from '@material-ui/core/styles';
+import { styled } from '@mui/material/styles';
 import { Mission } from 'models';
-import clsx from 'clsx';
 import {
   List,
   ListItem,
   ListItemAvatar,
   Avatar,
   ListItemText
-} from '@material-ui/core';
-import CreditsIcon from '@material-ui/icons/AttachMoney';
-import DifficultyIcon from '@material-ui/icons/SignalCellular2Bar';
-import TypeIcon from '@material-ui/icons/Layers';
-import LocationIcon from '@material-ui/icons/LocationOn';
-import ConstellationIcon from '@material-ui/icons/BubbleChart';
+} from '@mui/material';
+import CreditsIcon from '@mui/icons-material/AttachMoney';
+import DifficultyIcon from '@mui/icons-material/SignalCellular2Bar';
+import TypeIcon from '@mui/icons-material/Layers';
+import LocationIcon from '@mui/icons-material/LocationOn';
+import ConstellationIcon from '@mui/icons-material/BubbleChart';
 
-const useStyles = makeStyles((theme: Theme) => ({
-  root: {},
-  avatar: {
-    backgroundColor: theme.palette.background.default,
-    color: '#fff',
-    marginRight: theme.spacing(5)
-  }
-}));
+const StyledListItem = styled(ListItem)({
+  paddingTop: 2,
+  paddingBottom: 2
+});
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   mission: Mission;
 }
 
 const MissionTag: React.FC<Props> = (props) => {
-  const { mission, className } = props;
-  const classes = useStyles();
-  const rootClasses = clsx(classes.root, className);
+  const { mission, className, style } = props;
+
+  const avatarSx = {
+    bgcolor: 'grey.700',
+    color: '#fff',
+    mr: 5
+  };
 
   return (
-    <List className={rootClasses}>
-      <ListItem>
+    <List className={className} dense style={style}>
+      <StyledListItem>
         <ListItemAvatar>
-          <Avatar className={classes.avatar}>
+          <Avatar sx={avatarSx}>
             <CreditsIcon />
           </Avatar>
         </ListItemAvatar>
         <ListItemText primary="Credits" secondary={mission.credits} />
-      </ListItem>
-      <ListItem>
+      </StyledListItem>
+      <StyledListItem>
         <ListItemAvatar>
-          <Avatar className={classes.avatar}>
+          <Avatar sx={avatarSx}>
             <DifficultyIcon />
           </Avatar>
         </ListItemAvatar>
         <ListItemText primary="Difficulty" secondary={mission.difficulty} />
-      </ListItem>
-      <ListItem>
+      </StyledListItem>
+      <StyledListItem>
         <ListItemAvatar>
-          <Avatar className={classes.avatar}>
+          <Avatar sx={avatarSx}>
             <TypeIcon />
           </Avatar>
         </ListItemAvatar>
         <ListItemText primary="Type" secondary={mission.type} />
-      </ListItem>
-      <ListItem>
+      </StyledListItem>
+      <StyledListItem>
         <ListItemAvatar>
-          <Avatar className={classes.avatar}>
+          <Avatar sx={avatarSx}>
             <LocationIcon />
           </Avatar>
         </ListItemAvatar>
@@ -69,10 +68,10 @@ const MissionTag: React.FC<Props> = (props) => {
           primary="Location"
           secondary={`${mission.ascention} / ${mission.declination}`}
         />
-      </ListItem>
-      <ListItem>
+      </StyledListItem>
+      <StyledListItem>
         <ListItemAvatar>
-          <Avatar className={classes.avatar}>
+          <Avatar sx={avatarSx}>
             <ConstellationIcon />
           </Avatar>
         </ListItemAvatar>
@@ -80,7 +79,7 @@ const MissionTag: React.FC<Props> = (props) => {
           primary="Constellation"
           secondary={mission.constellation}
         />
-      </ListItem>
+      </StyledListItem>
     </List>
   );
 };

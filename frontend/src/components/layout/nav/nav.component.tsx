@@ -1,84 +1,69 @@
 import React from 'react';
 import { withRouter, Link } from 'react-router-dom';
-import { Button, makeStyles, Theme, Typography, Grid } from '@material-ui/core';
-import AddBoxIcon from '@material-ui/icons/AddBox';
+import { Button, Typography, Grid } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import AddBoxIcon from '@mui/icons-material/AddBox';
 
-const useStyles = makeStyles((theme: Theme) => ({
-  button: {
-    paddingLeft: theme.spacing(4),
-    paddingRight: theme.spacing(5)
-  },
-  icon: {
-    marginRight: theme.spacing(4)
-  }
+const StyledIcon = styled(AddBoxIcon)(({ theme }) => ({
+  marginRight: theme.spacing(4)
 }));
 
-const Nav: React.FC = () => {
-  const classes = useStyles();
+const buttonSx = { px: 4 } as const;
 
+const Nav: React.FC = () => {
   return (
-    <Grid container alignItems="center" spacing={4}>
-      <Grid item>
+    <Grid container sx={{ alignItems: 'center' }} spacing={4}>
+      <Grid>
         <Typography variant="overline">MENU</Typography>
       </Grid>
-      <Grid item>
+      <Grid>
         <Button
-          className={classes.button}
+          sx={buttonSx}
           color="primary"
           variant="contained"
           size="small"
           component={Link}
           to="/tactical"
         >
-          <AddBoxIcon fontSize="small" className={classes.icon} />
+          <StyledIcon fontSize="small" />
           TACTICAL
         </Button>
       </Grid>
-      <Grid item>
+      <Grid>
         <Button
-          className={classes.button}
+          sx={buttonSx}
           color="primary"
           variant="contained"
           size="small"
           component={Link}
           to="/engineering"
         >
-          <AddBoxIcon fontSize="small" className={classes.icon} />
+          <StyledIcon fontSize="small" />
           ENGINEERING
         </Button>
       </Grid>
-      <Grid item>
+      <Grid>
         <Button
-          className={classes.button}
+          sx={buttonSx}
           color="primary"
           variant="contained"
           size="small"
           component={Link}
           to="/marketplace"
         >
-          <AddBoxIcon fontSize="small" className={classes.icon} />
+          <StyledIcon fontSize="small" />
           STORE
         </Button>
       </Grid>
-      <Grid item>
-        <Button
-          className={classes.button}
-          variant="contained"
-          size="small"
-          disabled
-        >
-          <AddBoxIcon fontSize="small" className={classes.icon} />
+      <Grid>
+        <Button sx={buttonSx} variant="contained" size="small" disabled>
+          <StyledIcon fontSize="small" />
           SOMETHING
         </Button>
       </Grid>
-      <Grid item>
-        <Button
-          className={classes.button}
-          variant="contained"
-          size="small"
-          disabled
-        >
-          <AddBoxIcon fontSize="small" className={classes.icon} />
+      <Grid>
+        <Button sx={buttonSx} variant="contained" size="small" disabled>
+          <StyledIcon fontSize="small" />
           INVENTORY
         </Button>
       </Grid>

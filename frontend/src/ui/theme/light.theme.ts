@@ -1,12 +1,14 @@
-import { createMuiTheme } from '@material-ui/core';
-import { PaletteOptions } from '@material-ui/core/styles/createPalette';
-import { Overrides } from '@material-ui/core/styles/overrides';
-import createSpacing, { Spacing } from '@material-ui/core/styles/createSpacing';
+import {
+  createTheme,
+  PaletteOptions,
+  Components,
+  Theme
+} from '@mui/material/styles';
 
-const spacing: Spacing = createSpacing(4);
+const spacing = 4;
 
 const palette: PaletteOptions = {
-  type: 'light',
+  mode: 'light',
   primary: {
     light: '#f44336',
     main: '#f44336', // AppBar
@@ -46,8 +48,7 @@ const palette: PaletteOptions = {
   text: {
     primary: 'rgba(0, 0, 0, 0.87)', // Select items color
     secondary: 'rgba(0, 0, 0, 0.54)', // select placeholder color
-    disabled: 'rgba(0, 0, 0, 0.38)',
-    hint: 'rgba(0, 0, 0, 0.38)'
+    disabled: 'rgba(0, 0, 0, 0.38)'
   },
   action: {
     hover: '#f1f4f6',
@@ -55,17 +56,19 @@ const palette: PaletteOptions = {
   }
 };
 
-const overrides: Overrides = {
+const components: Components<Theme> = {
   // MuiMenuItem: {
-  //   root: {
-  //     '&:hover': {
-  //       backgroundColor: palette.grey![100]
-  //     },
-  //     '&$selected': {
-  //       backgroundColor: palette.grey![500]
+  //   styleOverrides: {
+  //     root: {
+  //       '&:hover': {
+  //         backgroundColor: palette.grey![100]
+  //       },
+  //       '&.Mui-selected': {
+  //         backgroundColor: palette.grey![500]
+  //       }
   //     }
   //   }
   // }
 };
 
-export default createMuiTheme({ spacing, palette, overrides });
+export default createTheme({ spacing, palette, components });

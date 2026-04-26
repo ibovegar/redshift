@@ -13,17 +13,16 @@ export const loadMissions = () => async (dispatch: Dispatch) => {
   }
 };
 
-export const completeMission = (mission: Mission) => async (
-  dispatch: Dispatch
-) => {
-  const updatedMission = { ...mission };
-  updatedMission.completed = true;
+export const completeMission =
+  (mission: Mission) => async (dispatch: Dispatch) => {
+    const updatedMission = { ...mission };
+    updatedMission.completed = true;
 
-  API.update(updatedMission)
-    .then(() => {
-      dispatch(actions.completeMissionSuccess(updatedMission));
-    })
-    .catch(error => {
-      dispatch(actions.completeMissionFailure(error));
-    });
-};
+    API.update(updatedMission)
+      .then(() => {
+        dispatch(actions.completeMissionSuccess(updatedMission));
+      })
+      .catch((error) => {
+        dispatch(actions.completeMissionFailure(error));
+      });
+  };

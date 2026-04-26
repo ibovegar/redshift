@@ -1,9 +1,17 @@
-import { Theme, createStyles } from '@material-ui/core/styles';
+import { styled } from '@mui/material/styles';
+import MuiAccordionDetails from '@mui/material/AccordionDetails';
+import MuiFormGroup from '@mui/material/FormGroup';
+import MuiCheckbox from '@mui/material/Checkbox';
 
-export default ({ spacing }: Theme) =>
-  createStyles({
-    root: {
-      padding: 14,
-      marginLeft: spacing(4)
-    }
-  });
+export const StyledAccordionDetails = styled(MuiAccordionDetails)({
+  padding: 0
+});
+
+export const StyledFormGroup = styled(MuiFormGroup)({
+  width: '100%'
+});
+
+export const StyledCheckbox = styled(MuiCheckbox)(({ theme }) => ({
+  padding: 14,
+  marginLeft: theme.spacing(4)
+}));

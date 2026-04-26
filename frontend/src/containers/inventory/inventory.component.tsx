@@ -1,21 +1,13 @@
 import React from 'react';
-import { FormControl, InputLabel, Select, MenuItem } from '@material-ui/core';
-import {
-  withStyles,
-  createStyles,
-  Theme,
-  WithStyles
-} from '@material-ui/core/styles';
+import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { styled } from '@mui/material/styles';
 
-const styles = ({ spacing }: Theme) =>
-  createStyles({
-    formControl: {
-      margin: spacing(1),
-      minWidth: 200
-    }
-  });
+const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  margin: theme.spacing(1),
+  minWidth: 200
+}));
 
-class Inventory extends React.Component<WithStyles<typeof styles>, any> {
+class Inventory extends React.Component<object, any> {
   state = {
     age: '',
     name: 'hai'
@@ -27,7 +19,7 @@ class Inventory extends React.Component<WithStyles<typeof styles>, any> {
 
   public render() {
     return (
-      <FormControl className={this.props.classes.formControl}>
+      <StyledFormControl>
         <InputLabel htmlFor="age-simple">Age</InputLabel>
         <Select
           value={this.state.age}
@@ -44,9 +36,9 @@ class Inventory extends React.Component<WithStyles<typeof styles>, any> {
           <MenuItem value={20}>Twenty</MenuItem>
           <MenuItem value={30}>Thirty</MenuItem>
         </Select>
-      </FormControl>
+      </StyledFormControl>
     );
   }
 }
 
-export default withStyles(styles)(Inventory);
+export default Inventory;

@@ -1,32 +1,24 @@
 import React from 'react';
 import {
   FormControlLabel,
-  Checkbox,
   Typography,
-  ExpansionPanel,
-  ExpansionPanelSummary,
+  Accordion,
+  AccordionSummary,
   Divider
-} from '@material-ui/core';
-import MuiExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import MuiFormGroup from '@material-ui/core/FormGroup';
-import { withStyles, WithStyles } from '@material-ui/core/styles';
-import styles from './product-filter-group.styles';
-import { CheckBoxOutlineBlank, CheckBox, ExpandMore } from '@material-ui/icons';
+} from '@mui/material';
+import {
+  StyledAccordionDetails,
+  StyledFormGroup,
+  StyledCheckbox
+} from './product-filter-group.styles';
+import {
+  CheckBoxOutlineBlank,
+  CheckBox,
+  ExpandMore
+} from '@mui/icons-material';
 import { ProductFilter } from 'models';
 
-const ExpansionPanelDetails = withStyles(() => ({
-  root: {
-    padding: 0
-  }
-}))(MuiExpansionPanelDetails);
-
-const FormGroup = withStyles(() => ({
-  root: {
-    width: '100%'
-  }
-}))(MuiFormGroup);
-
-interface Props extends WithStyles<typeof styles> {
+interface Props {
   title: string;
   defaultExpanded?: boolean;
   filters: ProductFilter[];
@@ -34,25 +26,22 @@ interface Props extends WithStyles<typeof styles> {
 }
 
 const ProductFilterGroup: React.FC<Props> = (props) => {
-  const { classes, filters, title, onFilterClick, defaultExpanded } = props;
+  const { filters, title, onFilterClick, defaultExpanded } = props;
 
   return (
-    <ExpansionPanel defaultExpanded={defaultExpanded}>
-      <ExpansionPanelSummary expandIcon={<ExpandMore />}>
+    <Accordion defaultExpanded={defaultExpanded}>
+      <AccordionSummary expandIcon={<ExpandMore />}>
         <Typography variant="overline">{title}</Typography>
-      </ExpansionPanelSummary>
-      <ExpansionPanelDetails>
-        <FormGroup>
+      </AccordionSummary>
+      <StyledAccordionDetails>
+        <StyledFormGroup>
           {filters.map((filter, index) => (
             <React.Fragment key={index}>
               <Divider />
               <FormControlLabel
                 key={filter.id}
                 control={
-                  <Checkbox
-                    classes={{
-                      root: classes.root
-                    }}
+                  <StyledCheckbox
                     value={filter.value}
                     icon={<CheckBoxOutlineBlank fontSize="small" />}
                     checkedIcon={<CheckBox fontSize="small" />}
@@ -63,10 +52,10 @@ const ProductFilterGroup: React.FC<Props> = (props) => {
               />
             </React.Fragment>
           ))}
-        </FormGroup>
-      </ExpansionPanelDetails>
-    </ExpansionPanel>
+        </StyledFormGroup>
+      </StyledAccordionDetails>
+    </Accordion>
   );
 };
 
-export default withStyles(styles)(ProductFilterGroup);
+export default ProductFilterGroup;

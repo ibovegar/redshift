@@ -1,77 +1,69 @@
 import React from 'react';
-import {
-  WithStyles,
-  withStyles,
-  createStyles,
-  Theme
-} from '@material-ui/core/styles';
-import { Typography } from '@material-ui/core';
+import { styled } from '@mui/material/styles';
+import { Typography } from '@mui/material';
 import { Mission } from 'models';
-import clsx from 'clsx';
 
-const styles = (theme: Theme) =>
-  createStyles({
-    root: {
-      position: 'fixed',
-      flexDirection: 'column',
-      display: 'flex',
-      alignItems: 'center',
-      width: 320,
-      padding: theme.spacing(2),
-      borderRadius: 5,
-      cursor: 'pointer',
-      transition: 'all 0.2s',
-      '&$disabled': {
-        filter: 'blur(10px)',
-        pointerEvents: 'none'
-      },
-      '&:hover': {
-        transform: 'scale(1.05)',
-        boxShadow: `inset 0 0 30px 2px ${theme.palette.primary.main}`
-      }
-    },
-    tag: {
-      width: '100%',
-      padding: `0 ${theme.spacing(6)}px`,
-      paddingBottom: theme.spacing(4),
-      paddingTop: theme.spacing(4),
-      backgroundColor: theme.palette.background.paper,
-      borderRadius: 10
-    },
-    spinner: {
-      display: 'flex',
-      justifyContent: 'center',
-      width: '50%',
-      height: 80,
-      clipPath: 'polygon(50% 100%, 0 0, 100% 0)',
-      background: `radial-gradient(circle at center 35%, transparent 20%, ${theme.palette.background.paper} 21%)`,
-      '&:after': {
-        content: '" "',
-        display: 'block',
-        width: 54,
-        height: 54,
-        margin: 1,
-        borderRadius: '50%',
-        border: `4px solid ${theme.palette.primary.main}`,
-        borderColor: `${theme.palette.primary.main} transparent ${theme.palette.primary.main} transparent`,
-        animation: '$rotate 0.7s linear infinite'
-      }
-    },
-    description: {
-      lineHeight: 1
-    },
-    '@keyframes rotate': {
-      '0%': {
-        transform: 'rotate(0deg)'
-      },
-      '100%': {
-        transform: 'rotate(360deg)'
-      }
-    },
-    disabled: {}
-  });
+const rotateKeyframes = {
+  '@keyframes rotate': {
+    '0%': { transform: 'rotate(0deg)' },
+    '100%': { transform: 'rotate(360deg)' }
+  }
+};
 
-interface Props extends WithStyles<typeof styles> {
+const Root = styled('div', {
+  shouldForwardProp: (prop) =>
+    prop !== 'disabled' && prop !== 'position' && prop !== 'onSelect'
+})<{ disabled?: boolean }>(({ theme, disabled }) => ({
+  position: 'fixed',
+  flexDirection: 'column',
+  display: 'flex',
+  alignItems: 'center',
+  width: 320,
+  padding: theme.spacing(2),
+  borderRadius: 5,
+  cursor: 'pointer',
+  transition: 'all 0.2s',
+  ...(disabled && {
+    filter: 'blur(10px)',
+    pointerEvents: 'none'
+  }),
+  '&:hover': {
+    transform: 'scale(1.05)',
+    boxShadow: `inset 0 0 30px 2px ${theme.palette.primary.main}`
+  }
+}));
+
+const Tag = styled('div')(({ theme }) => ({
+  width: '100%',
+  padding: `0 ${theme.spacing(6)}`,
+  paddingBottom: theme.spacing(4),
+  paddingTop: theme.spacing(4),
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: 10
+}));
+
+const Spinner = styled('div')(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  width: '50%',
+  height: 80,
+  clipPath: 'polygon(50% 100%, 0 0, 100% 0)',
+  background: `radial-gradient(circle at center 35%, transparent 20%, ${theme.palette.background.paper} 21%)`,
+  '&:after': {
+    content: '" "',
+    display: 'block',
+    width: 54,
+    height: 54,
+    margin: 1,
+    borderRadius: '50%',
+    border: `4px solid ${theme.palette.primary.main}`,
+    borderColor: `${theme.palette.primary.main} transparent ${theme.palette.primary.main} transparent`,
+    animation: 'rotate 0.7s linear infinite'
+  },
+  ...rotateKeyframes
+}));
+
+interface Props {
   mission: Mission;
   position: any;
   disabled?: boolean;
@@ -79,33 +71,27 @@ interface Props extends WithStyles<typeof styles> {
 }
 
 const MissionTag: React.FC<Props> = (props) => {
-  const { classes, mission, position, onSelect, disabled } = props;
-
-  const rootClasses = clsx(classes.root, {
-    [classes.disabled]: disabled
-  });
+  const { mission, position, onSelect, disabled } = props;
 
   return (
-    <div
-      className={rootClasses}
+    <Root
+      disabled={disabled}
       style={{ left: position.x + '%', top: position.y + '%' }}
       onClick={() => onSelect()}
     >
-      <div className={classes.tag}>
-        <Typography variant="h6" gutterBottom>
-          {mission.title}
-        </Typography>
+      <Tag>
+        <Typography variant="h6">{mission.title}</Typography>
         <Typography
-          className={classes.description}
           variant="overline"
           color="textSecondary"
+          sx={{ lineHeight: 1 }}
         >
           {mission.shortDescription}
         </Typography>
-      </div>
-      <div className={classes.spinner}></div>
-    </div>
+      </Tag>
+      <Spinner />
+    </Root>
   );
 };
 
-export default withStyles(styles)(MissionTag);
+export default MissionTag;

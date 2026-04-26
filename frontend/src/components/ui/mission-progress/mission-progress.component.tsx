@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Theme, makeStyles } from '@material-ui/core/styles';
-import clsx from 'clsx';
-import { Typography, LinearProgress } from '@material-ui/core';
+import { styled } from '@mui/material/styles';
+import { Typography, LinearProgress } from '@mui/material';
 
-const useStyles = makeStyles((theme: Theme) => ({
-  root: { padding: theme.spacing(2) }
+const Root = styled('div')(({ theme }) => ({
+  padding: theme.spacing(2)
 }));
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
@@ -12,10 +11,8 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const MissionProgress: React.FC<Props> = (props) => {
-  const { onCompleted, className } = props;
+  const { onCompleted, className, ...rest } = props;
   const [progress, setProgress] = useState(0);
-  const classes = useStyles();
-  const rootClasses = clsx(classes.root, className);
 
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -35,7 +32,7 @@ const MissionProgress: React.FC<Props> = (props) => {
   }, [progress, onCompleted]);
 
   return (
-    <div className={rootClasses}>
+    <Root className={className} {...rest}>
       <div>
         <Typography variant="h5" gutterBottom>
           MISSION IN PROGRESS
@@ -46,7 +43,7 @@ const MissionProgress: React.FC<Props> = (props) => {
           color="secondary"
         />
       </div>
-    </div>
+    </Root>
   );
 };
 

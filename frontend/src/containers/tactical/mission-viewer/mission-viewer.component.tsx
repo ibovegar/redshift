@@ -5,7 +5,7 @@ import { AppState } from 'store';
 import { connect } from 'react-redux';
 import { addCredits } from 'store/user';
 import { getMissionById, completeMission } from 'store/missions';
-import CloseIcon from '@material-ui/icons/Close';
+import CloseIcon from '@mui/icons-material/Close';
 import {
   Card,
   CardHeader,
@@ -14,59 +14,28 @@ import {
   Typography,
   CardActions,
   Button,
-  makeStyles,
-  Theme,
   IconButton
-} from '@material-ui/core';
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { MissionStats, MissionProgress } from 'components/ui';
 
-const useStyles = makeStyles((theme: Theme) => ({
-  root: {
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  card: {
-    width: '50%',
-    position: 'relative'
-  },
-  stats: {
-    position: 'absolute',
-    top: 100,
-    left: 10
-  },
-  content: {
-    padding: theme.spacing(8)
-  },
-  media: {
-    height: '440px',
-    width: '100%',
-    objectFit: 'cover',
-    display: 'block'
-  },
-  avatar: {
-    marginLeft: theme.spacing(2),
-    marginRight: theme.spacing(1),
-    backgroundColor: theme.palette.primary.main
-  },
-  actions: {
-    display: 'flex',
-    justifyContent: 'center'
-  },
-  inProgress: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    zIndex: 1000,
-    backgroundColor: theme.palette.background.paper
-  }
-}));
+const Root = styled('div')({
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+});
+
+const StyledCard = styled(Card)({
+  width: '50%',
+  position: 'relative'
+});
+
+const StyledCardActions = styled(CardActions)({
+  display: 'flex',
+  justifyContent: 'center'
+});
 
 interface StateProps {
   mission: Mission;
@@ -83,7 +52,6 @@ type Props = StateProps & RouteComponentProps<MatchParams>;
 const MissionViewer: React.FC<Props> = (props) => {
   const [redirect, setRedirect] = useState(false);
   const [inProgress, setInProgress] = useState(false);
-  const classes = useStyles();
   const { mission, completeMission, addCredits } = props;
 
   const handleOnCompleted = () => {
@@ -96,16 +64,27 @@ const MissionViewer: React.FC<Props> = (props) => {
   if (!mission) return <div>loading mission...</div>;
 
   return (
-    <div className={classes.root}>
-      <Card className={classes.card}>
+    <Root>
+      <StyledCard>
         {inProgress && (
           <MissionProgress
-            className={classes.inProgress}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              zIndex: 1000
+            }}
             onCompleted={handleOnCompleted}
           />
         )}
         <CardHeader
-          avatar={<Avatar className={classes.avatar}>R</Avatar>}
+          avatar={
+            <Avatar sx={{ ml: 2, mr: 1, bgcolor: 'primary.main' }}>R</Avatar>
+          }
           action={
             <IconButton aria-label="Settings" onClick={() => setRedirect(true)}>
               <CloseIcon />
@@ -115,17 +94,30 @@ const MissionViewer: React.FC<Props> = (props) => {
           subheader={mission.shortDescription}
         />
         <img
-          className={classes.media}
+          style={{
+            height: '440px',
+            width: '100%',
+            objectFit: 'cover',
+            display: 'block'
+          }}
           src={`${process.env.PUBLIC_URL}/images/art/${mission.id}.jpg`}
           alt=""
         />
-        <MissionStats className={classes.stats} mission={mission} />
-        <CardContent className={classes.content}>
-          <Typography variant="body2" color="textSecondary" component="p">
+        <MissionStats
+          style={{ position: 'absolute', top: 100, left: 10, zIndex: 1 }}
+          mission={mission}
+        />
+        <CardContent sx={{ p: 10 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            component="p"
+            sx={{ lineHeight: 1.8 }}
+          >
             {mission.description}
           </Typography>
         </CardContent>
-        <CardActions className={classes.actions}>
+        <StyledCardActions>
           <Button
             variant="contained"
             color="primary"
@@ -133,9 +125,9 @@ const MissionViewer: React.FC<Props> = (props) => {
           >
             LAUNCH MISSION
           </Button>
-        </CardActions>
-      </Card>
-    </div>
+        </StyledCardActions>
+      </StyledCard>
+    </Root>
   );
 };
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { ProductFilter } from 'models';
 import { ProductFilterGroup } from 'components';
 import { toArray, flatArrByValue } from 'utils/helpers';
-import produce from 'immer';
+import { produce } from 'immer';
 
 interface Props {
   onFilterClick: (filters: string[]) => void;

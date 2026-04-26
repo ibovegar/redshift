@@ -2,11 +2,16 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { UpgradeControls } from 'components';
 import { Viewer } from 'components';
-import Box from '@material-ui/core/Box';
+import Box from '@mui/material/Box';
 import * as interfaces from './spacecraft-builder.interface';
 import { Upgrade } from 'models';
 
-class SpacecraftBuilder extends React.Component<interfaces.Props, any> {
+class SpacecraftBuilder extends React.Component<
+  interfaces.Props,
+  { previewType: string | null }
+> {
+  state = { previewType: null as string | null };
+
   componentDidMount() {
     this.props.setSelectedSpacecraft(this.props.match.params.spacecraftId);
   }
@@ -30,11 +35,15 @@ class SpacecraftBuilder extends React.Component<interfaces.Props, any> {
     }
 
     return (
-      <Box display="flex" height="100%">
-        <Box flex={1} width={900} ml={6}>
-          <Viewer spacecraft={spacecraft} attachedUpgrades={attachedUpgrades} />
+      <Box sx={{ display: 'flex', height: '100%' }}>
+        <Box sx={{ flex: 1, width: 900, ml: 6 }}>
+          <Viewer
+            spacecraft={spacecraft}
+            attachedUpgrades={attachedUpgrades}
+            previewType={this.state.previewType}
+          />
         </Box>
-        <Box width={300} ml={6}>
+        <Box sx={{ width: 300, ml: 6 }}>
           <UpgradeControls
             spacecraft={spacecraft}
             attachedUpgrades={attachedUpgrades}
@@ -43,6 +52,8 @@ class SpacecraftBuilder extends React.Component<interfaces.Props, any> {
             onSelectUpgrade={(oldUpgrade, newUpgrade) =>
               this.handleSelectUpgrade(oldUpgrade, newUpgrade)
             }
+            onHoverUpgrade={(type) => this.setState({ previewType: type })}
+            onHoverEnd={() => this.setState({ previewType: null })}
           />
         </Box>
       </Box>

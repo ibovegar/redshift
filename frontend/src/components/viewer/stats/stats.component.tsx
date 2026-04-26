@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Spacecraft, AttachedUpgrades } from 'models';
-import { LinearProgress, Box, Typography, Button } from '@material-ui/core';
+import { LinearProgress, Box, Typography, Button } from '@mui/material';
 
 interface Props {
   spacecraft: Spacecraft;
@@ -14,11 +14,13 @@ const Stats: React.FC<Props> = ({ spacecraft, attachedUpgrades }) => {
 
   return (
     <Box
-      p={5}
-      pt={3}
-      bgcolor="background.default"
-      width="20%"
-      position="absolute"
+      sx={{
+        p: 5,
+        pt: 3,
+        bgcolor: 'background.default',
+        width: '20%',
+        position: 'absolute'
+      }}
     >
       {/* <Box m={2}>
         <Typography variant="body1">
@@ -74,7 +76,7 @@ const Stats: React.FC<Props> = ({ spacecraft, attachedUpgrades }) => {
         variant="determinate"
         value={baseStats.manuvrability + ((stabilizer && stabilizer.gain) || 0)}
       />
-      <Box mt={5}>
+      <Box sx={{ mt: 5 }}>
         <Button color="primary" variant="contained" size="small">
           DETAILS
         </Button>

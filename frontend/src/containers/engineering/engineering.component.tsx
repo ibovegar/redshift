@@ -3,10 +3,10 @@ import { Route, Switch, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import SpacecraftBuilder from './spacecraft-builder/spacecraft-builder.component';
 import { SpacecraftList } from 'components';
-import Box from '@material-ui/core/Box';
+import Box from '@mui/material/Box';
 import * as interfaces from './engineering.interface';
 import { Placeholder } from 'components/ui';
-import { Button } from '@material-ui/core';
+import { Button } from '@mui/material';
 
 class Engineering extends React.Component<interfaces.Props, any> {
   componentDidMount() {
@@ -46,14 +46,21 @@ class Engineering extends React.Component<interfaces.Props, any> {
     }
 
     return (
-      <Box display="flex" height="100%">
-        <Box width={340} height="100%" border={1} borderColor="grey.700">
+      <Box sx={{ display: 'flex', height: '100%' }}>
+        <Box
+          sx={{
+            width: 340,
+            height: '100%',
+            border: 1,
+            borderColor: 'grey.700'
+          }}
+        >
           <SpacecraftList
             spacecrafts={spacecrafts}
             onSpacecraftClick={this.handleSelectSpacecraft}
           />
         </Box>
-        <Box flex={1} height="100%">
+        <Box sx={{ flex: 1, height: '100%' }}>
           <Switch>
             <Route
               path={`${match.path}/:spacecraftId`}

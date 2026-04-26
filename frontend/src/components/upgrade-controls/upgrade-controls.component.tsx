@@ -13,6 +13,8 @@ interface Props {
   attachedUpgrades: AttachedUpgrades;
   onDeselectUpgrade: (upgradeType: Upgrade) => void;
   onSelectUpgrade: (oldUpgrade: Upgrade, newUpgrade: Upgrade) => void;
+  onHoverUpgrade?: (upgradeType: string) => void;
+  onHoverEnd?: () => void;
 }
 
 const UpgradeControls: React.FC<Props> = (props) => {
@@ -20,7 +22,9 @@ const UpgradeControls: React.FC<Props> = (props) => {
     availableUpgrades: available,
     attachedUpgrades: attached,
     onSelectUpgrade,
-    onDeselectUpgrade
+    onDeselectUpgrade,
+    onHoverUpgrade,
+    onHoverEnd
   } = props;
 
   // TODO: figure out why I render twice
@@ -36,6 +40,8 @@ const UpgradeControls: React.FC<Props> = (props) => {
         onSelect={(option: Upgrade) =>
           onSelectUpgrade(attached.deflector, option)
         }
+        onHover={() => onHoverUpgrade?.('deflector')}
+        onHoverEnd={onHoverEnd}
       />
       <UpgradeSelect
         type="Engine"
@@ -43,6 +49,8 @@ const UpgradeControls: React.FC<Props> = (props) => {
         options={available.engine}
         onDeselect={() => onDeselectUpgrade(attached.engine)}
         onSelect={(option: Upgrade) => onSelectUpgrade(attached.engine, option)}
+        onHover={() => onHoverUpgrade?.('engine')}
+        onHoverEnd={onHoverEnd}
       />
       <UpgradeSelect
         type="Plating"
@@ -52,6 +60,8 @@ const UpgradeControls: React.FC<Props> = (props) => {
         onSelect={(option: Upgrade) =>
           onSelectUpgrade(attached.plating, option)
         }
+        onHover={() => onHoverUpgrade?.('plating')}
+        onHoverEnd={onHoverEnd}
       />
       <UpgradeSelect
         type="Stabilizer"
@@ -61,6 +71,8 @@ const UpgradeControls: React.FC<Props> = (props) => {
         onSelect={(option: Upgrade) =>
           onSelectUpgrade(attached.stabilizer, option)
         }
+        onHover={() => onHoverUpgrade?.('stabilizer')}
+        onHoverEnd={onHoverEnd}
       />
       <UpgradeSelect
         type="Weapons"
@@ -70,6 +82,8 @@ const UpgradeControls: React.FC<Props> = (props) => {
         onSelect={(option: Upgrade) =>
           onSelectUpgrade(attached.weapons, option)
         }
+        onHover={() => onHoverUpgrade?.('weapons')}
+        onHoverEnd={onHoverEnd}
       />
     </>
   );

@@ -3,21 +3,19 @@ import { Spacecraft, AttachedUpgrades } from 'models';
 import Stats from './stats/stats.component';
 import Canvas from './canvas/canvas.component';
 import { Widget } from 'components';
-import { createStyles, withStyles, WithStyles } from '@material-ui/core/styles';
+import { styled } from '@mui/material/styles';
 import Plus from 'assets/images/plus.svg';
 
-const styles = () =>
-  createStyles({
-    crosses: {
-      height: '100%',
-      backgroundImage: `url(${Plus})`,
-      backgroundRepeat: 'repeat'
-    }
-  });
+const Crosses = styled('div')({
+  height: '100%',
+  backgroundImage: `url(${Plus})`,
+  backgroundRepeat: 'repeat'
+});
 
-interface Props extends WithStyles<typeof styles> {
+interface Props {
   spacecraft: Spacecraft;
   attachedUpgrades: AttachedUpgrades;
+  previewType?: string | null;
 }
 
 class SpacecraftViewer extends Component<Props, any> {
@@ -30,11 +28,11 @@ class SpacecraftViewer extends Component<Props, any> {
   };
 
   render() {
-    const { classes, spacecraft, attachedUpgrades } = this.props;
+    const { spacecraft, attachedUpgrades } = this.props;
 
     return (
       <Widget>
-        <div className={classes.crosses}>
+        <Crosses>
           {this.state.isLoading ? (
             <div>LOADING ASSETS. PLEASE WAIT... </div>
           ) : (
@@ -46,12 +44,13 @@ class SpacecraftViewer extends Component<Props, any> {
           <Canvas
             spacecraft={spacecraft}
             attachedUpgrades={attachedUpgrades}
+            previewType={this.props.previewType}
             onLoaded={this.handleLoaded}
           />
-        </div>
+        </Crosses>
       </Widget>
     );
   }
 }
 
-export default withStyles(styles)(SpacecraftViewer);
+export default SpacecraftViewer;
