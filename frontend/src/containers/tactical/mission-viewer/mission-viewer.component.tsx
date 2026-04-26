@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { RouteComponentProps, Redirect } from 'react-router-dom';
-import { Mission } from 'models';
+import { useParams, Navigate } from 'react-router';
 import { AppState } from 'store';
-import { connect } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { addCredits } from 'store/user';
 import { getMissionById, completeMission } from 'store/missions';
 import CloseIcon from '@mui/icons-material/Close';
@@ -37,30 +36,22 @@ const StyledCardActions = styled(CardActions)({
   justifyContent: 'center'
 });
 
-interface StateProps {
-  mission: Mission;
-  completeMission: (mission: Mission) => void;
-  addCredits: (amount: number) => void;
-}
-
-interface MatchParams {
-  missionId: string;
-}
-
-type Props = StateProps & RouteComponentProps<MatchParams>;
-
-const MissionViewer = (props: Props) => {
+const MissionViewer = () => {
   const [redirect, setRedirect] = useState(false);
   const [inProgress, setInProgress] = useState(false);
-  const { mission, completeMission, addCredits } = props;
+  const dispatch = useDispatch();
+  const { missionId } = useParams();
+  const mission = useSelector((state: AppState) =>
+    getMissionById(state, missionId!)
+  );
 
   const handleOnCompleted = () => {
-    completeMission(mission);
-    addCredits(mission.credits);
+    dispatch(completeMission(mission) as any);
+    dispatch(addCredits(mission.credits) as any);
     setRedirect(true);
   };
 
-  if (redirect) return <Redirect to="/tactical" />;
+  if (redirect) return <Navigate to="/tactical" />;
   if (!mission) return <div>loading mission...</div>;
 
   return (
@@ -131,13 +122,4 @@ const MissionViewer = (props: Props) => {
   );
 };
 
-export const mapDispatch = {
-  completeMission,
-  addCredits
-};
-
-const mapState = (state: AppState, ownProps: Props) => ({
-  mission: getMissionById(state, ownProps.match.params.missionId)
-});
-
-export default connect(mapState, mapDispatch)(MissionViewer);
+export default MissionViewer;

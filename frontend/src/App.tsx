@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
-import { Route, Redirect } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router';
 import Layout from './components/layout/layout.component';
 import { Tactical, Marketplace, Inventory, Engineering } from 'containers';
 import { loadUserStats } from 'store/user';
@@ -20,11 +20,13 @@ const App = (props: Props) => {
 
   return (
     <Layout authenticated credits={credits}>
-      <Redirect from="/" to="/tactical" />
-      <Route path="/tactical" component={Tactical} />
-      <Route path="/marketplace" component={Marketplace} />
-      <Route path="/inventory" component={Inventory} />
-      <Route path="/engineering" component={Engineering} />
+      <Routes>
+        <Route path="/" element={<Navigate to="/tactical" replace />} />
+        <Route path="/tactical/*" element={<Tactical />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/inventory" element={<Inventory />} />
+        <Route path="/engineering/*" element={<Engineering />} />
+      </Routes>
     </Layout>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { connect } from 'react-redux';
+import { useParams } from 'react-router';
 import { UpgradeControls } from 'components';
 import { Viewer } from 'components';
 import Box from '@mui/material/Box';
@@ -11,17 +12,17 @@ const SpacecraftBuilder = (props: interfaces.Props) => {
     spacecraft,
     attachedUpgrades,
     availableUpgrades,
-    match,
     setSelectedSpacecraft,
     attachUpgrade,
     detachUpgrade
   } = props;
 
+  const { spacecraftId } = useParams();
   const [previewType, setPreviewType] = useState<string | null>(null);
 
   useEffect(() => {
-    setSelectedSpacecraft(match.params.spacecraftId);
-  }, [match.params.spacecraftId, setSelectedSpacecraft]);
+    setSelectedSpacecraft(spacecraftId!);
+  }, [spacecraftId, setSelectedSpacecraft]);
 
   const handleSelectUpgrade = useCallback(
     (oldUpgrade: Upgrade, newUpgrade: Upgrade) => {

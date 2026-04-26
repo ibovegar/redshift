@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Spacecraft, Mission } from 'models';
 import { AppState } from 'store';
 import { MissionTag } from 'components/ui';
-import { Route, RouteComponentProps } from 'react-router';
+import { Routes, Route, useNavigate, useLocation } from 'react-router';
 import { loadSpacecrafts, getAllspacecrafts } from 'store/spacecrafts';
 import { loadMissions, getAllMissions } from 'store/missions';
 import MissionViewer from './mission-viewer/mission-viewer.component';
@@ -31,7 +31,7 @@ const tagPositions: any = [
   }
 ];
 
-interface Props extends RouteComponentProps {
+interface Props {
   isLoading: boolean;
   spacecrafts: Spacecraft[];
   missions: Mission[];
@@ -40,7 +40,9 @@ interface Props extends RouteComponentProps {
 }
 
 const Tactical = (props: Props) => {
-  const { history, match, missions, loadSpacecrafts, loadMissions } = props;
+  const { missions, loadSpacecrafts, loadMissions } = props;
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     loadSpacecrafts();
@@ -49,12 +51,12 @@ const Tactical = (props: Props) => {
 
   const handleSelectMission = useCallback(
     (missionId: string) => {
-      history.push(`${match.path}/${missionId}`);
+      navigate(missionId);
     },
-    [history, match.path]
+    [navigate]
   );
 
-  const isWatchingMission = history.location.pathname !== '/tactical';
+  const isWatchingMission = location.pathname !== '/tactical';
 
   return (
     <>
@@ -67,7 +69,9 @@ const Tactical = (props: Props) => {
           onSelect={() => handleSelectMission(mission.id)}
         />
       ))}
-      <Route path={`${match.path}/:missionId`} component={MissionViewer} />
+      <Routes>
+        <Route path=":missionId" element={<MissionViewer />} />
+      </Routes>
     </>
   );
 };

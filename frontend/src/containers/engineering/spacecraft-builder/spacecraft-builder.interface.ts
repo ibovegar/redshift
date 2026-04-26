@@ -5,7 +5,6 @@ import {
   AvailableUpgrades,
   AttachedUpgrades
 } from 'models';
-import { RouteComponentProps } from 'react-router-dom';
 import { setSelectedSpacecraft } from 'store/spacecrafts';
 import {
   detachUpgrade,
@@ -35,8 +34,4 @@ export const mapDispatchToProps = {
   setSelectedSpacecraft
 };
 
-export interface MatchParams {
-  spacecraftId: string;
-}
-
-export type Props = StateProps & RouteComponentProps<MatchParams>;
+export type Props = StateProps;

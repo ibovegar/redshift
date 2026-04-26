@@ -1,5 +1,5 @@
 import React from 'react';
-import { withRouter, Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Button, Typography, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -71,4 +71,4 @@ const Nav = () => {
   );
 };
 
-export default withRouter(Nav);
+export default Nav;

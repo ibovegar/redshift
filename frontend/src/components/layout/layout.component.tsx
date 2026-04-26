@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Toolbar from './toolbar/toolbar.component';
@@ -27,15 +27,16 @@ const TacticalWrapper = styled('div')({
   }
 });
 
-interface Props extends RouteComponentProps {
+interface Props {
   authenticated: boolean;
   credits: number;
   children: ReactNode;
 }
 
 const Layout = (props: Props) => {
-  const { children, history, credits } = props;
-  const isTactical = history.location.pathname === '/tactical';
+  const { children, credits } = props;
+  const location = useLocation();
+  const isTactical = location.pathname === '/tactical';
 
   const Wrapper = isTactical ? TacticalWrapper : React.Fragment;
 
@@ -59,4 +60,4 @@ const Layout = (props: Props) => {
   );
 };
 
-export default withRouter(Layout);
+export default Layout;

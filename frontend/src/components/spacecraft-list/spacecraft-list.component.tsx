@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router';
 import { Spacecraft } from 'models';
 import SpacecraftCard from './spacecraft-card/spacecraft-card.component';
 import { styled } from '@mui/material/styles';

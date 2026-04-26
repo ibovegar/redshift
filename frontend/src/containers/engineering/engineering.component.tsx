@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { Route, Switch, Link } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router';
 import { connect } from 'react-redux';
 import SpacecraftBuilder from './spacecraft-builder/spacecraft-builder.component';
 import { SpacecraftList } from 'components';
@@ -10,9 +10,8 @@ import { Button } from '@mui/material';
 
 const Engineering = (props: interfaces.Props) => {
   const {
-    match,
     spacecrafts,
-    isLoadingspacecrafts,
+    isLoadingSpacecrafts,
     isLoadingUpgrades,
     loadSpacecrafts,
     loadAllUpgrades,
@@ -49,7 +48,7 @@ const Engineering = (props: interfaces.Props) => {
     );
   }
 
-  if (isLoadingspacecrafts || isLoadingUpgrades) {
+  if (isLoadingSpacecrafts || isLoadingUpgrades) {
     return <div>Loading...</div>;
   }
 
@@ -69,21 +68,13 @@ const Engineering = (props: interfaces.Props) => {
         />
       </Box>
       <Box sx={{ flex: 1, height: '100%' }}>
-        <Switch>
+        <Routes>
+          <Route path=":spacecraftId" element={<SpacecraftBuilder />} />
           <Route
-            path={`${match.path}/:spacecraftId`}
-            render={(props) => (
-              <SpacecraftBuilder
-                key={props.match.params.spacecraftId}
-                {...props}
-              />
-            )}
+            path="/"
+            element={<Placeholder message="PLEASE SELECT A SPACECRAFT" />}
           />
-          <Route
-            path={`${match.path}/`}
-            render={() => <Placeholder message="PLEASE SELECT A SPACECRAFT" />}
-          />
-        </Switch>
+        </Routes>
       </Box>
     </Box>
   );
