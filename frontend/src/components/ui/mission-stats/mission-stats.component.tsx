@@ -23,7 +23,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   mission: Mission;
 }
 
-const MissionTag: React.FC<Props> = (props) => {
+const MissionTag = (props: Props) => {
   const { mission, className, style } = props;
 
   const avatarSx = {

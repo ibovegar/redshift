@@ -25,7 +25,7 @@ interface Props {
   onFilterClick: (filter: ProductFilter) => void;
 }
 
-const ProductFilterGroup: React.FC<Props> = (props) => {
+const ProductFilterGroup = (props: Props) => {
   const { filters, title, onFilterClick, defaultExpanded } = props;
 
   return (

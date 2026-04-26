@@ -10,8 +10,9 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   onCompleted: () => void;
 }
 
-const MissionProgress: React.FC<Props> = (props) => {
+const MissionProgress = (props: Props) => {
   const { onCompleted, className, ...rest } = props;
+
   const [progress, setProgress] = useState(0);
 
   React.useEffect(() => {

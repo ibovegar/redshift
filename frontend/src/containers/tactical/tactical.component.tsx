@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { connect } from 'react-redux';
 import { Spacecraft, Mission } from 'models';
 import { AppState } from 'store';
@@ -39,39 +39,38 @@ interface Props extends RouteComponentProps {
   loadMissions: () => void;
 }
 
-class Tactical extends React.Component<Props> {
-  componentDidMount() {
-    this.props.loadSpacecrafts();
-    this.props.loadMissions();
-  }
+const Tactical = (props: Props) => {
+  const { history, match, missions, loadSpacecrafts, loadMissions } = props;
 
-  handleSelectMission = (missionId: string) => {
-    this.props.history.push(`${this.props.match.path}/${missionId}`);
-  };
+  useEffect(() => {
+    loadSpacecrafts();
+    loadMissions();
+  }, [loadSpacecrafts, loadMissions]);
 
-  render() {
-    const isWatchingMission =
-      this.props.history.location.pathname !== '/tactical';
+  const handleSelectMission = useCallback(
+    (missionId: string) => {
+      history.push(`${match.path}/${missionId}`);
+    },
+    [history, match.path]
+  );
 
-    return (
-      <>
-        {this.props.missions.map((mission: Mission, index: number) => (
-          <MissionTag
-            key={mission.id}
-            mission={mission}
-            position={tagPositions[index]}
-            disabled={isWatchingMission || mission.completed}
-            onSelect={() => this.handleSelectMission(mission.id)}
-          />
-        ))}
-        <Route
-          path={`${this.props.match.path}/:missionId`}
-          component={MissionViewer}
+  const isWatchingMission = history.location.pathname !== '/tactical';
+
+  return (
+    <>
+      {missions.map((mission: Mission, index: number) => (
+        <MissionTag
+          key={mission.id}
+          mission={mission}
+          position={tagPositions[index]}
+          disabled={isWatchingMission || mission.completed}
+          onSelect={() => handleSelectMission(mission.id)}
         />
-      </>
-    );
-  }
-}
+      ))}
+      <Route path={`${match.path}/:missionId`} component={MissionViewer} />
+    </>
+  );
+};
 
 const mapStateToProps = (state: AppState) => ({
   isLoading: state.spacecrafts.isLoading,

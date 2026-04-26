@@ -1,71 +1,48 @@
-import React from 'react';
-import { produce } from 'immer';
+import React, { useState, useCallback } from 'react';
 import { ProductFilter } from 'models';
 import { ProductFilterGroup } from 'components';
 import { toArray, flatArrByValue } from 'utils/helpers';
 
 interface Props {
-  onFilterClick: (filters: string[]) => void; // TODO: typedef with ('spacecraft | 'etc')[]
+  onFilterClick: (filters: string[]) => void;
 }
 
-interface State {
-  [id: string]: ProductFilter;
-}
+const initialFilters: Record<string, ProductFilter> = {
+  spacecraft: { id: 'spacecraft', value: false, label: 'Spacecraft' },
+  engine: { id: 'engine', value: false, label: 'Engine' },
+  plating: { id: 'plating', value: false, label: 'Plating' },
+  deflector: { id: 'deflector', value: false, label: 'Deflector' },
+  weapons: { id: 'weapons', value: false, label: 'Weapons' },
+  stabilizer: { id: 'stabilizer', value: false, label: 'Stabilizer' }
+};
 
-export default class StoreTypeFilter extends React.Component<Props, State> {
-  state = {
-    spacecraft: {
-      id: 'spacecraft',
-      value: false,
-      label: 'Spacecraft'
-    },
-    engine: {
-      id: 'engine',
-      value: false,
-      label: 'Engine'
-    },
-    plating: {
-      id: 'plating',
-      value: false,
-      label: 'Plating'
-    },
-    deflector: {
-      id: 'deflector',
-      value: false,
-      label: 'Deflector'
-    },
-    weapons: {
-      id: 'weapons',
-      value: false,
-      label: 'Weapons'
-    },
-    stabilizer: {
-      id: 'stabilizer',
-      value: false,
-      label: 'Stabilizer'
-    }
-  };
+const StoreTypeFilter = (props: Props) => {
+  const { onFilterClick } = props;
 
-  handleFilterClick = (filter: ProductFilter) => {
-    this.setState(
-      produce((state) => {
-        state[filter.id].value = !state[filter.id].value;
-      }),
-      () => {
-        const arr: ProductFilter[] = toArray(this.state);
-        const filters = flatArrByValue(arr, 'value', 'id');
-        return this.props.onFilterClick(filters);
-      }
-    );
-  };
+  const [filters, setFilters] = useState(initialFilters);
 
-  public render() {
-    return (
-      <ProductFilterGroup
-        title="Product category"
-        filters={toArray(this.state)}
-        onFilterClick={this.handleFilterClick}
-      />
-    );
-  }
-}
+  const handleFilterClick = useCallback(
+    (filter: ProductFilter) => {
+      setFilters((prev) => {
+        const next = {
+          ...prev,
+          [filter.id]: { ...prev[filter.id], value: !prev[filter.id].value }
+        };
+        const arr: ProductFilter[] = toArray(next);
+        onFilterClick(flatArrByValue(arr, 'value', 'id'));
+        return next;
+      });
+    },
+    [onFilterClick]
+  );
+
+  return (
+    <ProductFilterGroup
+      title="Product category"
+      filters={toArray(filters)}
+      onFilterClick={handleFilterClick}
+    />
+  );
+};
+
+export default StoreTypeFilter;

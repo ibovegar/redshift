@@ -70,7 +70,7 @@ interface Props {
   onSelect: () => void;
 }
 
-const MissionTag: React.FC<Props> = (props) => {
+const MissionTag = (props: Props) => {
   const { mission, position, onSelect, disabled } = props;
 
   return (

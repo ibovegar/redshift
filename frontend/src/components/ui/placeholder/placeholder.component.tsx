@@ -32,7 +32,7 @@ interface Props {
   message: string;
 }
 
-const Placeholder: React.FC<Props> = (props) => {
+const Placeholder = (props: Props) => {
   const { action } = props;
 
   return (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { connect } from 'react-redux';
 import { styled } from '@mui/material/styles';
 import {
@@ -36,75 +36,67 @@ interface Props {
   purchase: (cart: (Spacecraft | Upgrade)[]) => void;
 }
 
-interface State {
-  productTypeFilter: string[];
-  spacecraftFilter: string[];
-}
+const Marketplace = (props: Props) => {
+  const {
+    products,
+    cart,
+    credits,
+    loadStore,
+    addToCart,
+    removeFromCart,
+    purchase
+  } = props;
 
-class Marketplace extends React.Component<Props, State> {
-  state: State = {
-    productTypeFilter: [],
-    spacecraftFilter: []
-  };
+  const [productTypeFilter, setProductTypeFilter] = useState<string[]>([]);
+  const [spacecraftFilter, setSpacecraftFilter] = useState<string[]>([]);
 
-  componentDidMount() {
-    this.props.loadStore();
-  }
+  useEffect(() => {
+    loadStore();
+  }, [loadStore]);
 
-  handleAddToCart = (product: Spacecraft | Upgrade) => {
-    this.props.addToCart(product);
-  };
+  const handleAddToCart = useCallback(
+    (product: Spacecraft | Upgrade) => {
+      addToCart(product);
+    },
+    [addToCart]
+  );
 
-  handleRemoveFromCart = (index: number) => {
-    this.props.removeFromCart(index);
-  };
+  const handleRemoveFromCart = useCallback(
+    (index: number) => {
+      removeFromCart(index);
+    },
+    [removeFromCart]
+  );
 
-  handlePurchase = () => {
-    this.props.purchase(this.props.cart);
-  };
+  const handlePurchase = useCallback(() => {
+    purchase(cart);
+  }, [purchase, cart]);
 
-  handleCategoryFilter = (filters: string[]) => {
-    console.log('category', filters);
-  };
+  let filtered: (Spacecraft | Upgrade)[] = products;
+  filtered = filterObjArr(products, spacecraftFilter, 'spacecraftRegistry');
+  filtered = filterObjArr(filtered, productTypeFilter, 'storeType');
 
-  handleSpacecraftFilter = (filters: string[]) => {
-    this.setState({ spacecraftFilter: filters });
-  };
-
-  handleUpgradeFilter = (filters: string[]) => {
-    this.setState({ productTypeFilter: filters });
-  };
-
-  public render() {
-    const { products, cart, credits } = this.props;
-    const { productTypeFilter, spacecraftFilter } = this.state;
-
-    let filtered: (Spacecraft | Upgrade)[] = products;
-    filtered = filterObjArr(products, spacecraftFilter, 'spacecraftRegistry');
-    filtered = filterObjArr(filtered, productTypeFilter, 'storeType');
-
-    return (
-      <StyledGrid container spacing={6}>
-        <StickyGrid size="grow">
-          {/* <CategoryFilter onFilterClick={this.handleCategoryFilter} /> */}
-          <SpacecraftFilter onFilterClick={this.handleSpacecraftFilter} />
-          <StoreTypeFilter onFilterClick={this.handleUpgradeFilter} />
-        </StickyGrid>
-        <Grid size={8}>
-          <Products onAddClick={this.handleAddToCart} products={filtered} />
-        </Grid>
-        <StickyGrid size="grow">
-          <Cart
-            credits={credits}
-            cart={cart}
-            onRemove={this.handleRemoveFromCart}
-            onPurchase={this.handlePurchase}
-          />
-        </StickyGrid>
-      </StyledGrid>
-    );
-  }
-}
+  return (
+    <StyledGrid container spacing={6}>
+      <StickyGrid size="grow">
+        {/* <CategoryFilter onFilterClick={handleCategoryFilter} /> */}
+        <SpacecraftFilter onFilterClick={setSpacecraftFilter} />
+        <StoreTypeFilter onFilterClick={setProductTypeFilter} />
+      </StickyGrid>
+      <Grid size={8}>
+        <Products onAddClick={handleAddToCart} products={filtered} />
+      </Grid>
+      <StickyGrid size="grow">
+        <Cart
+          credits={credits}
+          cart={cart}
+          onRemove={handleRemoveFromCart}
+          onPurchase={handlePurchase}
+        />
+      </StickyGrid>
+    </StyledGrid>
+  );
+};
 
 export const mapStateToProps = (state: AppState) => ({
   products: state.marketplace.products,

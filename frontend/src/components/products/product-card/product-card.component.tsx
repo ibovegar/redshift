@@ -18,7 +18,7 @@ interface Props {
   onAddClick: () => void;
 }
 
-const ProductCard: React.FC<Props> = (props) => {
+const ProductCard = (props: Props) => {
   const { product, onAddClick } = props;
 
   const imgUrl = isSpacecraft(product)

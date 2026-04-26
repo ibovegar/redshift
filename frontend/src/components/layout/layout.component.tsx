@@ -33,7 +33,7 @@ interface Props extends RouteComponentProps {
   children: ReactNode;
 }
 
-const Layout: React.FC<Props> = (props) => {
+const Layout = (props: Props) => {
   const { children, history, credits } = props;
   const isTactical = history.location.pathname === '/tactical';
 

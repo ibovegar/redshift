@@ -49,7 +49,7 @@ interface MatchParams {
 
 type Props = StateProps & RouteComponentProps<MatchParams>;
 
-const MissionViewer: React.FC<Props> = (props) => {
+const MissionViewer = (props: Props) => {
   const [redirect, setRedirect] = useState(false);
   const [inProgress, setInProgress] = useState(false);
   const { mission, completeMission, addCredits } = props;

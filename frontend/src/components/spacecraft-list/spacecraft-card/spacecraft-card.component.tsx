@@ -8,7 +8,8 @@ interface Props {
   spacecraft: Spacecraft;
 }
 
-const spacecraftCard: React.FC<Props> = ({ spacecraft }) => {
+const spacecraftCard = (props: Props) => {
+  const { spacecraft } = props;
   return (
     <Box sx={{ p: 1 }}>
       <Grid container sx={{ justifyContent: 'center', alignItems: 'center' }}>

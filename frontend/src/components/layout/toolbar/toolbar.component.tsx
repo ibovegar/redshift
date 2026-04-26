@@ -30,7 +30,8 @@ interface Props {
   credits: number;
 }
 
-const Toolbar: React.FC<Props> = ({ credits }) => {
+const Toolbar = (props: Props) => {
+  const { credits } = props;
   return (
     <Root>
       <Left>

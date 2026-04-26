@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { ProductFilter } from 'models';
 import { ProductFilterGroup } from 'components';
 import { toArray } from 'utils/helpers';
@@ -7,52 +7,39 @@ interface Props {
   onFilterClick: (filters: ProductFilter[]) => void;
 }
 
-class PriceFilter extends React.Component<Props, any> {
-  state = {
-    100: {
-      id: '100',
-      value: false,
-      label: '0-100'
-    },
-    500: {
-      id: '500',
-      value: false,
-      label: '100-500'
-    },
-    1000: {
-      id: '1000',
-      value: false,
-      label: '500-1000'
-    },
-    2000: {
-      id: '2000',
-      value: false,
-      label: '1000-2000'
-    }
-  };
+const initialFilters: Record<string, ProductFilter> = {
+  100: { id: '100', value: false, label: '0-100' },
+  500: { id: '500', value: false, label: '100-500' },
+  1000: { id: '1000', value: false, label: '500-1000' },
+  2000: { id: '2000', value: false, label: '1000-2000' }
+};
 
-  handleFilterClick = (filter: ProductFilter) => {
-    this.setState(
-      (prevState: any) => ({
-        ...prevState,
-        [filter.id]: {
-          ...prevState[filter.id],
-          value: !prevState[filter.id].value
-        }
-      }),
-      () => this.props.onFilterClick(toArray(this.state))
-    );
-  };
+const PriceFilter = (props: Props) => {
+  const { onFilterClick } = props;
 
-  public render() {
-    return (
-      <ProductFilterGroup
-        title="Product category"
-        filters={toArray(this.state)}
-        onFilterClick={this.handleFilterClick}
-      />
-    );
-  }
-}
+  const [filters, setFilters] = useState(initialFilters);
+
+  const handleFilterClick = useCallback(
+    (filter: ProductFilter) => {
+      setFilters((prev) => {
+        const next = {
+          ...prev,
+          [filter.id]: { ...prev[filter.id], value: !prev[filter.id].value }
+        };
+        onFilterClick(toArray(next));
+        return next;
+      });
+    },
+    [onFilterClick]
+  );
+
+  return (
+    <ProductFilterGroup
+      title="Product category"
+      filters={toArray(filters)}
+      onFilterClick={handleFilterClick}
+    />
+  );
+};
 
 export default PriceFilter;

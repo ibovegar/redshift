@@ -17,7 +17,7 @@ interface Props {
   onHoverEnd?: () => void;
 }
 
-const UpgradeControls: React.FC<Props> = (props) => {
+const UpgradeControls = (props: Props) => {
   const {
     availableUpgrades: available,
     attachedUpgrades: attached,

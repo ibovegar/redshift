@@ -8,7 +8,7 @@ interface Props {
   onAddClick: (product: Spacecraft | Upgrade) => void;
 }
 
-const Products: React.FC<Props> = (props) => {
+const Products = (props: Props) => {
   const { products, onAddClick } = props;
 
   return (

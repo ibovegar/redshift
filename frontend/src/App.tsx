@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { Route, Redirect } from 'react-router-dom';
 import Layout from './components/layout/layout.component';
@@ -11,25 +11,23 @@ interface Props {
   loadUserStats: () => void;
 }
 
-class App extends Component<Props> {
-  componentDidMount() {
-    this.props.loadUserStats();
-  }
+const App = (props: Props) => {
+  const { credits, loadUserStats } = props;
 
-  render() {
-    const { credits } = this.props;
+  useEffect(() => {
+    loadUserStats();
+  }, [loadUserStats]);
 
-    return (
-      <Layout authenticated credits={credits}>
-        <Redirect from="/" to="/tactical" />
-        <Route path="/tactical" component={Tactical} />
-        <Route path="/marketplace" component={Marketplace} />
-        <Route path="/inventory" component={Inventory} />
-        <Route path="/engineering" component={Engineering} />
-      </Layout>
-    );
-  }
-}
+  return (
+    <Layout authenticated credits={credits}>
+      <Redirect from="/" to="/tactical" />
+      <Route path="/tactical" component={Tactical} />
+      <Route path="/marketplace" component={Marketplace} />
+      <Route path="/inventory" component={Inventory} />
+      <Route path="/engineering" component={Engineering} />
+    </Layout>
+  );
+};
 
 const mapStateToProps = (state: AppState) => ({
   credits: state.user.credits

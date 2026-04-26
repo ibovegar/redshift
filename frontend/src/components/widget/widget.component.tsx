@@ -19,7 +19,7 @@ interface Props {
   children: ReactNode;
 }
 
-const Widget: React.FC<Props> = (props) => {
+const Widget = (props: Props) => {
   const { children } = props;
 
   return (

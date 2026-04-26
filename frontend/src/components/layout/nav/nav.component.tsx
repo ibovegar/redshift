@@ -10,7 +10,7 @@ const StyledIcon = styled(AddBoxIcon)(({ theme }) => ({
 
 const buttonSx = { px: 4 } as const;
 
-const Nav: React.FC = () => {
+const Nav = () => {
   return (
     <Grid container sx={{ alignItems: 'center' }} spacing={4}>
       <Grid>

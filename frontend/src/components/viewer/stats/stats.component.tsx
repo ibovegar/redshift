@@ -7,7 +7,8 @@ interface Props {
   attachedUpgrades: AttachedUpgrades;
 }
 
-const Stats: React.FC<Props> = ({ spacecraft, attachedUpgrades }) => {
+const Stats = (props: Props) => {
+  const { spacecraft, attachedUpgrades } = props;
   // Only rerender if buffs changes
   const { baseStats } = spacecraft;
   const { engine, deflector, weapons, stabilizer, plating } = attachedUpgrades;

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import * as THREE from 'three';
@@ -15,160 +15,41 @@ interface Props {
   onLoaded: () => void;
 }
 
-export default class Canvas extends Component<Props, any> {
-  camera: THREE.PerspectiveCamera;
-  scene: THREE.Scene;
-  renderer: THREE.WebGLRenderer;
-  manager: THREE.LoadingManager;
-  controls: OrbitControls;
-  mesh: any = null;
-  canvas: any = null;
-  frameId: any = null;
-  enableHelpers = false;
-  spacecraftModel: any;
+const FADE_SPEED = 0.03;
+const PREVIEW_OPACITY = 0.4;
+const PREVIEW_TINT = new THREE.Color(0.2, 0.6, 1.5);
 
-  componentDidMount() {
-    this.init();
-    this.addControls();
+const Canvas = (props: Props) => {
+  const { spacecraft, attachedUpgrades, previewType, onLoaded } = props;
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera>(null!);
+  const sceneRef = useRef<THREE.Scene>(null!);
+  const rendererRef = useRef<THREE.WebGLRenderer>(null!);
+  const controlsRef = useRef<OrbitControls>(null!);
+  const frameIdRef = useRef<number | null>(null);
+  const spacecraftModelRef = useRef<any>(null);
+  const fadeTargetsRef = useRef(new Map<any, number>());
+  const clonedMaterialsRef = useRef(new Set<any>());
+  const originalColorsRef = useRef(new Map<any, THREE.Color>());
+  const propsRef = useRef({
+    spacecraft,
+    attachedUpgrades,
+    previewType,
+    onLoaded
+  });
 
-    if (!this.frameId) {
-      this.frameId = requestAnimationFrame(this.animate);
-    }
-  }
+  // Keep propsRef in sync so GLTF callback reads latest props
+  propsRef.current = { spacecraft, attachedUpgrades, previewType, onLoaded };
 
-  componentDidUpdate(prevProps: Props) {
-    const { attachedUpgrades, previewType } = this.props;
-    this.updateModel(UpgradeType.Engine, !!attachedUpgrades.engine);
-    this.updateModel(UpgradeType.Weapons, !!attachedUpgrades.weapons);
-    this.updateModel(UpgradeType.Stabilizer, !!attachedUpgrades.stabilizer);
-    this.updateModel(UpgradeType.Plating, !!attachedUpgrades.plating);
-    this.updateModel(UpgradeType.Deflector, !!attachedUpgrades.deflector);
-
-    if (previewType !== prevProps.previewType) {
-      // Clear previous preview
-      if (prevProps.previewType) {
-        this.setPreview(prevProps.previewType, false);
-      }
-      // Show new preview (only if not already attached)
-      if (
-        previewType &&
-        !attachedUpgrades[previewType as keyof AttachedUpgrades]
-      ) {
-        this.setPreview(previewType, true);
-      }
-    }
-  }
-
-  componentWillUnmount() {
-    cancelAnimationFrame(this.frameId);
-    this.canvas.removeChild(this.renderer.domElement);
-  }
-
-  fadeTargets: Map<any, number> = new Map();
-  fadeSpeed = 0.03;
-  clonedMaterials: Set<any> = new Set();
-  previewOpacity = 0.4;
-  previewTint = new THREE.Color(0.2, 0.6, 1.5);
-  originalColors: Map<any, THREE.Color> = new Map();
-
-  setPreview = (upgradeType: string, show: boolean) => {
-    if (!this.spacecraftModel) return;
-
-    const registry = this.props.spacecraft.spacecraftRegistry;
-    const map = upgradeMap[registry][upgradeType];
-    if (!map) return;
-
-    for (const modelName of map) {
-      const model = this.spacecraftModel.children.find(
-        (m: any) => m.name === modelName
-      );
-      if (!model) continue;
-
-      // Clone materials if not done yet
-      model.traverse((child: any) => {
-        if (
-          child.isMesh &&
-          child.material &&
-          !this.clonedMaterials.has(child)
-        ) {
-          child.material = child.material.clone();
-          child.material.transparent = true;
-          this.clonedMaterials.add(child);
-        }
-      });
-
-      if (show) {
-        model.visible = true;
-        model.traverse((child: any) => {
-          if (child.isMesh && child.material) {
-            // Store original color and apply blue tint
-            if (!this.originalColors.has(child)) {
-              this.originalColors.set(child, child.material.color.clone());
-            }
-            child.material.color.copy(this.previewTint);
-            child.material.emissive = new THREE.Color(0.15, 0.4, 1.0);
-            child.material.opacity = this.previewOpacity;
-          }
-        });
-        this.fadeTargets.set(model, this.previewOpacity);
-      } else {
-        // Restore original colors
-        model.traverse((child: any) => {
-          if (child.isMesh && child.material) {
-            const orig = this.originalColors.get(child);
-            if (orig) {
-              child.material.color.copy(orig);
-            }
-            if (child.material.emissive) {
-              child.material.emissive.set(0, 0, 0);
-            }
-          }
-        });
-        this.fadeTargets.set(model, 0);
-      }
-    }
-  };
-
-  updateModel = (upgradeType: string, isVisible: boolean) => {
-    if (!this.spacecraftModel) return;
-
-    const map =
-      upgradeMap[this.props.spacecraft.spacecraftRegistry][upgradeType];
-
-    for (const modelName of map) {
-      const model = this.spacecraftModel.children.find(
-        (m: any) => m.name === modelName
-      );
-      if (!model) continue;
-
-      // Clone materials so fading doesn't affect shared materials
-      model.traverse((child: any) => {
-        if (
-          child.isMesh &&
-          child.material &&
-          !this.clonedMaterials.has(child)
-        ) {
-          child.material = child.material.clone();
-          child.material.transparent = true;
-          this.clonedMaterials.add(child);
-        }
-      });
-
-      if (isVisible) model.visible = true;
-
-      this.fadeTargets.set(model, isVisible ? 1 : 0);
-    }
-  };
-
-  updateFades = () => {
-    this.fadeTargets.forEach((targetOpacity, model) => {
+  const updateFades = useCallback(() => {
+    fadeTargetsRef.current.forEach((targetOpacity, model) => {
       let done = true;
       model.traverse((child: any) => {
         if (child.isMesh && child.material) {
           const current = child.material.opacity;
           if (Math.abs(current - targetOpacity) > 0.01) {
             child.material.opacity +=
-              (targetOpacity - current) * this.fadeSpeed * 3;
+              (targetOpacity - current) * FADE_SPEED * 3;
             done = false;
           } else {
             child.material.opacity = targetOpacity;
@@ -177,40 +58,40 @@ export default class Canvas extends Component<Props, any> {
       });
       if (done) {
         if (targetOpacity === 0) model.visible = false;
-        this.fadeTargets.delete(model);
+        fadeTargetsRef.current.delete(model);
       }
     });
-  };
+  }, []);
 
-  addControls = () => {
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.05;
-    this.controls.autoRotate = true;
-    this.controls.autoRotateSpeed = 0.5;
-    this.controls.rotateSpeed = 0.5;
-    this.controls.enablePan = false;
-    this.controls.zoomSpeed = 1.0;
-  };
+  const renderScene = useCallback(() => {
+    rendererRef.current.render(sceneRef.current, cameraRef.current);
+  }, []);
 
-  handleClick = () => {
-    this.controls.autoRotate = false;
-  };
+  const animate = useCallback(() => {
+    controlsRef.current.update();
+    updateFades();
+    renderScene();
+    frameIdRef.current = window.requestAnimationFrame(animate);
+  }, [updateFades, renderScene]);
 
-  init = () => {
-    const aspectRatio = getAspectRatio(this.canvas);
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(40, aspectRatio, 0.1, 100);
-    this.camera.position.z = 12;
-    this.camera.position.y = 14;
-    this.camera.position.x = 12;
-    this.camera.lookAt(this.scene.position);
+  const handleClick = useCallback(() => {
+    controlsRef.current.autoRotate = false;
+  }, []);
 
-    // Add hemisphere light
+  // Initialize Three.js scene (runs once on mount)
+  useEffect(() => {
+    const canvas = canvasRef.current!;
+    const aspectRatio = getAspectRatio(canvas);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, aspectRatio, 0.1, 100);
+    camera.position.z = 12;
+    camera.position.y = 14;
+    camera.position.x = 12;
+    camera.lookAt(scene.position);
+
     const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 6);
-    this.scene.add(hemisphereLight);
+    scene.add(hemisphereLight);
 
-    // Add spotlight
     const spotLight = new THREE.SpotLight(0xffffff, 300);
     spotLight.position.setY(20);
     spotLight.position.setZ(0);
@@ -218,106 +99,198 @@ export default class Canvas extends Component<Props, any> {
     spotLight.penumbra = 0.05;
     spotLight.decay = 2;
     spotLight.distance = 200;
-    this.scene.add(spotLight);
+    scene.add(spotLight);
 
-    // Add ambient light
-    // const ambLight = new THREE.AmbientLight(0xffffff);
-    // this.scene.add(ambLight);
-
-    // Add directional light
     const dirLight = new THREE.DirectionalLight(0xffffff, 6);
     dirLight.position.setY(40);
     dirLight.position.setZ(-10);
-    this.scene.add(dirLight);
+    scene.add(dirLight);
 
-    // Add point light
     const pointLight = new THREE.PointLight(0xffffff, 150, 100);
     pointLight.position.setY(-4);
     pointLight.position.setX(-8);
     pointLight.position.setZ(-10);
-    this.scene.add(pointLight);
-
-    if (this.enableHelpers) {
-      const spotHelper = new THREE.SpotLightHelper(spotLight);
-      const dirHelper = new THREE.DirectionalLightHelper(dirLight, 5);
-      const sphereSize = 1;
-      const pointHelper = new THREE.PointLightHelper(pointLight, sphereSize);
-      this.scene.add(spotHelper);
-      this.scene.add(dirHelper);
-      this.scene.add(pointHelper);
-      this.scene.add(new THREE.AxesHelper(200));
-    }
+    scene.add(pointLight);
 
     const manager = new THREE.LoadingManager();
-
-    manager.onLoad = () => {
-      this.setState({ isLoading: false });
-    };
-
-    manager.onProgress = (_, loaded, total) => {
-      const progress = (loaded / total) * 100;
-      this.setState({ progress });
+    manager.onProgress = (_: any, loaded: number, total: number) => {
+      console.log(`Loading: ${((loaded / total) * 100).toFixed(0)}%`);
     };
 
     const loader = new GLTFLoader(manager);
     loader.load(
-      `${process.env.PUBLIC_URL}/models/${this.props.spacecraft.spacecraftRegistry}.glb`,
+      `${process.env.PUBLIC_URL}/models/${propsRef.current.spacecraft.spacecraftRegistry}.glb`,
       (gltf) => {
-        this.scene.add(gltf.scene);
-        this.spacecraftModel = gltf.scene;
+        scene.add(gltf.scene);
+        spacecraftModelRef.current = gltf.scene;
 
         // Hide all upgrade parts immediately before first render
-        const registry = this.props.spacecraft.spacecraftRegistry;
-        const { attachedUpgrades } = this.props;
+        const registry = propsRef.current.spacecraft.spacecraftRegistry;
+        const attached = propsRef.current.attachedUpgrades;
         const upgradeTypes = Object.keys(upgradeMap[registry]);
         for (const type of upgradeTypes) {
-          const isAttached =
-            !!attachedUpgrades[type as keyof typeof attachedUpgrades];
+          const isAttached = !!attached[type as keyof typeof attached];
           for (const modelName of upgradeMap[registry][type]) {
-            const model = this.spacecraftModel.children.find(
+            const model = spacecraftModelRef.current.children.find(
               (m: any) => m.name === modelName
             );
             if (model) model.visible = isAttached;
           }
         }
 
-        this.props.onLoaded();
+        propsRef.current.onLoaded();
       },
-      () => console.log(''),
+      () => {},
       (error) => console.error(error)
     );
 
-    this.renderer = new THREE.WebGLRenderer({
+    const renderer = new THREE.WebGLRenderer({
       alpha: true,
       antialias: true
     });
+    renderer.setPixelRatio(devicePixelRatio);
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    canvas.appendChild(renderer.domElement);
 
-    this.renderer.setPixelRatio(devicePixelRatio);
-    this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.canvas.appendChild(this.renderer.domElement);
-  };
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+    controls.rotateSpeed = 0.5;
+    controls.enablePan = false;
+    controls.zoomSpeed = 1.0;
 
-  animate = () => {
-    this.controls.update();
-    this.updateFades();
-    this.renderScene();
-    this.frameId = window.requestAnimationFrame(this.animate);
-  };
+    sceneRef.current = scene;
+    cameraRef.current = camera;
+    rendererRef.current = renderer;
+    controlsRef.current = controls;
 
-  renderScene = () => {
-    this.renderer.render(this.scene, this.camera);
-  };
+    frameIdRef.current = requestAnimationFrame(animate);
 
-  render() {
-    return (
-      <div
-        style={{ width: '100%', height: '100%' }}
-        onClick={this.handleClick}
-        ref={(canvas) => {
-          this.canvas = canvas;
-        }}
-      />
-    );
-  }
-}
+    return () => {
+      if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
+      canvas.removeChild(renderer.domElement);
+    };
+  }, [animate]);
+
+  // Handle attachedUpgrades changes
+  useEffect(() => {
+    const model = spacecraftModelRef.current;
+    if (!model) return;
+
+    const cloneMaterials = (part: any) => {
+      part.traverse((child: any) => {
+        if (
+          child.isMesh &&
+          child.material &&
+          !clonedMaterialsRef.current.has(child)
+        ) {
+          child.material = child.material.clone();
+          child.material.transparent = true;
+          clonedMaterialsRef.current.add(child);
+        }
+      });
+    };
+
+    const updateModel = (upgradeType: string, isVisible: boolean) => {
+      const map = upgradeMap[spacecraft.spacecraftRegistry][upgradeType];
+      for (const modelName of map) {
+        const part = model.children.find((m: any) => m.name === modelName);
+        if (!part) continue;
+        cloneMaterials(part);
+        if (isVisible) part.visible = true;
+        fadeTargetsRef.current.set(part, isVisible ? 1 : 0);
+      }
+    };
+
+    updateModel(UpgradeType.Engine, !!attachedUpgrades.engine);
+    updateModel(UpgradeType.Weapons, !!attachedUpgrades.weapons);
+    updateModel(UpgradeType.Stabilizer, !!attachedUpgrades.stabilizer);
+    updateModel(UpgradeType.Plating, !!attachedUpgrades.plating);
+    updateModel(UpgradeType.Deflector, !!attachedUpgrades.deflector);
+  }, [attachedUpgrades, spacecraft.spacecraftRegistry]);
+
+  // Handle previewType changes
+  const prevPreviewRef = useRef<string | null | undefined>(null);
+  useEffect(() => {
+    const model = spacecraftModelRef.current;
+    if (!model) return;
+
+    const prevPreview = prevPreviewRef.current;
+    prevPreviewRef.current = previewType;
+
+    const setPreview = (upgradeType: string, show: boolean) => {
+      const registry = spacecraft.spacecraftRegistry;
+      const map = upgradeMap[registry][upgradeType];
+      if (!map) return;
+
+      for (const modelName of map) {
+        const part = model.children.find((m: any) => m.name === modelName);
+        if (!part) continue;
+
+        part.traverse((child: any) => {
+          if (
+            child.isMesh &&
+            child.material &&
+            !clonedMaterialsRef.current.has(child)
+          ) {
+            child.material = child.material.clone();
+            child.material.transparent = true;
+            clonedMaterialsRef.current.add(child);
+          }
+        });
+
+        if (show) {
+          part.visible = true;
+          part.traverse((child: any) => {
+            if (child.isMesh && child.material) {
+              if (!originalColorsRef.current.has(child)) {
+                originalColorsRef.current.set(
+                  child,
+                  child.material.color.clone()
+                );
+              }
+              child.material.color.copy(PREVIEW_TINT);
+              child.material.emissive = new THREE.Color(0.15, 0.4, 1.0);
+              child.material.opacity = PREVIEW_OPACITY;
+            }
+          });
+          fadeTargetsRef.current.set(part, PREVIEW_OPACITY);
+        } else {
+          part.traverse((child: any) => {
+            if (child.isMesh && child.material) {
+              const orig = originalColorsRef.current.get(child);
+              if (orig) child.material.color.copy(orig);
+              if (child.material.emissive) {
+                child.material.emissive.set(0, 0, 0);
+              }
+            }
+          });
+          fadeTargetsRef.current.set(part, 0);
+        }
+      }
+    };
+
+    if (prevPreview) {
+      setPreview(prevPreview, false);
+    }
+    if (
+      previewType &&
+      !attachedUpgrades[previewType as keyof AttachedUpgrades]
+    ) {
+      setPreview(previewType, true);
+    }
+  }, [previewType, attachedUpgrades, spacecraft.spacecraftRegistry]);
+
+  return (
+    <div
+      style={{ width: '100%', height: '100%' }}
+      onClick={handleClick}
+      ref={canvasRef}
+    />
+  );
+};
+
+export default Canvas;

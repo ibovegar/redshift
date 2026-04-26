@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Spacecraft, AttachedUpgrades } from 'models';
 import Stats from './stats/stats.component';
 import Canvas from './canvas/canvas.component';
@@ -18,39 +18,32 @@ interface Props {
   previewType?: string | null;
 }
 
-class SpacecraftViewer extends Component<Props, any> {
-  state = {
-    isLoading: true
-  };
+const SpacecraftViewer = (props: Props) => {
+  const { spacecraft, attachedUpgrades, previewType } = props;
 
-  handleLoaded = () => {
-    this.setState({ isLoading: false });
-  };
+  const [isLoading, setIsLoading] = useState(true);
 
-  render() {
-    const { spacecraft, attachedUpgrades } = this.props;
+  const handleLoaded = useCallback(() => {
+    setIsLoading(false);
+  }, []);
 
-    return (
-      <Widget>
-        <Crosses>
-          {this.state.isLoading ? (
-            <div>LOADING ASSETS. PLEASE WAIT... </div>
-          ) : (
-            <Stats
-              spacecraft={spacecraft}
-              attachedUpgrades={attachedUpgrades}
-            />
-          )}
-          <Canvas
-            spacecraft={spacecraft}
-            attachedUpgrades={attachedUpgrades}
-            previewType={this.props.previewType}
-            onLoaded={this.handleLoaded}
-          />
-        </Crosses>
-      </Widget>
-    );
-  }
-}
+  return (
+    <Widget>
+      <Crosses>
+        {isLoading ? (
+          <div>LOADING ASSETS. PLEASE WAIT... </div>
+        ) : (
+          <Stats spacecraft={spacecraft} attachedUpgrades={attachedUpgrades} />
+        )}
+        <Canvas
+          spacecraft={spacecraft}
+          attachedUpgrades={attachedUpgrades}
+          previewType={previewType}
+          onLoaded={handleLoaded}
+        />
+      </Crosses>
+    </Widget>
+  );
+};
 
 export default SpacecraftViewer;

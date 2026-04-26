@@ -20,7 +20,7 @@ interface Props {
   onHoverEnd?: () => void;
 }
 
-const UpgradeSelect: React.FC<Props> = (props) => {
+const UpgradeSelect = (props: Props) => {
   const { value, options, type, onSelect, onDeselect, onHover, onHoverEnd } =
     props;
   const [anchorEl, setAnchorEl]: [any, any] = React.useState(null);
