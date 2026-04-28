@@ -1,9 +1,9 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Spacecraft, AttachedUpgrades, UpgradeType } from 'models';
 import upgradeMap from './upgrade-map';
 import { getAspectRatio } from 'utils/helpers';
@@ -119,7 +119,7 @@ const Canvas = (props: Props) => {
 
     const loader = new GLTFLoader(manager);
     loader.load(
-      `${process.env.PUBLIC_URL}/models/${propsRef.current.spacecraft.spacecraftRegistry}.glb`,
+      `/models/${propsRef.current.spacecraft.spacecraftRegistry}.glb`,
       (gltf) => {
         scene.add(gltf.scene);
         spacecraftModelRef.current = gltf.scene;

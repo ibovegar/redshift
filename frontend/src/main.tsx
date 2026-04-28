@@ -1,4 +1,3 @@
-import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 
@@ -11,8 +10,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import ThemeDark from './ui/theme/dark.theme';
 // import ThemeLight from './ui/theme/light.theme';
 
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+import App from 'containers/app/app.component';
 
 import 'normalize.css';
 import './assets/css/styles.css';
@@ -43,4 +41,3 @@ const app = (
 
 const root = createRoot(document.getElementById('root')!);
 root.render(app);
-serviceWorker.unregister();

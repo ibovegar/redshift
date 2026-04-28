@@ -1,4 +1,3 @@
-import React from 'react';
 import { styled } from '@mui/material/styles';
 import Nav from '../nav/nav.component';
 import { Typography } from '@mui/material';

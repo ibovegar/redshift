@@ -1,6 +1,6 @@
 import { Upgrade } from 'models';
 
-const url = process.env.REACT_APP_API_URL;
+const url = import.meta.env.VITE_API_URL;
 
 export const getAll = async (): Promise<Upgrade[]> => {
   const response = await fetch(`${url}/upgrades`);

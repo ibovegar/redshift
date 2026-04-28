@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { Spacecraft, AttachedUpgrades } from 'models';
 import { LinearProgress, Box, Typography, Button } from '@mui/material';
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Spacecraft, AttachedUpgrades } from 'models';
 import Stats from './stats/stats.component';
 import Canvas from './canvas/canvas.component';

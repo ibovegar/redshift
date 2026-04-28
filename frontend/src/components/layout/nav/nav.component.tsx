@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router';
 import { Button, Typography, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';

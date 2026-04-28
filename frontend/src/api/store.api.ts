@@ -3,7 +3,7 @@ import { isUpgrade, isSpacecraft } from 'utils/guards';
 import * as spacecraftAPI from './spacecraft.api';
 import * as upgradeAPI from './upgrades.api';
 
-const url = process.env.REACT_APP_API_URL;
+const url = import.meta.env.VITE_API_URL;
 
 export const get = async (): Promise<Upgrade[]> => {
   const response = await fetch(`${url}/store`);

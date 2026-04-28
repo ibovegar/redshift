@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   StyledCard,
   StyledCardContent,
@@ -22,8 +21,8 @@ const ProductCard = (props: Props) => {
   const { product, onAddClick } = props;
 
   const imgUrl = isSpacecraft(product)
-    ? `${process.env.PUBLIC_URL}/images/spacecraft_lg/${product.spacecraftRegistry}.png`
-    : `${process.env.PUBLIC_URL}/images/upgrade_lg/${product.upgradeRegistry}.png`;
+    ? `/images/spacecraft_lg/${product.spacecraftRegistry}.png`
+    : `/images/upgrade_lg/${product.upgradeRegistry}.png`;
 
   return (
     <StyledCard>

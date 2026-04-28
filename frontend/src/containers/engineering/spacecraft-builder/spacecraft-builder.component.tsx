@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { connect } from 'react-redux';
 import { useParams } from 'react-router';
 import { UpgradeControls } from 'components';

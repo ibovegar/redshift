@@ -1,6 +1,6 @@
 import { UserStats } from 'models';
 
-const url = process.env.REACT_APP_API_URL;
+const url = import.meta.env.VITE_API_URL;
 
 export const get = async (): Promise<UserStats> => {
   const response = await fetch(`${url}/user`);

@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { connect } from 'react-redux';
 import { Spacecraft, Mission } from 'models';
 import { AppState } from 'store';

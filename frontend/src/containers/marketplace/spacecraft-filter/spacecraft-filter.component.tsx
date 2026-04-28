@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { ProductFilter } from 'models';
 import { ProductFilterGroup } from 'components';
 import { toArray, flatArrByValue } from 'utils/helpers';

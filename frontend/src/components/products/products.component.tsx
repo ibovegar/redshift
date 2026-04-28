@@ -1,4 +1,3 @@
-import React from 'react';
 import { Spacecraft, Upgrade } from 'models';
 import ProductCard from './product-card/product-card.component';
 import { Grid } from '@mui/material';

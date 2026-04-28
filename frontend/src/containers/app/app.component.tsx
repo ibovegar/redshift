@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { Route, Routes, Navigate } from 'react-router';
-import Layout from './components/layout/layout.component';
+import Layout from 'components/layout/layout.component';
 import { Tactical, Marketplace, Inventory, Engineering } from 'containers';
 import { loadUserStats } from 'store/user';
 import { AppState } from 'store';

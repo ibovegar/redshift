@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams, Navigate } from 'react-router';
 import { AppState } from 'store';
 import { useSelector, useDispatch } from 'react-redux';
@@ -91,7 +91,7 @@ const MissionViewer = () => {
             objectFit: 'cover',
             display: 'block'
           }}
-          src={`${process.env.PUBLIC_URL}/images/art/${mission.id}.jpg`}
+          src={`/images/art/${mission.id}.jpg`}
           alt=""
         />
         <MissionStats

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Spacecraft } from 'models';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
@@ -18,7 +17,7 @@ const spacecraftCard = (props: Props) => {
             style={{ display: 'block' }}
             height="50"
             alt="spacecraft"
-            src={`${process.env.PUBLIC_URL}/icons/spacecraft/${spacecraft.spacecraftRegistry}.png`}
+            src={`/icons/spacecraft/${spacecraft.spacecraftRegistry}.png`}
           />
         </Grid>
         <Grid style={{ paddingLeft: '20px' }}>
