@@ -1,11 +1,6 @@
-import {
-  createTheme,
-  PaletteOptions,
-  Components,
-  Theme
-} from '@mui/material/styles';
+import { type Components, createTheme, type PaletteOptions, type Theme } from '@mui/material/styles'
 
-const spacing = 4;
+const spacing = 4
 
 const palette: PaletteOptions = {
   mode: 'light',
@@ -54,7 +49,7 @@ const palette: PaletteOptions = {
     hover: '#f1f4f6',
     selected: '#e1e8eb'
   }
-};
+}
 
 const components: Components<Theme> = {
   // MuiMenuItem: {
@@ -69,6 +64,6 @@ const components: Components<Theme> = {
   //     }
   //   }
   // }
-};
+}
 
-export default createTheme({ spacing, palette, components });
+export default createTheme({ spacing, palette, components })

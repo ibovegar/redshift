@@ -1,57 +1,45 @@
-import { useEffect, useState, useCallback } from 'react';
-import { connect } from 'react-redux';
-import { useParams } from 'react-router';
-import { UpgradeControls } from 'components';
-import { Viewer } from 'components';
-import Box from '@mui/material/Box';
-import * as interfaces from './spacecraft-builder.interface';
-import { Upgrade } from 'models';
+import Box from '@mui/material/Box'
+import { UpgradeControls, Viewer } from 'components'
+import type { Upgrade } from 'models'
+import { useCallback, useEffect, useState } from 'react'
+import { connect } from 'react-redux'
+import { useParams } from 'react-router'
+import * as interfaces from './spacecraft-builder.interface'
 
 const SpacecraftBuilder = (props: interfaces.Props) => {
-  const {
-    spacecraft,
-    attachedUpgrades,
-    availableUpgrades,
-    setSelectedSpacecraft,
-    attachUpgrade,
-    detachUpgrade
-  } = props;
+  const { spacecraft, attachedUpgrades, availableUpgrades, setSelectedSpacecraft, attachUpgrade, detachUpgrade } = props
 
-  const { spacecraftId } = useParams();
-  const [previewType, setPreviewType] = useState<string | null>(null);
+  const { spacecraftId } = useParams()
+  const [previewType, setPreviewType] = useState<string | null>(null)
 
   useEffect(() => {
-    setSelectedSpacecraft(spacecraftId!);
-  }, [spacecraftId, setSelectedSpacecraft]);
+    if (spacecraftId) setSelectedSpacecraft(spacecraftId)
+  }, [spacecraftId, setSelectedSpacecraft])
 
   const handleSelectUpgrade = useCallback(
     (oldUpgrade: Upgrade, newUpgrade: Upgrade) => {
-      if (!spacecraft) return;
-      if (oldUpgrade) detachUpgrade(oldUpgrade);
-      attachUpgrade(spacecraft, newUpgrade);
+      if (!spacecraft) return
+      if (oldUpgrade) detachUpgrade(oldUpgrade)
+      attachUpgrade(spacecraft, newUpgrade)
     },
     [spacecraft, detachUpgrade, attachUpgrade]
-  );
+  )
 
   const handleDeselectUpgrade = useCallback(
     (upgrade: Upgrade) => {
-      detachUpgrade(upgrade);
+      detachUpgrade(upgrade)
     },
     [detachUpgrade]
-  );
+  )
 
   if (!spacecraft) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>
   }
 
   return (
     <Box sx={{ display: 'flex', height: '100%' }}>
       <Box sx={{ flex: 1, width: 900, ml: 6 }}>
-        <Viewer
-          spacecraft={spacecraft}
-          attachedUpgrades={attachedUpgrades}
-          previewType={previewType}
-        />
+        <Viewer spacecraft={spacecraft} attachedUpgrades={attachedUpgrades} previewType={previewType} />
       </Box>
       <Box sx={{ width: 300, ml: 6 }}>
         <UpgradeControls
@@ -65,10 +53,7 @@ const SpacecraftBuilder = (props: interfaces.Props) => {
         />
       </Box>
     </Box>
-  );
-};
+  )
+}
 
-export default connect(
-  interfaces.mapStateToProps,
-  interfaces.mapDispatchToProps
-)(SpacecraftBuilder);
+export default connect(interfaces.mapStateToProps, interfaces.mapDispatchToProps)(SpacecraftBuilder)

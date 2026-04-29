@@ -1,27 +1,24 @@
-import { Spacecraft, Upgrade } from 'models';
-import ProductCard from './product-card/product-card.component';
-import { Grid } from '@mui/material';
+import { Grid } from '@mui/material'
+import type { Spacecraft, Upgrade } from 'models'
+import ProductCard from './product-card/product-card.component'
 
 interface Props {
-  products: (Spacecraft | Upgrade)[];
-  onAddClick: (product: Spacecraft | Upgrade) => void;
+  products: (Spacecraft | Upgrade)[]
+  onAddClick: (product: Spacecraft | Upgrade) => void
 }
 
 const Products = (props: Props) => {
-  const { products, onAddClick } = props;
+  const { products, onAddClick } = props
 
   return (
     <Grid container spacing={6}>
-      {products.map((product, index) => (
-        <Grid size={12} key={index}>
-          <ProductCard
-            product={product}
-            onAddClick={() => onAddClick(product)}
-          />
+      {products.map((product, _index) => (
+        <Grid size={12} key={product.id}>
+          <ProductCard product={product} onAddClick={() => onAddClick(product)} />
         </Grid>
       ))}
     </Grid>
-  );
-};
+  )
+}
 
-export default Products;
+export default Products

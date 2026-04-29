@@ -1,13 +1,13 @@
-import { Link } from 'react-router';
-import { Button, Typography, Grid } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import AddBoxIcon from '@mui/icons-material/AddBox';
+import AddBoxIcon from '@mui/icons-material/AddBox'
+import { Button, Grid, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
+import { Link } from 'react-router'
 
 const StyledIcon = styled(AddBoxIcon)(({ theme }) => ({
   marginRight: theme.spacing(4)
-}));
+}))
 
-const buttonSx = { px: 4 } as const;
+const buttonSx = { px: 4 } as const
 
 const Nav = () => {
   return (
@@ -16,40 +16,19 @@ const Nav = () => {
         <Typography variant="overline">MENU</Typography>
       </Grid>
       <Grid>
-        <Button
-          sx={buttonSx}
-          color="primary"
-          variant="contained"
-          size="small"
-          component={Link}
-          to="/tactical"
-        >
+        <Button sx={buttonSx} color="primary" variant="contained" size="small" component={Link} to="/tactical">
           <StyledIcon fontSize="small" />
           TACTICAL
         </Button>
       </Grid>
       <Grid>
-        <Button
-          sx={buttonSx}
-          color="primary"
-          variant="contained"
-          size="small"
-          component={Link}
-          to="/engineering"
-        >
+        <Button sx={buttonSx} color="primary" variant="contained" size="small" component={Link} to="/engineering">
           <StyledIcon fontSize="small" />
           ENGINEERING
         </Button>
       </Grid>
       <Grid>
-        <Button
-          sx={buttonSx}
-          color="primary"
-          variant="contained"
-          size="small"
-          component={Link}
-          to="/marketplace"
-        >
+        <Button sx={buttonSx} color="primary" variant="contained" size="small" component={Link} to="/marketplace">
           <StyledIcon fontSize="small" />
           STORE
         </Button>
@@ -67,7 +46,7 @@ const Nav = () => {
         </Button>
       </Grid>
     </Grid>
-  );
-};
+  )
+}
 
-export default Nav;
+export default Nav

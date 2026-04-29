@@ -1,3 +1,3 @@
 export interface UserStats {
-  credits: number;
+  credits: number
 }

@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent } from '@mui/material'
+import { styled } from '@mui/material/styles'
+import { useState } from 'react'
 
 const StyledFormControl = styled(FormControl)(({ theme }) => ({
   margin: theme.spacing(1),
   minWidth: 200
-}));
+}))
 
 const Inventory = () => {
-  const [age, setAge] = useState('');
+  const [age, setAge] = useState('')
 
-  const handleChange = (event: any) => {
-    setAge(event.target.value);
-  };
+  const handleChange = (event: SelectChangeEvent) => {
+    setAge(event.target.value)
+  }
 
   return (
     <StyledFormControl>
@@ -33,7 +33,7 @@ const Inventory = () => {
         <MenuItem value={30}>Thirty</MenuItem>
       </Select>
     </StyledFormControl>
-  );
-};
+  )
+}
 
-export default Inventory;
+export default Inventory

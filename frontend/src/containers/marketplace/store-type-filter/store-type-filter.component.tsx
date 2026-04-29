@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
-import { ProductFilter } from 'models';
-import { ProductFilterGroup } from 'components';
-import { toArray, flatArrByValue } from 'utils/helpers';
+import { ProductFilterGroup } from 'components'
+import type { ProductFilter } from 'models'
+import { useCallback, useState } from 'react'
+import { flatArrByValue, toArray } from 'utils/helpers'
 
 interface Props {
-  onFilterClick: (filters: string[]) => void;
+  onFilterClick: (filters: string[]) => void
 }
 
 const initialFilters: Record<string, ProductFilter> = {
@@ -14,12 +14,12 @@ const initialFilters: Record<string, ProductFilter> = {
   deflector: { id: 'deflector', value: false, label: 'Deflector' },
   weapons: { id: 'weapons', value: false, label: 'Weapons' },
   stabilizer: { id: 'stabilizer', value: false, label: 'Stabilizer' }
-};
+}
 
 const StoreTypeFilter = (props: Props) => {
-  const { onFilterClick } = props;
+  const { onFilterClick } = props
 
-  const [filters, setFilters] = useState(initialFilters);
+  const [filters, setFilters] = useState(initialFilters)
 
   const handleFilterClick = useCallback(
     (filter: ProductFilter) => {
@@ -27,22 +27,16 @@ const StoreTypeFilter = (props: Props) => {
         const next = {
           ...prev,
           [filter.id]: { ...prev[filter.id], value: !prev[filter.id].value }
-        };
-        const arr: ProductFilter[] = toArray(next);
-        onFilterClick(flatArrByValue(arr, 'value', 'id'));
-        return next;
-      });
+        }
+        const arr: ProductFilter[] = toArray(next)
+        onFilterClick(flatArrByValue(arr, 'value', 'id'))
+        return next
+      })
     },
     [onFilterClick]
-  );
+  )
 
-  return (
-    <ProductFilterGroup
-      title="Product category"
-      filters={toArray(filters)}
-      onFilterClick={handleFilterClick}
-    />
-  );
-};
+  return <ProductFilterGroup title="Product category" filters={toArray(filters)} onFilterClick={handleFilterClick} />
+}
 
-export default StoreTypeFilter;
+export default StoreTypeFilter

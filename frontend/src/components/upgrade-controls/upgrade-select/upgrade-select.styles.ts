@@ -1,5 +1,5 @@
-import { styled } from '@mui/material/styles';
-import { Avatar } from '@mui/material';
+import { Avatar } from '@mui/material'
+import { styled } from '@mui/material/styles'
 
 export const Input = styled('div')(({ theme }) => ({
   cursor: 'pointer',
@@ -13,7 +13,7 @@ export const Input = styled('div')(({ theme }) => ({
   '&:hover': {
     backgroundColor: theme.palette.grey[700]
   }
-}));
+}))
 
 export const Dropdown = styled('ul')(({ theme }) => ({
   padding: 0,
@@ -26,21 +26,21 @@ export const Dropdown = styled('ul')(({ theme }) => ({
       backgroundColor: theme.palette.action.hover
     }
   }
-}));
+}))
 
 export const GainAvatar = styled(Avatar)(({ theme }) => ({
   backgroundColor: theme.palette.grey[50],
   color: theme.palette.text.primary,
   fontSize: theme.typography.h6.fontSize
-}));
+}))
 
-export const Root = styled('div')({});
+export const Root = styled('div')({})
 
-export const DisabledRoot = styled('div')({});
+export const DisabledRoot = styled('div')({})
 
 export const ActiveInput = styled(Input)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
   '&:hover': {
     backgroundColor: theme.palette.primary.dark
   }
-}));
+}))

@@ -1,28 +1,21 @@
-import {
-  StyledCard,
-  StyledCardContent,
-  Cover,
-  Controls,
-  StyledDivider,
-  StyledChip
-} from './product-card.styles';
-import Typography from '@mui/material/Typography';
-import { Spacecraft, Upgrade } from 'models';
-import { Button, Box } from '@mui/material';
-import { isSpacecraft } from 'utils/guards';
-import { formatCurrency } from 'utils/helpers';
+import { Box, Button } from '@mui/material'
+import Typography from '@mui/material/Typography'
+import type { Spacecraft, Upgrade } from 'models'
+import { isSpacecraft } from 'utils/guards'
+import { formatCurrency } from 'utils/helpers'
+import { Controls, Cover, StyledCard, StyledCardContent, StyledChip, StyledDivider } from './product-card.styles'
 
 interface Props {
-  product: Spacecraft | Upgrade;
-  onAddClick: () => void;
+  product: Spacecraft | Upgrade
+  onAddClick: () => void
 }
 
 const ProductCard = (props: Props) => {
-  const { product, onAddClick } = props;
+  const { product, onAddClick } = props
 
   const imgUrl = isSpacecraft(product)
     ? `/images/spacecraft_lg/${product.spacecraftRegistry}.png`
-    : `/images/upgrade_lg/${product.upgradeRegistry}.png`;
+    : `/images/upgrade_lg/${product.upgradeRegistry}.png`
 
   return (
     <StyledCard>
@@ -42,17 +35,12 @@ const ProductCard = (props: Props) => {
       <Controls>
         <Typography component="h6">{formatCurrency(product.price)}</Typography>
         <StyledDivider />
-        <Button
-          variant="contained"
-          size="small"
-          color="primary"
-          onClick={onAddClick}
-        >
+        <Button variant="contained" size="small" color="primary" onClick={onAddClick}>
           ADD
         </Button>
       </Controls>
     </StyledCard>
-  );
-};
+  )
+}
 
-export default ProductCard;
+export default ProductCard

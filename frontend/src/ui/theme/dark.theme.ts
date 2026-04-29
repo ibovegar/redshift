@@ -1,12 +1,8 @@
-import {
-  createTheme,
-  PaletteOptions,
-  Components,
-  Theme
-} from '@mui/material/styles';
+import { type Components, createTheme, type PaletteOptions, type Theme } from '@mui/material/styles'
+
 // import { ThemeStyle } from '@mui/material/styles';
 
-const spacing = 4;
+const spacing = 4
 
 // const typography: ThemeStyle = {
 //   h1: {
@@ -63,7 +59,7 @@ const palette: PaletteOptions = {
     selected: '#19385b',
     disabledBackground: '#3b444f'
   }
-};
+}
 
 const components: Components<Theme> = {
   MuiCard: {
@@ -122,7 +118,7 @@ const components: Components<Theme> = {
   //     }
   //   }
   // }
-};
+}
 
 export default createTheme({
   spacing,
@@ -157,4 +153,4 @@ export default createTheme({
       fontSize: '0.7rem'
     }
   }
-});
+})

@@ -15,12 +15,7 @@ export default {
   },
   tellrx5: {
     engine: ['GXX_L-Prop-A003', 'GXX_L-Prop-A004'], // OK
-    stabilizer: [
-      'GXX_L-Wing-C001',
-      'GXX_L-Wing-C002',
-      'GXX_L-Prop-E003',
-      'GXX_L-Prop-E004'
-    ], // OK
+    stabilizer: ['GXX_L-Wing-C001', 'GXX_L-Wing-C002', 'GXX_L-Prop-E003', 'GXX_L-Prop-E004'], // OK
     weapons: ['GXX_L-Laser-Ion001', 'GXX_L-Laser-Ion002'], // OK
     deflector: [], // NO UPGRADE
     plating: [] // (Prop-E003/4) NO UPGRADE -> moved to stabilizer due to dependency
@@ -46,4 +41,4 @@ export default {
       'GXX_L-MissileA002'
     ]
   }
-};
+}

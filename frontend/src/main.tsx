@@ -1,32 +1,32 @@
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router';
+import { ThemeProvider } from '@mui/material/styles'
+import { createRoot } from 'react-dom/client'
 
-import { Provider } from 'react-redux';
-import { createStore, applyMiddleware, compose } from 'redux';
-import rootReducer from 'store';
-import { thunk } from 'redux-thunk';
-
-import { ThemeProvider } from '@mui/material/styles';
-import ThemeDark from './ui/theme/dark.theme';
+import { Provider } from 'react-redux'
+import { BrowserRouter } from 'react-router'
+import { applyMiddleware, compose, createStore } from 'redux'
+import { thunk } from 'redux-thunk'
+import rootReducer from 'store'
+import ThemeDark from './ui/theme/dark.theme'
 // import ThemeLight from './ui/theme/light.theme';
 
-import App from 'containers/app/app.component';
+import App from 'containers/app/app.component'
 
-import 'normalize.css';
-import './assets/css/styles.css';
-import { CssBaseline } from '@mui/material';
+import 'normalize.css'
+import './assets/css/styles.css'
+import { CssBaseline } from '@mui/material'
 
-const middleware = [thunk];
-const composeEnhancers =
-  typeof window === 'object' &&
-  (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
-    ? (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
-        // Specify extension’s options like name, actionsBlacklist, actionsCreators, serialize...
-      })
-    : compose;
+const middleware = [thunk]
 
-const enhancer = composeEnhancers(applyMiddleware(...middleware));
-const store = createStore(rootReducer, enhancer);
+interface WindowWithDevTools extends Window {
+  __REDUX_DEVTOOLS_EXTENSION_COMPOSE__?: typeof compose
+}
+
+const composeEnhancers: typeof compose =
+  (typeof window === 'object' && (window as WindowWithDevTools).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) || compose
+
+const enhancer = composeEnhancers(applyMiddleware(...middleware))
+// @ts-expect-error createStore with enhancer
+const store = createStore(rootReducer, enhancer)
 
 const app = (
   <Provider store={store}>
@@ -37,7 +37,9 @@ const app = (
       </ThemeProvider>
     </BrowserRouter>
   </Provider>
-);
+)
 
-const root = createRoot(document.getElementById('root')!);
-root.render(app);
+const rootElement = document.getElementById('root')
+if (!rootElement) throw new Error('Root element not found')
+const root = createRoot(rootElement)
+root.render(app)

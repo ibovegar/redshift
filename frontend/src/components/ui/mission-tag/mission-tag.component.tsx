@@ -1,17 +1,16 @@
-import { styled } from '@mui/material/styles';
-import { Typography } from '@mui/material';
-import { Mission } from 'models';
+import { Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
+import type { Mission } from 'models'
 
 const rotateKeyframes = {
   '@keyframes rotate': {
     '0%': { transform: 'rotate(0deg)' },
     '100%': { transform: 'rotate(360deg)' }
   }
-};
+}
 
 const Root = styled('div', {
-  shouldForwardProp: (prop) =>
-    prop !== 'disabled' && prop !== 'position' && prop !== 'onSelect'
+  shouldForwardProp: (prop) => prop !== 'disabled' && prop !== 'position' && prop !== 'onSelect'
 })<{ disabled?: boolean }>(({ theme, disabled }) => ({
   position: 'fixed',
   flexDirection: 'column',
@@ -30,7 +29,7 @@ const Root = styled('div', {
     transform: 'scale(1.05)',
     boxShadow: `inset 0 0 30px 2px ${theme.palette.primary.main}`
   }
-}));
+}))
 
 const Tag = styled('div')(({ theme }) => ({
   width: '100%',
@@ -39,7 +38,7 @@ const Tag = styled('div')(({ theme }) => ({
   paddingTop: theme.spacing(4),
   backgroundColor: theme.palette.background.paper,
   borderRadius: 10
-}));
+}))
 
 const Spinner = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -60,37 +59,29 @@ const Spinner = styled('div')(({ theme }) => ({
     animation: 'rotate 0.7s linear infinite'
   },
   ...rotateKeyframes
-}));
+}))
 
 interface Props {
-  mission: Mission;
-  position: any;
-  disabled?: boolean;
-  onSelect: () => void;
+  mission: Mission
+  position: { x: number; y: number }
+  disabled?: boolean
+  onSelect: () => void
 }
 
 const MissionTag = (props: Props) => {
-  const { mission, position, onSelect, disabled } = props;
+  const { mission, position, onSelect, disabled } = props
 
   return (
-    <Root
-      disabled={disabled}
-      style={{ left: position.x + '%', top: position.y + '%' }}
-      onClick={() => onSelect()}
-    >
+    <Root disabled={disabled} style={{ left: `${position.x}%`, top: `${position.y}%` }} onClick={() => onSelect()}>
       <Tag>
         <Typography variant="h6">{mission.title}</Typography>
-        <Typography
-          variant="overline"
-          color="textSecondary"
-          sx={{ lineHeight: 1 }}
-        >
+        <Typography variant="overline" color="textSecondary" sx={{ lineHeight: 1 }}>
           {mission.shortDescription}
         </Typography>
       </Tag>
       <Spinner />
     </Root>
-  );
-};
+  )
+}
 
-export default MissionTag;
+export default MissionTag

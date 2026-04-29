@@ -1,9 +1,9 @@
-import React, { ReactNode } from 'react';
-import { useLocation } from 'react-router';
-import { Box } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import Toolbar from './toolbar/toolbar.component';
-import backgroundImage from 'assets/images/15.jpg';
+import { Box } from '@mui/material'
+import { styled } from '@mui/material/styles'
+import backgroundImage from 'assets/images/15.jpg'
+import React, { type ReactNode } from 'react'
+import { useLocation } from 'react-router'
+import Toolbar from './toolbar/toolbar.component'
 
 const Background = styled('img')({
   position: 'fixed',
@@ -17,7 +17,7 @@ const Background = styled('img')({
   filter: 'grayscale(20%) brightness(30%)',
   transition: 'filter 0.5s ease-in-out, transform 1.2s ease-in-out',
   transform: 'scale(1.05)'
-});
+})
 
 const TacticalWrapper = styled('div')({
   display: 'contents',
@@ -25,20 +25,20 @@ const TacticalWrapper = styled('div')({
     transform: 'scale(1)',
     filter: 'grayscale(10%) brightness(80%)'
   }
-});
+})
 
 interface Props {
-  authenticated: boolean;
-  credits: number;
-  children: ReactNode;
+  authenticated: boolean
+  credits: number
+  children: ReactNode
 }
 
 const Layout = (props: Props) => {
-  const { children, credits } = props;
-  const location = useLocation();
-  const isTactical = location.pathname === '/tactical';
+  const { children, credits } = props
+  const location = useLocation()
+  const isTactical = location.pathname === '/tactical'
 
-  const Wrapper = isTactical ? TacticalWrapper : React.Fragment;
+  const Wrapper = isTactical ? TacticalWrapper : React.Fragment
 
   return (
     <Box
@@ -57,7 +57,7 @@ const Layout = (props: Props) => {
         {children}
       </Box>
     </Box>
-  );
-};
+  )
+}
 
-export default Layout;
+export default Layout

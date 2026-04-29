@@ -1,14 +1,14 @@
-import { useEffect, useCallback } from 'react';
-import { connect } from 'react-redux';
-import { Spacecraft, Mission } from 'models';
-import { AppState } from 'store';
-import { MissionTag } from 'components/ui';
-import { Routes, Route, useNavigate, useLocation } from 'react-router';
-import { loadSpacecrafts, getAllspacecrafts } from 'store/spacecrafts';
-import { loadMissions, getAllMissions } from 'store/missions';
-import MissionViewer from './mission-viewer/mission-viewer.component';
+import { MissionTag } from 'components/ui'
+import type { Mission, Spacecraft } from 'models'
+import { useCallback, useEffect } from 'react'
+import { connect } from 'react-redux'
+import { Route, Routes, useLocation, useNavigate } from 'react-router'
+import type { AppState } from 'store'
+import { getAllMissions, loadMissions } from 'store/missions'
+import { getAllspacecrafts, loadSpacecrafts } from 'store/spacecrafts'
+import MissionViewer from './mission-viewer/mission-viewer.component'
 
-const tagPositions: any = [
+const tagPositions: { x: number; y: number }[] = [
   {
     x: 5,
     y: 20
@@ -29,34 +29,34 @@ const tagPositions: any = [
     x: 100,
     y: 100
   }
-];
+]
 
 interface Props {
-  isLoading: boolean;
-  spacecrafts: Spacecraft[];
-  missions: Mission[];
-  loadSpacecrafts: () => void;
-  loadMissions: () => void;
+  isLoading: boolean
+  spacecrafts: Spacecraft[]
+  missions: Mission[]
+  loadSpacecrafts: () => void
+  loadMissions: () => void
 }
 
 const Tactical = (props: Props) => {
-  const { missions, loadSpacecrafts, loadMissions } = props;
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { missions, loadSpacecrafts, loadMissions } = props
+  const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
-    loadSpacecrafts();
-    loadMissions();
-  }, [loadSpacecrafts, loadMissions]);
+    loadSpacecrafts()
+    loadMissions()
+  }, [loadSpacecrafts, loadMissions])
 
   const handleSelectMission = useCallback(
     (missionId: string) => {
-      navigate(missionId);
+      navigate(missionId)
     },
     [navigate]
-  );
+  )
 
-  const isWatchingMission = location.pathname !== '/tactical';
+  const isWatchingMission = location.pathname !== '/tactical'
 
   return (
     <>
@@ -73,18 +73,18 @@ const Tactical = (props: Props) => {
         <Route path=":missionId" element={<MissionViewer />} />
       </Routes>
     </>
-  );
-};
+  )
+}
 
 const mapStateToProps = (state: AppState) => ({
   isLoading: state.spacecrafts.isLoading,
   spacecrafts: getAllspacecrafts(state),
   missions: getAllMissions(state)
-});
+})
 
 const mapDispatchToProps = {
   loadSpacecrafts,
   loadMissions
-};
+}
 
-export default connect(mapStateToProps, mapDispatchToProps)(Tactical);
+export default connect(mapStateToProps, mapDispatchToProps)(Tactical)

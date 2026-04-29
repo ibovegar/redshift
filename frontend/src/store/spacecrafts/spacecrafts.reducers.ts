@@ -1,25 +1,22 @@
-import { ActionTypes } from './spacecrafts.actions';
-import State from './spacecrafts.interfaces';
-import { Spacecraft } from 'models';
-import { toEntities } from 'utils/helpers';
+import type { Spacecraft } from 'models'
+import { toEntities } from 'utils/helpers'
+import type { ActionTypes } from './spacecrafts.actions'
+import type State from './spacecrafts.interfaces'
 
 const initialState: State = {
   selected: undefined,
   entities: {},
   ids: [],
   isLoading: true
-};
+}
 
-export function reducer(
-  state: State = initialState,
-  action: ActionTypes
-): State {
+export function reducer(state: State = initialState, action: ActionTypes): State {
   switch (action.type) {
     case 'LOAD_ALL_SPACECRAFTS_REQUEST': {
       return {
         ...state,
         isLoading: true
-      };
+      }
     }
 
     case 'LOAD_ALL_SPACECRAFTS_SUCCESS': {
@@ -28,21 +25,21 @@ export function reducer(
         isLoading: false,
         entities: toEntities(action.spacecrafts, 'id'),
         ids: action.spacecrafts.map((spacecraft: Spacecraft) => spacecraft.id)
-      };
+      }
     }
 
     case 'LOAD_ALL_SPACECRAFTS_FAILURE': {
       return {
         ...state,
         isLoading: false
-      };
+      }
     }
 
     case 'SET_SELECTED_SPACECRAFT': {
       return {
         ...state,
         selected: state.entities[action.spacecraftId]
-      };
+      }
     }
 
     // case 'LOAD_SPACECRAFT_SUCCESS':
@@ -58,6 +55,6 @@ export function reducer(
     //   };
 
     default:
-      return state;
+      return state
   }
 }

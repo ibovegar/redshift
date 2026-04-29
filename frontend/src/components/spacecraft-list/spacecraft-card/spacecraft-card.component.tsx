@@ -1,14 +1,14 @@
-import { Spacecraft } from 'models';
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
-import { Box } from '@mui/material';
+import { Box } from '@mui/material'
+import Grid from '@mui/material/Grid'
+import Typography from '@mui/material/Typography'
+import type { Spacecraft } from 'models'
 
 interface Props {
-  spacecraft: Spacecraft;
+  spacecraft: Spacecraft
 }
 
 const spacecraftCard = (props: Props) => {
-  const { spacecraft } = props;
+  const { spacecraft } = props
   return (
     <Box sx={{ p: 1 }}>
       <Grid container sx={{ justifyContent: 'center', alignItems: 'center' }}>
@@ -26,7 +26,7 @@ const spacecraftCard = (props: Props) => {
         </Grid>
       </Grid>
     </Box>
-  );
-};
+  )
+}
 
-export default spacecraftCard;
+export default spacecraftCard

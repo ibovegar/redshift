@@ -1,22 +1,13 @@
-import { useState } from 'react';
-import { useParams, Navigate } from 'react-router';
-import { AppState } from 'store';
-import { useSelector, useDispatch } from 'react-redux';
-import { addCredits } from 'store/user';
-import { getMissionById, completeMission } from 'store/missions';
-import CloseIcon from '@mui/icons-material/Close';
-import {
-  Card,
-  CardHeader,
-  Avatar,
-  CardContent,
-  Typography,
-  CardActions,
-  Button,
-  IconButton
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { MissionStats, MissionProgress } from 'components/ui';
+import CloseIcon from '@mui/icons-material/Close'
+import { Avatar, Button, Card, CardActions, CardContent, CardHeader, IconButton, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
+import { MissionProgress, MissionStats } from 'components/ui'
+import { useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { Navigate, useParams } from 'react-router'
+import type { AppState } from 'store'
+import { completeMission, getMissionById } from 'store/missions'
+import { addCredits } from 'store/user'
 
 const Root = styled('div')({
   width: '100%',
@@ -24,35 +15,36 @@ const Root = styled('div')({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center'
-});
+})
 
 const StyledCard = styled(Card)({
   width: '50%',
   position: 'relative'
-});
+})
 
 const StyledCardActions = styled(CardActions)({
   display: 'flex',
   justifyContent: 'center'
-});
+})
 
 const MissionViewer = () => {
-  const [redirect, setRedirect] = useState(false);
-  const [inProgress, setInProgress] = useState(false);
-  const dispatch = useDispatch();
-  const { missionId } = useParams();
-  const mission = useSelector((state: AppState) =>
-    getMissionById(state, missionId!)
-  );
+  const [redirect, setRedirect] = useState(false)
+  const [inProgress, setInProgress] = useState(false)
+  const dispatch = useDispatch()
+  const { missionId } = useParams()
+  const mission = useSelector((state: AppState) => (missionId ? getMissionById(state, missionId) : undefined))
 
   const handleOnCompleted = () => {
-    dispatch(completeMission(mission) as any);
-    dispatch(addCredits(mission.credits) as any);
-    setRedirect(true);
-  };
+    if (!mission) return
+    // biome-ignore lint/suspicious/noExplicitAny: redux-thunk dispatch typing
+    dispatch(completeMission(mission) as any)
+    // biome-ignore lint/suspicious/noExplicitAny: redux-thunk dispatch typing
+    dispatch(addCredits(mission.credits) as any)
+    setRedirect(true)
+  }
 
-  if (redirect) return <Navigate to="/tactical" />;
-  if (!mission) return <div>loading mission...</div>;
+  if (redirect) return <Navigate to="/tactical" />
+  if (!mission) return <div>loading mission...</div>
 
   return (
     <Root>
@@ -73,9 +65,7 @@ const MissionViewer = () => {
           />
         )}
         <CardHeader
-          avatar={
-            <Avatar sx={{ ml: 2, mr: 1, bgcolor: 'primary.main' }}>R</Avatar>
-          }
+          avatar={<Avatar sx={{ ml: 2, mr: 1, bgcolor: 'primary.main' }}>R</Avatar>}
           action={
             <IconButton aria-label="Settings" onClick={() => setRedirect(true)}>
               <CloseIcon />
@@ -94,32 +84,20 @@ const MissionViewer = () => {
           src={`/images/art/${mission.id}.jpg`}
           alt=""
         />
-        <MissionStats
-          style={{ position: 'absolute', top: 100, left: 10, zIndex: 1 }}
-          mission={mission}
-        />
+        <MissionStats style={{ position: 'absolute', top: 100, left: 10, zIndex: 1 }} mission={mission} />
         <CardContent sx={{ p: 10 }}>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            component="p"
-            sx={{ lineHeight: 1.8 }}
-          >
+          <Typography variant="body2" color="text.secondary" component="p" sx={{ lineHeight: 1.8 }}>
             {mission.description}
           </Typography>
         </CardContent>
         <StyledCardActions>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setInProgress(true)}
-          >
+          <Button variant="contained" color="primary" onClick={() => setInProgress(true)}>
             LAUNCH MISSION
           </Button>
         </StyledCardActions>
       </StyledCard>
     </Root>
-  );
-};
+  )
+}
 
-export default MissionViewer;
+export default MissionViewer

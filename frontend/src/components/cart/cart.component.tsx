@@ -1,23 +1,23 @@
-import React from 'react';
-import { Button, Typography, Box, Divider } from '@mui/material';
-import { Spacecraft, Upgrade } from 'models';
-import { formatCurrency } from 'utils/helpers';
+import { Box, Button, Divider, Typography } from '@mui/material'
+import type { Spacecraft, Upgrade } from 'models'
+import React from 'react'
+import { formatCurrency } from 'utils/helpers'
 
 interface Props {
-  credits: number;
-  cart: (Spacecraft | Upgrade)[];
-  onRemove: (index: number) => void;
-  onPurchase: () => void;
+  credits: number
+  cart: (Spacecraft | Upgrade)[]
+  onRemove: (index: number) => void
+  onPurchase: () => void
 }
 
 const Cart = (props: Props) => {
-  const { cart, credits, onRemove, onPurchase } = props;
+  const { cart, credits, onRemove, onPurchase } = props
 
   const totalPrice = cart.reduce((sum, i) => {
-    return sum + i.price;
-  }, 0);
+    return sum + i.price
+  }, 0)
 
-  const isPurchasable = cart.length > 0 && totalPrice < credits;
+  const isPurchasable = cart.length > 0 && totalPrice < credits
 
   return (
     <Box
@@ -30,7 +30,7 @@ const Cart = (props: Props) => {
       }}
     >
       {cart.map((product, index) => (
-        <React.Fragment key={index}>
+        <React.Fragment key={product.id}>
           <Box
             sx={{
               display: 'flex',
@@ -61,16 +61,11 @@ const Cart = (props: Props) => {
         <Typography variant="subtitle1">TOTAL PRICE</Typography>
         <Typography variant="h6">{formatCurrency(totalPrice)}</Typography>
       </Box>
-      <Button
-        color="primary"
-        disabled={!isPurchasable}
-        variant="contained"
-        onClick={onPurchase}
-      >
+      <Button color="primary" disabled={!isPurchasable} variant="contained" onClick={onPurchase}>
         {totalPrice > credits ? 'INSUFFICIENT FUNDS' : 'PURCHASE'}
       </Button>
     </Box>
-  );
-};
+  )
+}
 
-export default Cart;
+export default Cart

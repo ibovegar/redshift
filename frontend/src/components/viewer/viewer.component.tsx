@@ -1,31 +1,31 @@
-import { useState, useCallback } from 'react';
-import { Spacecraft, AttachedUpgrades } from 'models';
-import Stats from './stats/stats.component';
-import Canvas from './canvas/canvas.component';
-import { Widget } from 'components';
-import { styled } from '@mui/material/styles';
-import Plus from 'assets/images/plus.svg';
+import { styled } from '@mui/material/styles'
+import Plus from 'assets/images/plus.svg'
+import { Widget } from 'components'
+import type { AttachedUpgrades, Spacecraft } from 'models'
+import { useCallback, useState } from 'react'
+import Canvas from './canvas/canvas.component'
+import Stats from './stats/stats.component'
 
 const Crosses = styled('div')({
   height: '100%',
   backgroundImage: `url(${Plus})`,
   backgroundRepeat: 'repeat'
-});
+})
 
 interface Props {
-  spacecraft: Spacecraft;
-  attachedUpgrades: AttachedUpgrades;
-  previewType?: string | null;
+  spacecraft: Spacecraft
+  attachedUpgrades: AttachedUpgrades
+  previewType?: string | null
 }
 
 const SpacecraftViewer = (props: Props) => {
-  const { spacecraft, attachedUpgrades, previewType } = props;
+  const { spacecraft, attachedUpgrades, previewType } = props
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true)
 
   const handleLoaded = useCallback(() => {
-    setIsLoading(false);
-  }, []);
+    setIsLoading(false)
+  }, [])
 
   return (
     <Widget>
@@ -43,7 +43,7 @@ const SpacecraftViewer = (props: Props) => {
         />
       </Crosses>
     </Widget>
-  );
-};
+  )
+}
 
-export default SpacecraftViewer;
+export default SpacecraftViewer

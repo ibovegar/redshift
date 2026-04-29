@@ -1,296 +1,293 @@
-import { useRef, useEffect, useCallback } from 'react';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { Spacecraft, AttachedUpgrades, UpgradeType } from 'models';
-import upgradeMap from './upgrade-map';
-import { getAspectRatio } from 'utils/helpers';
+import { type AttachedUpgrades, type Spacecraft, UpgradeType } from 'models'
+import { useCallback, useEffect, useRef } from 'react'
+import * as THREE from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { getAspectRatio } from 'utils/helpers'
+import upgradeMap from './upgrade-map'
 
 interface Props {
-  spacecraft: Spacecraft;
-  attachedUpgrades: AttachedUpgrades;
-  previewType?: string | null;
-  onLoaded: () => void;
+  spacecraft: Spacecraft
+  attachedUpgrades: AttachedUpgrades
+  previewType?: string | null
+  onLoaded: () => void
 }
 
-const FADE_SPEED = 0.03;
-const PREVIEW_OPACITY = 0.4;
-const PREVIEW_TINT = new THREE.Color(0.2, 0.6, 1.5);
+const FADE_SPEED = 0.03
+const PREVIEW_OPACITY = 0.4
+const PREVIEW_TINT = new THREE.Color(0.2, 0.6, 1.5)
 
 const Canvas = (props: Props) => {
-  const { spacecraft, attachedUpgrades, previewType, onLoaded } = props;
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera>(null!);
-  const sceneRef = useRef<THREE.Scene>(null!);
-  const rendererRef = useRef<THREE.WebGLRenderer>(null!);
-  const controlsRef = useRef<OrbitControls>(null!);
-  const frameIdRef = useRef<number | null>(null);
-  const spacecraftModelRef = useRef<any>(null);
-  const fadeTargetsRef = useRef(new Map<any, number>());
-  const clonedMaterialsRef = useRef(new Set<any>());
-  const originalColorsRef = useRef(new Map<any, THREE.Color>());
+  const { spacecraft, attachedUpgrades, previewType, onLoaded } = props
+  const canvasRef = useRef<HTMLDivElement>(null)
+  // biome-ignore lint/style/noNonNullAssertion: Three.js refs are assigned in useEffect before use
+  const cameraRef = useRef<THREE.PerspectiveCamera>(null!)
+  // biome-ignore lint/style/noNonNullAssertion: Three.js refs are assigned in useEffect before use
+  const sceneRef = useRef<THREE.Scene>(null!)
+  // biome-ignore lint/style/noNonNullAssertion: Three.js refs are assigned in useEffect before use
+  const rendererRef = useRef<THREE.WebGLRenderer>(null!)
+  // biome-ignore lint/style/noNonNullAssertion: Three.js refs are assigned in useEffect before use
+  const controlsRef = useRef<OrbitControls>(null!)
+  const frameIdRef = useRef<number | null>(null)
+  const spacecraftModelRef = useRef<THREE.Group | null>(null)
+  const fadeTargetsRef = useRef(new Map<THREE.Object3D, number>())
+  const clonedMaterialsRef = useRef(new Set<THREE.Object3D>())
+  const originalColorsRef = useRef(new Map<THREE.Object3D, THREE.Color>())
   const propsRef = useRef({
     spacecraft,
     attachedUpgrades,
     previewType,
     onLoaded
-  });
+  })
 
   // Keep propsRef in sync so GLTF callback reads latest props
-  propsRef.current = { spacecraft, attachedUpgrades, previewType, onLoaded };
+  propsRef.current = { spacecraft, attachedUpgrades, previewType, onLoaded }
 
   const updateFades = useCallback(() => {
     fadeTargetsRef.current.forEach((targetOpacity, model) => {
-      let done = true;
+      let done = true
+      // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
       model.traverse((child: any) => {
         if (child.isMesh && child.material) {
-          const current = child.material.opacity;
+          const current = child.material.opacity
           if (Math.abs(current - targetOpacity) > 0.01) {
-            child.material.opacity +=
-              (targetOpacity - current) * FADE_SPEED * 3;
-            done = false;
+            child.material.opacity += (targetOpacity - current) * FADE_SPEED * 3
+            done = false
           } else {
-            child.material.opacity = targetOpacity;
+            child.material.opacity = targetOpacity
           }
         }
-      });
+      })
       if (done) {
-        if (targetOpacity === 0) model.visible = false;
-        fadeTargetsRef.current.delete(model);
+        if (targetOpacity === 0) model.visible = false
+        fadeTargetsRef.current.delete(model)
       }
-    });
-  }, []);
+    })
+  }, [])
 
   const renderScene = useCallback(() => {
-    rendererRef.current.render(sceneRef.current, cameraRef.current);
-  }, []);
+    rendererRef.current.render(sceneRef.current, cameraRef.current)
+  }, [])
 
   const animate = useCallback(() => {
-    controlsRef.current.update();
-    updateFades();
-    renderScene();
-    frameIdRef.current = window.requestAnimationFrame(animate);
-  }, [updateFades, renderScene]);
+    controlsRef.current.update()
+    updateFades()
+    renderScene()
+    frameIdRef.current = window.requestAnimationFrame(animate)
+  }, [updateFades, renderScene])
 
   const handleClick = useCallback(() => {
-    controlsRef.current.autoRotate = false;
-  }, []);
+    controlsRef.current.autoRotate = false
+  }, [])
 
   // Initialize Three.js scene (runs once on mount)
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    const aspectRatio = getAspectRatio(canvas);
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, aspectRatio, 0.1, 100);
-    camera.position.z = 12;
-    camera.position.y = 14;
-    camera.position.x = 12;
-    camera.lookAt(scene.position);
+    // biome-ignore lint/style/noNonNullAssertion: ref is guaranteed to be set at this point
+    const canvas = canvasRef.current!
+    const aspectRatio = getAspectRatio(canvas)
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(40, aspectRatio, 0.1, 100)
+    camera.position.z = 12
+    camera.position.y = 14
+    camera.position.x = 12
+    camera.lookAt(scene.position)
 
-    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 6);
-    scene.add(hemisphereLight);
+    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 6)
+    scene.add(hemisphereLight)
 
-    const spotLight = new THREE.SpotLight(0xffffff, 300);
-    spotLight.position.setY(20);
-    spotLight.position.setZ(0);
-    spotLight.angle = Math.PI / 8;
-    spotLight.penumbra = 0.05;
-    spotLight.decay = 2;
-    spotLight.distance = 200;
-    scene.add(spotLight);
+    const spotLight = new THREE.SpotLight(0xffffff, 300)
+    spotLight.position.setY(20)
+    spotLight.position.setZ(0)
+    spotLight.angle = Math.PI / 8
+    spotLight.penumbra = 0.05
+    spotLight.decay = 2
+    spotLight.distance = 200
+    scene.add(spotLight)
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 6);
-    dirLight.position.setY(40);
-    dirLight.position.setZ(-10);
-    scene.add(dirLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 6)
+    dirLight.position.setY(40)
+    dirLight.position.setZ(-10)
+    scene.add(dirLight)
 
-    const pointLight = new THREE.PointLight(0xffffff, 150, 100);
-    pointLight.position.setY(-4);
-    pointLight.position.setX(-8);
-    pointLight.position.setZ(-10);
-    scene.add(pointLight);
+    const pointLight = new THREE.PointLight(0xffffff, 150, 100)
+    pointLight.position.setY(-4)
+    pointLight.position.setX(-8)
+    pointLight.position.setZ(-10)
+    scene.add(pointLight)
 
-    const manager = new THREE.LoadingManager();
-    manager.onProgress = (_: any, loaded: number, total: number) => {
-      console.log(`Loading: ${((loaded / total) * 100).toFixed(0)}%`);
-    };
+    const manager = new THREE.LoadingManager()
+    manager.onProgress = (_: string, loaded: number, total: number) => {
+      console.log(`Loading: ${((loaded / total) * 100).toFixed(0)}%`)
+    }
 
-    const loader = new GLTFLoader(manager);
+    const loader = new GLTFLoader(manager)
     loader.load(
       `/models/${propsRef.current.spacecraft.spacecraftRegistry}.glb`,
       (gltf) => {
-        scene.add(gltf.scene);
-        spacecraftModelRef.current = gltf.scene;
+        scene.add(gltf.scene)
+        spacecraftModelRef.current = gltf.scene
 
         // Hide all upgrade parts immediately before first render
-        const registry = propsRef.current.spacecraft.spacecraftRegistry;
-        const attached = propsRef.current.attachedUpgrades;
-        const upgradeTypes = Object.keys(upgradeMap[registry]);
+        const registry = propsRef.current.spacecraft.spacecraftRegistry
+        const attached = propsRef.current.attachedUpgrades
+        const upgradeTypes = Object.keys(upgradeMap[registry])
         for (const type of upgradeTypes) {
-          const isAttached = !!attached[type as keyof typeof attached];
+          const isAttached = !!attached[type as keyof typeof attached]
           for (const modelName of upgradeMap[registry][type]) {
-            const model = spacecraftModelRef.current.children.find(
-              (m: any) => m.name === modelName
-            );
-            if (model) model.visible = isAttached;
+            // biome-ignore lint/suspicious/noExplicitAny: Three.js GLTF scene children
+            const model = spacecraftModelRef.current.children.find((m: any) => m.name === modelName)
+            if (model) model.visible = isAttached
           }
         }
 
-        propsRef.current.onLoaded();
+        propsRef.current.onLoaded()
       },
       () => {},
       (error) => console.error(error)
-    );
+    )
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
       antialias: true
-    });
-    renderer.setPixelRatio(devicePixelRatio);
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    canvas.appendChild(renderer.domElement);
+    })
+    renderer.setPixelRatio(devicePixelRatio)
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight)
+    renderer.outputColorSpace = THREE.SRGBColorSpace
+    canvas.appendChild(renderer.domElement)
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.5;
-    controls.rotateSpeed = 0.5;
-    controls.enablePan = false;
-    controls.zoomSpeed = 1.0;
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.dampingFactor = 0.05
+    controls.autoRotate = true
+    controls.autoRotateSpeed = 0.5
+    controls.rotateSpeed = 0.5
+    controls.enablePan = false
+    controls.zoomSpeed = 1.0
 
-    sceneRef.current = scene;
-    cameraRef.current = camera;
-    rendererRef.current = renderer;
-    controlsRef.current = controls;
+    sceneRef.current = scene
+    cameraRef.current = camera
+    rendererRef.current = renderer
+    controlsRef.current = controls
 
-    frameIdRef.current = requestAnimationFrame(animate);
+    frameIdRef.current = requestAnimationFrame(animate)
 
     return () => {
-      if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
-      canvas.removeChild(renderer.domElement);
-    };
-  }, [animate]);
+      if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current)
+      canvas.removeChild(renderer.domElement)
+    }
+  }, [animate])
 
   // Handle attachedUpgrades changes
   useEffect(() => {
-    const model = spacecraftModelRef.current;
-    if (!model) return;
+    const model = spacecraftModelRef.current
+    if (!model) return
 
+    // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
     const cloneMaterials = (part: any) => {
+      // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
       part.traverse((child: any) => {
-        if (
-          child.isMesh &&
-          child.material &&
-          !clonedMaterialsRef.current.has(child)
-        ) {
-          child.material = child.material.clone();
-          child.material.transparent = true;
-          clonedMaterialsRef.current.add(child);
+        if (child.isMesh && child.material && !clonedMaterialsRef.current.has(child)) {
+          child.material = child.material.clone()
+          child.material.transparent = true
+          clonedMaterialsRef.current.add(child)
         }
-      });
-    };
+      })
+    }
 
     const updateModel = (upgradeType: string, isVisible: boolean) => {
-      const map = upgradeMap[spacecraft.spacecraftRegistry][upgradeType];
+      const map = upgradeMap[spacecraft.spacecraftRegistry][upgradeType]
       for (const modelName of map) {
-        const part = model.children.find((m: any) => m.name === modelName);
-        if (!part) continue;
-        cloneMaterials(part);
-        if (isVisible) part.visible = true;
-        fadeTargetsRef.current.set(part, isVisible ? 1 : 0);
+        // biome-ignore lint/suspicious/noExplicitAny: Three.js scene children
+        const part = model.children.find((m: any) => m.name === modelName)
+        if (!part) continue
+        cloneMaterials(part)
+        if (isVisible) part.visible = true
+        fadeTargetsRef.current.set(part, isVisible ? 1 : 0)
       }
-    };
+    }
 
-    updateModel(UpgradeType.Engine, !!attachedUpgrades.engine);
-    updateModel(UpgradeType.Weapons, !!attachedUpgrades.weapons);
-    updateModel(UpgradeType.Stabilizer, !!attachedUpgrades.stabilizer);
-    updateModel(UpgradeType.Plating, !!attachedUpgrades.plating);
-    updateModel(UpgradeType.Deflector, !!attachedUpgrades.deflector);
-  }, [attachedUpgrades, spacecraft.spacecraftRegistry]);
+    updateModel(UpgradeType.Engine, !!attachedUpgrades.engine)
+    updateModel(UpgradeType.Weapons, !!attachedUpgrades.weapons)
+    updateModel(UpgradeType.Stabilizer, !!attachedUpgrades.stabilizer)
+    updateModel(UpgradeType.Plating, !!attachedUpgrades.plating)
+    updateModel(UpgradeType.Deflector, !!attachedUpgrades.deflector)
+  }, [attachedUpgrades, spacecraft.spacecraftRegistry])
 
   // Handle previewType changes
-  const prevPreviewRef = useRef<string | null | undefined>(null);
+  const prevPreviewRef = useRef<string | null | undefined>(null)
   useEffect(() => {
-    const model = spacecraftModelRef.current;
-    if (!model) return;
+    const model = spacecraftModelRef.current
+    if (!model) return
 
-    const prevPreview = prevPreviewRef.current;
-    prevPreviewRef.current = previewType;
+    const prevPreview = prevPreviewRef.current
+    prevPreviewRef.current = previewType
 
     const setPreview = (upgradeType: string, show: boolean) => {
-      const registry = spacecraft.spacecraftRegistry;
-      const map = upgradeMap[registry][upgradeType];
-      if (!map) return;
+      const registry = spacecraft.spacecraftRegistry
+      const map = upgradeMap[registry][upgradeType]
+      if (!map) return
 
       for (const modelName of map) {
-        const part = model.children.find((m: any) => m.name === modelName);
-        if (!part) continue;
+        // biome-ignore lint/suspicious/noExplicitAny: Three.js scene children
+        const part = model.children.find((m: any) => m.name === modelName)
+        if (!part) continue
 
+        // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
         part.traverse((child: any) => {
-          if (
-            child.isMesh &&
-            child.material &&
-            !clonedMaterialsRef.current.has(child)
-          ) {
-            child.material = child.material.clone();
-            child.material.transparent = true;
-            clonedMaterialsRef.current.add(child);
+          if (child.isMesh && child.material && !clonedMaterialsRef.current.has(child)) {
+            child.material = child.material.clone()
+            child.material.transparent = true
+            clonedMaterialsRef.current.add(child)
           }
-        });
+        })
 
         if (show) {
-          part.visible = true;
+          part.visible = true
+          // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
           part.traverse((child: any) => {
             if (child.isMesh && child.material) {
               if (!originalColorsRef.current.has(child)) {
-                originalColorsRef.current.set(
-                  child,
-                  child.material.color.clone()
-                );
+                originalColorsRef.current.set(child, child.material.color.clone())
               }
-              child.material.color.copy(PREVIEW_TINT);
-              child.material.emissive = new THREE.Color(0.15, 0.4, 1.0);
-              child.material.opacity = PREVIEW_OPACITY;
+              child.material.color.copy(PREVIEW_TINT)
+              child.material.emissive = new THREE.Color(0.15, 0.4, 1.0)
+              child.material.opacity = PREVIEW_OPACITY
             }
-          });
-          fadeTargetsRef.current.set(part, PREVIEW_OPACITY);
+          })
+          fadeTargetsRef.current.set(part, PREVIEW_OPACITY)
         } else {
+          // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
           part.traverse((child: any) => {
             if (child.isMesh && child.material) {
-              const orig = originalColorsRef.current.get(child);
-              if (orig) child.material.color.copy(orig);
+              const orig = originalColorsRef.current.get(child)
+              if (orig) child.material.color.copy(orig)
               if (child.material.emissive) {
-                child.material.emissive.set(0, 0, 0);
+                child.material.emissive.set(0, 0, 0)
               }
             }
-          });
-          fadeTargetsRef.current.set(part, 0);
+          })
+          fadeTargetsRef.current.set(part, 0)
         }
       }
-    };
+    }
 
     if (prevPreview) {
-      setPreview(prevPreview, false);
+      setPreview(prevPreview, false)
     }
-    if (
-      previewType &&
-      !attachedUpgrades[previewType as keyof AttachedUpgrades]
-    ) {
-      setPreview(previewType, true);
+    if (previewType && !attachedUpgrades[previewType as keyof AttachedUpgrades]) {
+      setPreview(previewType, true)
     }
-  }, [previewType, attachedUpgrades, spacecraft.spacecraftRegistry]);
+  }, [previewType, attachedUpgrades, spacecraft.spacecraftRegistry])
 
   return (
     <div
+      role="application"
       style={{ width: '100%', height: '100%' }}
       onClick={handleClick}
+      onKeyDown={handleClick}
       ref={canvasRef}
     />
-  );
-};
+  )
+}
 
-export default Canvas;
+export default Canvas

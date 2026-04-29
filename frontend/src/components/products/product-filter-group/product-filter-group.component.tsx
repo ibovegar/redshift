@@ -1,32 +1,18 @@
-import React from 'react';
-import {
-  FormControlLabel,
-  Typography,
-  Accordion,
-  AccordionSummary,
-  Divider
-} from '@mui/material';
-import {
-  StyledAccordionDetails,
-  StyledFormGroup,
-  StyledCheckbox
-} from './product-filter-group.styles';
-import {
-  CheckBoxOutlineBlank,
-  CheckBox,
-  ExpandMore
-} from '@mui/icons-material';
-import { ProductFilter } from 'models';
+import { CheckBox, CheckBoxOutlineBlank, ExpandMore } from '@mui/icons-material'
+import { Accordion, AccordionSummary, Divider, FormControlLabel, Typography } from '@mui/material'
+import type { ProductFilter } from 'models'
+import React from 'react'
+import { StyledAccordionDetails, StyledCheckbox, StyledFormGroup } from './product-filter-group.styles'
 
 interface Props {
-  title: string;
-  defaultExpanded?: boolean;
-  filters: ProductFilter[];
-  onFilterClick: (filter: ProductFilter) => void;
+  title: string
+  defaultExpanded?: boolean
+  filters: ProductFilter[]
+  onFilterClick: (filter: ProductFilter) => void
 }
 
 const ProductFilterGroup = (props: Props) => {
-  const { filters, title, onFilterClick, defaultExpanded } = props;
+  const { filters, title, onFilterClick, defaultExpanded } = props
 
   return (
     <Accordion defaultExpanded={defaultExpanded}>
@@ -35,8 +21,8 @@ const ProductFilterGroup = (props: Props) => {
       </AccordionSummary>
       <StyledAccordionDetails>
         <StyledFormGroup>
-          {filters.map((filter, index) => (
-            <React.Fragment key={index}>
+          {filters.map((filter, _index) => (
+            <React.Fragment key={filter.id}>
               <Divider />
               <FormControlLabel
                 key={filter.id}
@@ -55,7 +41,7 @@ const ProductFilterGroup = (props: Props) => {
         </StyledFormGroup>
       </StyledAccordionDetails>
     </Accordion>
-  );
-};
+  )
+}
 
-export default ProductFilterGroup;
+export default ProductFilterGroup

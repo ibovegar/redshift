@@ -1,19 +1,14 @@
-import {
-  Spacecraft,
-  AvailableUpgrades,
-  Upgrade,
-  AttachedUpgrades
-} from 'models';
-import UpgradeSelect from './upgrade-select/upgrade-select.component';
+import type { AttachedUpgrades, AvailableUpgrades, Spacecraft, Upgrade } from 'models'
+import UpgradeSelect from './upgrade-select/upgrade-select.component'
 
 interface Props {
-  spacecraft: Spacecraft;
-  availableUpgrades: AvailableUpgrades;
-  attachedUpgrades: AttachedUpgrades;
-  onDeselectUpgrade: (upgradeType: Upgrade) => void;
-  onSelectUpgrade: (oldUpgrade: Upgrade, newUpgrade: Upgrade) => void;
-  onHoverUpgrade?: (upgradeType: string) => void;
-  onHoverEnd?: () => void;
+  spacecraft: Spacecraft
+  availableUpgrades: AvailableUpgrades
+  attachedUpgrades: AttachedUpgrades
+  onDeselectUpgrade: (upgradeType: Upgrade) => void
+  onSelectUpgrade: (oldUpgrade: Upgrade, newUpgrade: Upgrade) => void
+  onHoverUpgrade?: (upgradeType: string) => void
+  onHoverEnd?: () => void
 }
 
 const UpgradeControls = (props: Props) => {
@@ -24,7 +19,7 @@ const UpgradeControls = (props: Props) => {
     onDeselectUpgrade,
     onHoverUpgrade,
     onHoverEnd
-  } = props;
+  } = props
 
   // TODO: figure out why I render twice
   // console.log('render controls', upgrades);
@@ -36,9 +31,7 @@ const UpgradeControls = (props: Props) => {
         value={attached.deflector}
         options={available.deflector}
         onDeselect={() => onDeselectUpgrade(attached.deflector)}
-        onSelect={(option: Upgrade) =>
-          onSelectUpgrade(attached.deflector, option)
-        }
+        onSelect={(option: Upgrade) => onSelectUpgrade(attached.deflector, option)}
         onHover={() => onHoverUpgrade?.('deflector')}
         onHoverEnd={onHoverEnd}
       />
@@ -56,9 +49,7 @@ const UpgradeControls = (props: Props) => {
         value={attached.plating}
         options={available.plating}
         onDeselect={() => onDeselectUpgrade(attached.plating)}
-        onSelect={(option: Upgrade) =>
-          onSelectUpgrade(attached.plating, option)
-        }
+        onSelect={(option: Upgrade) => onSelectUpgrade(attached.plating, option)}
         onHover={() => onHoverUpgrade?.('plating')}
         onHoverEnd={onHoverEnd}
       />
@@ -67,9 +58,7 @@ const UpgradeControls = (props: Props) => {
         value={attached.stabilizer}
         options={available.stabilizer}
         onDeselect={() => onDeselectUpgrade(attached.stabilizer)}
-        onSelect={(option: Upgrade) =>
-          onSelectUpgrade(attached.stabilizer, option)
-        }
+        onSelect={(option: Upgrade) => onSelectUpgrade(attached.stabilizer, option)}
         onHover={() => onHoverUpgrade?.('stabilizer')}
         onHoverEnd={onHoverEnd}
       />
@@ -78,14 +67,12 @@ const UpgradeControls = (props: Props) => {
         value={attached.weapons}
         options={available.weapons}
         onDeselect={() => onDeselectUpgrade(attached.weapons)}
-        onSelect={(option: Upgrade) =>
-          onSelectUpgrade(attached.weapons, option)
-        }
+        onSelect={(option: Upgrade) => onSelectUpgrade(attached.weapons, option)}
         onHover={() => onHoverUpgrade?.('weapons')}
         onHoverEnd={onHoverEnd}
       />
     </>
-  );
-};
+  )
+}
 
-export default UpgradeControls;
+export default UpgradeControls

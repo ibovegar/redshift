@@ -1,9 +1,9 @@
-import { combineReducers } from 'redux';
-import * as spacecrafts from './spacecrafts';
-import * as upgrades from './upgrades';
-import * as marketplace from './marketplace';
-import * as user from './user';
-import * as missions from './missions';
+import { combineReducers } from 'redux'
+import * as marketplace from './marketplace'
+import * as missions from './missions'
+import * as spacecrafts from './spacecrafts'
+import * as upgrades from './upgrades'
+import * as user from './user'
 
 export const rootReducer = combineReducers({
   spacecrafts: spacecrafts.reducer,
@@ -11,7 +11,7 @@ export const rootReducer = combineReducers({
   marketplace: marketplace.reducer,
   user: user.reducer,
   missions: missions.reducer
-});
+})
 
-export type AppState = ReturnType<typeof rootReducer>;
-export default rootReducer;
+export type AppState = ReturnType<typeof rootReducer>
+export default rootReducer

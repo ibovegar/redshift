@@ -1,11 +1,11 @@
-import React from 'react';
-import { NavLink } from 'react-router';
-import { Spacecraft } from 'models';
-import SpacecraftCard from './spacecraft-card/spacecraft-card.component';
-import { styled } from '@mui/material/styles';
+import { styled } from '@mui/material/styles'
+import type { Spacecraft } from 'models'
+import type React from 'react'
+import { NavLink } from 'react-router'
+import SpacecraftCard from './spacecraft-card/spacecraft-card.component'
 
 const StyledNavLink = styled(NavLink)(({ theme }) => ({
-  border: '1px dashed' + theme.palette.grey[700],
+  border: `1px dashed${theme.palette.grey[700]}`,
   margin: 10,
   display: 'flex',
   textDecoration: 'none',
@@ -16,7 +16,7 @@ const StyledNavLink = styled(NavLink)(({ theme }) => ({
     backgroundColor: theme.palette.grey[400]
   },
   '&.active': {
-    backgroundColor: theme.palette.primary.main + '!important',
+    backgroundColor: `${theme.palette.primary.main}!important`,
     border: 'none',
     borderRadius: 2,
     clipPath: `polygon(
@@ -25,15 +25,15 @@ const StyledNavLink = styled(NavLink)(({ theme }) => ({
       100% 100%, 100% 100%,
       10px 100%, 0% calc(100% - 10px))`
   }
-}));
+}))
 
 interface StateProps {
-  spacecrafts: Spacecraft[];
-  onSpacecraftClick?: (event: React.MouseEvent) => void;
+  spacecrafts: Spacecraft[]
+  onSpacecraftClick?: (event: React.MouseEvent) => void
 }
 
 const SpacecraftList = (props: StateProps) => {
-  const { spacecrafts, onSpacecraftClick } = props;
+  const { spacecrafts, onSpacecraftClick } = props
 
   return (
     <>
@@ -48,7 +48,7 @@ const SpacecraftList = (props: StateProps) => {
         </StyledNavLink>
       ))}
     </>
-  );
-};
+  )
+}
 
-export default SpacecraftList;
+export default SpacecraftList

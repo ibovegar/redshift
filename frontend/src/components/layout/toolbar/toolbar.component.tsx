@@ -1,7 +1,7 @@
-import { styled } from '@mui/material/styles';
-import Nav from '../nav/nav.component';
-import { Typography } from '@mui/material';
-import { formatCurrency } from 'utils/helpers';
+import { Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
+import { formatCurrency } from 'utils/helpers'
+import Nav from '../nav/nav.component'
 
 const Root = styled('div')(({ theme }) => ({
   borderStyle: 'solid',
@@ -10,11 +10,11 @@ const Root = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   height: 60
-}));
+}))
 
 const Left = styled('div')({
   flex: '1'
-});
+})
 
 const Right = styled('div')(({ theme }) => ({
   height: '100%',
@@ -23,14 +23,14 @@ const Right = styled('div')(({ theme }) => ({
   paddingLeft: theme.spacing(5),
   paddingRight: theme.spacing(5),
   backgroundColor: theme.palette.background.paper
-}));
+}))
 
 interface Props {
-  credits: number;
+  credits: number
 }
 
 const Toolbar = (props: Props) => {
-  const { credits } = props;
+  const { credits } = props
   return (
     <Root>
       <Left>
@@ -40,7 +40,7 @@ const Toolbar = (props: Props) => {
         <Typography variant="h6">{formatCurrency(credits)}</Typography>
       </Right>
     </Root>
-  );
-};
+  )
+}
 
-export default Toolbar;
+export default Toolbar

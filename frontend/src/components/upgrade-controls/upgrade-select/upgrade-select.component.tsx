@@ -1,58 +1,52 @@
-import React from 'react';
-import { Upgrade } from 'models';
-import { Box, Typography, Popover, Divider } from '@mui/material';
-import {
-  Input,
-  ActiveInput,
-  Dropdown,
-  GainAvatar
-} from './upgrade-select.styles';
-import RemoveIcon from '@mui/icons-material/IndeterminateCheckBox';
-import { PopoverOrigin } from '@mui/material/Popover';
+import RemoveIcon from '@mui/icons-material/IndeterminateCheckBox'
+import { Box, Divider, Popover, Typography } from '@mui/material'
+import type { PopoverOrigin } from '@mui/material/Popover'
+import type { Upgrade } from 'models'
+import React from 'react'
+import { ActiveInput, Dropdown, GainAvatar, Input } from './upgrade-select.styles'
 
 interface Props {
-  value: Upgrade;
-  options: Upgrade[];
-  type: string;
-  onSelect: (option: Upgrade) => void;
-  onDeselect: () => void;
-  onHover?: (option: Upgrade) => void;
-  onHoverEnd?: () => void;
+  value: Upgrade
+  options: Upgrade[]
+  type: string
+  onSelect: (option: Upgrade) => void
+  onDeselect: () => void
+  onHover?: (option: Upgrade) => void
+  onHoverEnd?: () => void
 }
 
 const UpgradeSelect = (props: Props) => {
-  const { value, options, type, onSelect, onDeselect, onHover, onHoverEnd } =
-    props;
-  const [anchorEl, setAnchorEl]: [any, any] = React.useState(null);
+  const { value, options, type, onSelect, onDeselect, onHover, onHoverEnd } = props
+  const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null)
 
-  const isDisabled = !value && options.length === 0;
-  const isActive = !!value;
+  const isDisabled = !value && options.length === 0
+  const isActive = !!value
 
-  const handleOpen = (event: React.MouseEvent) => {
-    setAnchorEl(event.currentTarget);
-  };
+  const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
 
   const handleClose = () => {
-    setAnchorEl(null);
-    onHoverEnd?.();
-  };
+    setAnchorEl(null)
+    onHoverEnd?.()
+  }
 
   const handleSelect = (option: Upgrade) => {
-    handleClose();
-    onSelect(option);
-  };
+    handleClose()
+    onSelect(option)
+  }
 
   const handleDeselect = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    onDeselect();
-  };
+    event.stopPropagation()
+    onDeselect()
+  }
 
-  const open = Boolean(anchorEl);
-  const id = open ? `${type}spacecraft-control` : undefined;
-  const placeholder = value ? value.name : options.length + ' available';
-  const popoverOrigin: PopoverOrigin = { vertical: 'top', horizontal: 'left' };
+  const open = Boolean(anchorEl)
+  const id = open ? `${type}spacecraft-control` : undefined
+  const placeholder = value ? value.name : `${options.length} available`
+  const popoverOrigin: PopoverOrigin = { vertical: 'top', horizontal: 'left' }
 
-  const InputComponent = isActive ? ActiveInput : Input;
+  const InputComponent = isActive ? ActiveInput : Input
 
   return (
     <div style={isDisabled ? { opacity: 0.4, pointerEvents: 'none' } : {}}>
@@ -90,6 +84,7 @@ const UpgradeSelect = (props: Props) => {
               <li
                 key={option.id}
                 onClick={() => handleSelect(option)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSelect(option)}
                 onMouseEnter={() => onHover?.(option)}
                 onMouseLeave={() => onHoverEnd?.()}
               >
@@ -108,10 +103,7 @@ const UpgradeSelect = (props: Props) => {
                     <Typography style={{ whiteSpace: 'nowrap' }} variant="h6">
                       {option.name}
                     </Typography>
-                    <Typography
-                      style={{ whiteSpace: 'nowrap' }}
-                      variant="subtitle1"
-                    >
+                    <Typography style={{ whiteSpace: 'nowrap' }} variant="subtitle1">
                       {option.manufacturer.toUpperCase()}
                     </Typography>
                   </Box>
@@ -123,7 +115,7 @@ const UpgradeSelect = (props: Props) => {
         </Dropdown>
       </Popover>
     </div>
-  );
-};
+  )
+}
 
-export default UpgradeSelect;
+export default UpgradeSelect

@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
-import { ProductFilter } from 'models';
-import { ProductFilterGroup } from 'components';
-import { toArray, flatArrByValue } from 'utils/helpers';
+import { ProductFilterGroup } from 'components'
+import type { ProductFilter } from 'models'
+import { useCallback, useState } from 'react'
+import { flatArrByValue, toArray } from 'utils/helpers'
 
 interface Props {
-  onFilterClick: (filters: string[]) => void;
+  onFilterClick: (filters: string[]) => void
 }
 
 const initialFilters: Record<string, ProductFilter> = {
@@ -13,12 +13,12 @@ const initialFilters: Record<string, ProductFilter> = {
   hamm2: { id: 'hamm2', value: false, label: 'Hammerhead 2' },
   vanguard: { id: 'vanguard', value: false, label: 'Vanguard SAR' },
   tellrx5: { id: 'tellrx5', value: false, label: 'Tellus R X5' }
-};
+}
 
 const SpacecraftFilter = (props: Props) => {
-  const { onFilterClick } = props;
+  const { onFilterClick } = props
 
-  const [filters, setFilters] = useState(initialFilters);
+  const [filters, setFilters] = useState(initialFilters)
 
   const handleFilterClick = useCallback(
     (filter: ProductFilter) => {
@@ -26,22 +26,16 @@ const SpacecraftFilter = (props: Props) => {
         const next = {
           ...prev,
           [filter.id]: { ...prev[filter.id], value: !prev[filter.id].value }
-        };
-        const arr: ProductFilter[] = toArray(next);
-        onFilterClick(flatArrByValue(arr, 'value', 'id'));
-        return next;
-      });
+        }
+        const arr: ProductFilter[] = toArray(next)
+        onFilterClick(flatArrByValue(arr, 'value', 'id'))
+        return next
+      })
     },
     [onFilterClick]
-  );
+  )
 
-  return (
-    <ProductFilterGroup
-      title="spacecrafts"
-      filters={toArray(filters)}
-      onFilterClick={handleFilterClick}
-    />
-  );
-};
+  return <ProductFilterGroup title="spacecrafts" filters={toArray(filters)} onFilterClick={handleFilterClick} />
+}
 
-export default SpacecraftFilter;
+export default SpacecraftFilter
