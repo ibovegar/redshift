@@ -1,4 +1,4 @@
-import * as API from 'api/upgrades.api'
+import * as API from 'api/upgrades'
 import type { Upgrade } from 'models'
 import type { Dispatch } from 'redux'
 import * as actions from './actions'

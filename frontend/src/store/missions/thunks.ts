@@ -1,4 +1,4 @@
-import * as API from 'api/missions.api'
+import * as API from 'api/missions'
 import type { Mission } from 'models'
 import type { Dispatch } from 'redux'
 import * as actions from './actions'

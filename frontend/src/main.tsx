@@ -6,8 +6,8 @@ import { BrowserRouter } from 'react-router'
 import { applyMiddleware, compose, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
 import rootReducer from 'store'
-import ThemeDark from './ui/theme/dark.theme'
-// import ThemeLight from './ui/theme/light.theme';
+import ThemeDark from './ui/theme/dark'
+// import ThemeLight from './ui/theme/light';
 
 import App from 'containers/App/App'
 

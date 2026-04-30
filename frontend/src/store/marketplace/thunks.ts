@@ -1,4 +1,4 @@
-import * as API from 'api/store.api'
+import * as API from 'api/store'
 import type { Spacecraft, Upgrade } from 'models'
 import type { Dispatch } from 'redux'
 import * as fromUserStore from '../user'

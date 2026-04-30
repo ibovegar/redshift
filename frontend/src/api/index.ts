@@ -1,6 +1,6 @@
-import * as spacecraft from './spacecraft.api'
-import * as store from './store.api'
-import * as upgrades from './upgrades.api'
+import * as spacecraft from './spacecraft'
+import * as store from './store'
+import * as upgrades from './upgrades'
 
 export default {
   spacecraft,

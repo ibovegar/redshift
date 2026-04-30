@@ -1,4 +1,4 @@
-import * as API from 'api/user.api'
+import * as API from 'api/user'
 import type { Dispatch } from 'redux'
 import type { AppState } from 'store'
 import * as actions from './actions'
