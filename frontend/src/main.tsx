@@ -9,7 +9,7 @@ import rootReducer from 'store'
 import ThemeDark from './ui/theme/dark.theme'
 // import ThemeLight from './ui/theme/light.theme';
 
-import App from 'containers/app/app.component'
+import App from 'containers/App/App'
 
 import 'normalize.css'
 import './assets/css/styles.css'
@@ -39,7 +39,15 @@ const app = (
   </Provider>
 )
 
+async function startMocking() {
+  const { worker } = await import('./mocks/browser')
+  await worker.start({ onUnhandledRequest: 'bypass' })
+}
+
 const rootElement = document.getElementById('root')
 if (!rootElement) throw new Error('Root element not found')
 const root = createRoot(rootElement)
-root.render(app)
+
+startMocking().then(() => {
+  root.render(app)
+})

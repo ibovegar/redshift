@@ -1,4 +1,4 @@
-export { default as Engineering } from './engineering/engineering.component'
-export { default as Inventory } from './inventory/inventory.component'
-export { default as Marketplace } from './marketplace/marketplace.component'
-export { default as Tactical } from './tactical/tactical.component'
+export { default as Engineering } from './Engineering/Engineering'
+export { default as Inventory } from './Inventory/Inventory'
+export { default as Marketplace } from './Marketplace/Marketplace'
+export { default as Tactical } from './Tactical/Tactical'
