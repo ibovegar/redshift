@@ -2,12 +2,9 @@ import CloseIcon from '@mui/icons-material/Close'
 import { Avatar, Button, Card, CardActions, CardContent, CardHeader, IconButton, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { MissionProgress, MissionStats } from 'components/ui'
+import { useCompleteMission, useMissions } from 'hooks'
 import { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { Navigate, useParams } from 'react-router'
-import type { AppState } from 'store'
-import { completeMission, getMissionById } from 'store/missions'
-import { addCredits } from 'store/user'
 
 const Root = styled('div')({
   width: '100%',
@@ -30,16 +27,15 @@ const StyledCardActions = styled(CardActions)({
 const MissionViewer = () => {
   const [redirect, setRedirect] = useState(false)
   const [inProgress, setInProgress] = useState(false)
-  const dispatch = useDispatch()
   const { missionId } = useParams()
-  const mission = useSelector((state: AppState) => (missionId ? getMissionById(state, missionId) : undefined))
+  const { data: missions = [] } = useMissions()
+  const completeMission = useCompleteMission()
+
+  const mission = missions.find((m) => m.id === missionId)
 
   const handleOnCompleted = () => {
     if (!mission) return
-    // biome-ignore lint/suspicious/noExplicitAny: redux-thunk dispatch typing
-    dispatch(completeMission(mission) as any)
-    // biome-ignore lint/suspicious/noExplicitAny: redux-thunk dispatch typing
-    dispatch(addCredits(mission.credits) as any)
+    completeMission.mutate(mission)
     setRedirect(true)
   }
 

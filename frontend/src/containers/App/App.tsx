@@ -1,25 +1,13 @@
 import Layout from 'components/Layout/Layout'
 import { Engineering, Inventory, Marketplace, Tactical } from 'containers'
-import { useEffect } from 'react'
-import { connect } from 'react-redux'
+import { useUser } from 'hooks'
 import { Navigate, Route, Routes } from 'react-router'
-import type { AppState } from 'store'
-import { loadUserStats } from 'store/user'
 
-interface Props {
-  credits: number
-  loadUserStats: () => void
-}
-
-const App = (props: Props) => {
-  const { credits, loadUserStats } = props
-
-  useEffect(() => {
-    loadUserStats()
-  }, [loadUserStats])
+const App = () => {
+  const { data: user } = useUser()
 
   return (
-    <Layout authenticated credits={credits}>
+    <Layout authenticated credits={user?.credits ?? 0}>
       <Routes>
         <Route path="/" element={<Navigate to="/tactical" replace />} />
         <Route path="/tactical/*" element={<Tactical />} />
@@ -31,12 +19,4 @@ const App = (props: Props) => {
   )
 }
 
-const mapStateToProps = (state: AppState) => ({
-  credits: state.user.credits
-})
-
-const mapDispatchToProps = {
-  loadUserStats
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(App)
+export default App

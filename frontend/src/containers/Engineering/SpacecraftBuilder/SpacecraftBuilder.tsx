@@ -1,36 +1,44 @@
 import Box from '@mui/material/Box'
 import { UpgradeControls, Viewer } from 'components'
+import {
+  getAttachedUpgrades,
+  getAvailableUpgrades,
+  useAttachUpgrade,
+  useDetachUpgrade,
+  useSpacecraft,
+  useUpgrades
+} from 'hooks'
 import type { Upgrade } from 'models'
-import { useCallback, useEffect, useState } from 'react'
-import { connect } from 'react-redux'
+import { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
-import * as interfaces from './SpacecraftBuilder.types'
 
-const SpacecraftBuilder = (props: interfaces.Props) => {
-  const { spacecraft, attachedUpgrades, availableUpgrades, setSelectedSpacecraft, attachUpgrade, detachUpgrade } = props
-
+const SpacecraftBuilder = () => {
   const { spacecraftId } = useParams()
+  const { data: spacecraft } = useSpacecraft(spacecraftId)
+  const { data: upgrades = [] } = useUpgrades()
+  const attachMutation = useAttachUpgrade()
+  const detachMutation = useDetachUpgrade()
+
   const [previewType, setPreviewType] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (spacecraftId) setSelectedSpacecraft(spacecraftId)
-  }, [spacecraftId, setSelectedSpacecraft])
+  const attachedUpgrades = useMemo(() => getAttachedUpgrades(upgrades, spacecraft), [upgrades, spacecraft])
+  const availableUpgrades = useMemo(() => getAvailableUpgrades(upgrades, spacecraft), [upgrades, spacecraft])
 
   const handleSelectUpgrade = useCallback(
     (oldUpgrade: Upgrade, newUpgrade: Upgrade) => {
       if (!spacecraft) return
-      if (oldUpgrade) detachUpgrade(spacecraft.id, oldUpgrade.id)
-      attachUpgrade(spacecraft.id, newUpgrade.id)
+      if (oldUpgrade) detachMutation.mutate({ spacecraftId: spacecraft.id, upgradeId: oldUpgrade.id })
+      attachMutation.mutate({ spacecraftId: spacecraft.id, upgradeId: newUpgrade.id })
     },
-    [spacecraft, detachUpgrade, attachUpgrade]
+    [spacecraft, detachMutation, attachMutation]
   )
 
   const handleDeselectUpgrade = useCallback(
     (upgrade: Upgrade) => {
       if (!spacecraft) return
-      detachUpgrade(spacecraft.id, upgrade.id)
+      detachMutation.mutate({ spacecraftId: spacecraft.id, upgradeId: upgrade.id })
     },
-    [spacecraft, detachUpgrade]
+    [spacecraft, detachMutation]
   )
 
   if (!spacecraft) {
@@ -57,4 +65,4 @@ const SpacecraftBuilder = (props: interfaces.Props) => {
   )
 }
 
-export default connect(interfaces.mapStateToProps, interfaces.mapDispatchToProps)(SpacecraftBuilder)
+export default SpacecraftBuilder

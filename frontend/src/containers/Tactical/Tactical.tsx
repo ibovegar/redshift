@@ -1,11 +1,8 @@
 import { MissionTag } from 'components/ui'
-import type { Mission, Spacecraft } from 'models'
-import { useCallback, useEffect } from 'react'
-import { connect } from 'react-redux'
+import { useMissions, useSpacecrafts } from 'hooks'
+import type { Mission } from 'models'
+import { useCallback } from 'react'
 import { Route, Routes, useLocation, useNavigate } from 'react-router'
-import type { AppState } from 'store'
-import { getAllMissions, loadMissions } from 'store/missions'
-import { getAllspacecrafts, loadSpacecrafts } from 'store/spacecrafts'
 import MissionViewer from './MissionViewer/MissionViewer'
 
 const tagPositions: { x: number; y: number }[] = [
@@ -31,23 +28,11 @@ const tagPositions: { x: number; y: number }[] = [
   }
 ]
 
-interface Props {
-  isLoading: boolean
-  spacecrafts: Spacecraft[]
-  missions: Mission[]
-  loadSpacecrafts: () => void
-  loadMissions: () => void
-}
-
-const Tactical = (props: Props) => {
-  const { missions, loadSpacecrafts, loadMissions } = props
+const Tactical = () => {
+  const { data: missions = [] } = useMissions()
+  useSpacecrafts()
   const navigate = useNavigate()
   const location = useLocation()
-
-  useEffect(() => {
-    loadSpacecrafts()
-    loadMissions()
-  }, [loadSpacecrafts, loadMissions])
 
   const handleSelectMission = useCallback(
     (missionId: string) => {
@@ -76,15 +61,4 @@ const Tactical = (props: Props) => {
   )
 }
 
-const mapStateToProps = (state: AppState) => ({
-  isLoading: state.spacecrafts.isLoading,
-  spacecrafts: getAllspacecrafts(state),
-  missions: getAllMissions(state)
-})
-
-const mapDispatchToProps = {
-  loadSpacecrafts,
-  loadMissions
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(Tactical)
+export default Tactical

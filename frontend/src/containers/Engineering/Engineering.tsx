@@ -2,36 +2,25 @@ import { Button } from '@mui/material'
 import Box from '@mui/material/Box'
 import { SpacecraftList } from 'components'
 import { Placeholder } from 'components/ui'
+import { useSpacecrafts, useUpgrades } from 'hooks'
 import type React from 'react'
-import { useCallback, useEffect } from 'react'
-import { connect } from 'react-redux'
-import { Link, Route, Routes } from 'react-router'
-import * as interfaces from './Engineering.types'
+import { useCallback } from 'react'
+import { Link, Route, Routes, useNavigate } from 'react-router'
 import SpacecraftBuilder from './SpacecraftBuilder/SpacecraftBuilder'
 
-const Engineering = (props: interfaces.Props) => {
-  const {
-    spacecrafts,
-    isLoadingSpacecrafts,
-    isLoadingUpgrades,
-    loadSpacecrafts,
-    loadAllUpgrades,
-    setSelectedSpacecraft
-  } = props
-
-  useEffect(() => {
-    loadSpacecrafts()
-    loadAllUpgrades()
-  }, [loadSpacecrafts, loadAllUpgrades])
+const Engineering = () => {
+  const { data: spacecrafts = [], isLoading: isLoadingSpacecrafts } = useSpacecrafts()
+  const { isLoading: isLoadingUpgrades } = useUpgrades()
+  const navigate = useNavigate()
 
   const handleSelectSpacecraft = useCallback(
     (event: React.MouseEvent) => {
-      setSelectedSpacecraft(event.currentTarget.id)
+      navigate(event.currentTarget.id)
     },
-    [setSelectedSpacecraft]
+    [navigate]
   )
 
-  if (!spacecrafts.length) {
+  if (!spacecrafts.length && !isLoadingSpacecrafts) {
     return (
       <Placeholder
         message="INVENTORY IS EMPTY"
@@ -70,4 +59,4 @@ const Engineering = (props: interfaces.Props) => {
   )
 }
 
-export default connect(interfaces.mapStateToProps, interfaces.mapDispatchToProps)(Engineering)
+export default Engineering

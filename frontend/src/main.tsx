@@ -1,42 +1,28 @@
+import { CssBaseline } from '@mui/material'
 import { ThemeProvider } from '@mui/material/styles'
-import { createRoot } from 'react-dom/client'
-
-import { Provider } from 'react-redux'
-import { BrowserRouter } from 'react-router'
-import { applyMiddleware, compose, createStore } from 'redux'
-import { thunk } from 'redux-thunk'
-import rootReducer from 'store'
-import ThemeDark from './ui/theme/dark'
-// import ThemeLight from './ui/theme/light';
-
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from 'containers/App/App'
+import { CartProvider } from 'hooks'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router'
+import ThemeDark from './ui/theme/dark'
 
 import 'normalize.css'
 import './assets/css/styles.css'
-import { CssBaseline } from '@mui/material'
 
-const middleware = [thunk]
-
-interface WindowWithDevTools extends Window {
-  __REDUX_DEVTOOLS_EXTENSION_COMPOSE__?: typeof compose
-}
-
-const composeEnhancers: typeof compose =
-  (typeof window === 'object' && (window as WindowWithDevTools).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) || compose
-
-const enhancer = composeEnhancers(applyMiddleware(...middleware))
-// @ts-expect-error createStore with enhancer
-const store = createStore(rootReducer, enhancer)
+const queryClient = new QueryClient()
 
 const app = (
-  <Provider store={store}>
-    <BrowserRouter>
-      <ThemeProvider theme={ThemeDark}>
-        <CssBaseline />
-        <App />
-      </ThemeProvider>
-    </BrowserRouter>
-  </Provider>
+  <QueryClientProvider client={queryClient}>
+    <CartProvider>
+      <BrowserRouter>
+        <ThemeProvider theme={ThemeDark}>
+          <CssBaseline />
+          <App />
+        </ThemeProvider>
+      </BrowserRouter>
+    </CartProvider>
+  </QueryClientProvider>
 )
 
 async function startMocking() {

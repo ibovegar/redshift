@@ -1,0 +1,19 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import * as userApi from 'api/user'
+import { queryKeys } from './queryKeys'
+
+export const useUser = () =>
+  useQuery({
+    queryKey: queryKeys.user,
+    queryFn: userApi.get
+  })
+
+export const useAddCredits = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: userApi.updateCredits,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.user })
+    }
+  })
+}
