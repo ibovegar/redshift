@@ -7,7 +7,6 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 import { ThemeDark } from './ui/theme/dark'
 
-import 'normalize.css'
 import './assets/css/styles.css'
 
 const queryClient = new QueryClient()
