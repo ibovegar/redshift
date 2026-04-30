@@ -85,7 +85,11 @@ const components: Components<Theme> = {
           0 0, 0 0, /* top-left */
           100% 0%, 100% 0, /* top-right */ 
           100% 100%, 100% 100%, /* bottom-right */
-          10px 100%, 0% calc(100% - 10px)) /* bottom-left */`
+          10px 100%, 0% calc(100% - 10px)) /* bottom-left */`,
+        transition: 'none',
+        '&:hover': {
+          backgroundColor: 'inherit'
+        }
       }
     }
   },
