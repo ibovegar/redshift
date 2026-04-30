@@ -19,17 +19,18 @@ const SpacecraftBuilder = (props: interfaces.Props) => {
   const handleSelectUpgrade = useCallback(
     (oldUpgrade: Upgrade, newUpgrade: Upgrade) => {
       if (!spacecraft) return
-      if (oldUpgrade) detachUpgrade(oldUpgrade)
-      attachUpgrade(spacecraft, newUpgrade)
+      if (oldUpgrade) detachUpgrade(spacecraft.id, oldUpgrade.id)
+      attachUpgrade(spacecraft.id, newUpgrade.id)
     },
     [spacecraft, detachUpgrade, attachUpgrade]
   )
 
   const handleDeselectUpgrade = useCallback(
     (upgrade: Upgrade) => {
-      detachUpgrade(upgrade)
+      if (!spacecraft) return
+      detachUpgrade(spacecraft.id, upgrade.id)
     },
-    [detachUpgrade]
+    [spacecraft, detachUpgrade]
   )
 
   if (!spacecraft) {

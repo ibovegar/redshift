@@ -1,5 +1,5 @@
 import * as API from 'api/upgrades.api'
-import type { Spacecraft, Upgrade } from 'models'
+import type { Upgrade } from 'models'
 import type { Dispatch } from 'redux'
 import * as actions from './actions'
 
@@ -23,27 +23,19 @@ export const loadAllUpgrades = () => async (dispatch: Dispatch) => {
   }
 }
 
-export const detachUpgrade = (upgrade: Upgrade) => async (dispatch: Dispatch) => {
-  const newUpgrade = { ...upgrade }
-  newUpgrade.isAttached = false
-  newUpgrade.spacecraftId = ''
-
+export const detachUpgrade = (spacecraftId: string, upgradeId: string) => async (dispatch: Dispatch) => {
   try {
-    await API.update(newUpgrade)
-    dispatch(actions.detachUpgradeSuccess(newUpgrade))
+    const upgrade = await API.detach(spacecraftId, upgradeId)
+    dispatch(actions.detachUpgradeSuccess(upgrade))
   } catch (error) {
     console.log(error)
   }
 }
 
-export const attachUpgrade = (spacecraft: Spacecraft, upgrade: Upgrade) => async (dispatch: Dispatch) => {
-  const newUpgrade = { ...upgrade }
-  newUpgrade.isAttached = true
-  newUpgrade.spacecraftId = spacecraft.id
-
+export const attachUpgrade = (spacecraftId: string, upgradeId: string) => async (dispatch: Dispatch) => {
   try {
-    await API.update(newUpgrade)
-    dispatch(actions.attachUpgradeSuccess(newUpgrade))
+    const upgrade = await API.attach(spacecraftId, upgradeId)
+    dispatch(actions.attachUpgradeSuccess(upgrade))
   } catch (error) {
     console.log(error)
   }

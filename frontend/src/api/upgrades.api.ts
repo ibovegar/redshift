@@ -12,20 +12,16 @@ export const get = async (spacecraftId: string): Promise<Upgrade[]> => {
   return response.json()
 }
 
-export const update = async (upgrade: Upgrade): Promise<Upgrade> => {
-  const response = await fetch(`${url}/upgrades/${upgrade.id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...upgrade })
+export const attach = async (spacecraftId: string, upgradeId: string): Promise<Upgrade> => {
+  const response = await fetch(`${url}/spacecrafts/${spacecraftId}/upgrades/${upgradeId}`, {
+    method: 'POST'
   })
   return response.json()
 }
 
-export const post = async (upgrade: Upgrade): Promise<Upgrade> => {
-  const response = await fetch(`${url}/upgrades`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(upgrade)
+export const detach = async (spacecraftId: string, upgradeId: string): Promise<Upgrade> => {
+  const response = await fetch(`${url}/spacecrafts/${spacecraftId}/upgrades/${upgradeId}`, {
+    method: 'DELETE'
   })
   return response.json()
 }

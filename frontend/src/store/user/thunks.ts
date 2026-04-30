@@ -13,18 +13,6 @@ export const loadUserStats = () => async (dispatch: Dispatch) => {
   }
 }
 
-export const subtractCredits = (amount: number) => async (dispatch: Dispatch, getState: () => AppState) => {
-  const state: AppState = getState()
-  const credits = state.user.credits - amount
-
-  try {
-    await API.updateCredits(credits)
-    dispatch(actions.updateCreditsSuccess(credits))
-  } catch {
-    console.log('failed to update credits')
-  }
-}
-
 export const addCredits = (amount: number) => async (dispatch: Dispatch, getState: () => AppState) => {
   const state: AppState = getState()
   const credits = state.user.credits + amount
