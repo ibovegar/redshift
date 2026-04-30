@@ -1,11 +1,5 @@
 import { FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent } from '@mui/material'
-import { styled } from '@mui/material/styles'
 import { useState } from 'react'
-
-const StyledFormControl = styled(FormControl)(({ theme }) => ({
-  margin: theme.spacing(1),
-  minWidth: 200
-}))
 
 export const Inventory = () => {
   const [age, setAge] = useState('')
@@ -15,7 +9,7 @@ export const Inventory = () => {
   }
 
   return (
-    <StyledFormControl>
+    <FormControl sx={{ m: 1, minWidth: 200 }}>
       <InputLabel htmlFor="age-simple">Age</InputLabel>
       <Select
         value={age}
@@ -32,6 +26,6 @@ export const Inventory = () => {
         <MenuItem value={20}>Twenty</MenuItem>
         <MenuItem value={30}>Thirty</MenuItem>
       </Select>
-    </StyledFormControl>
+    </FormControl>
   )
 }

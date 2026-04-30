@@ -1,5 +1,4 @@
 import { Grid } from '@mui/material'
-import { styled } from '@mui/material/styles'
 import { Cart, Products } from 'components'
 import { usePurchase, useStoreProducts, useUser } from 'hooks'
 import { useCart } from 'hooks/useCart'
@@ -9,18 +8,8 @@ import { filterObjArr } from 'utils/helpers'
 import { SpacecraftFilter } from './SpacecraftFilter/SpacecraftFilter'
 import { StoreTypeFilter } from './StoreTypeFilter/StoreTypeFilter'
 
-const StyledGrid = styled(Grid)({
-  position: 'relative'
-})
-
-const StickyGrid = styled(Grid)({
-  height: '100%',
-  position: 'sticky',
-  top: 0
-})
-
 export const Marketplace = () => {
-  const { data: products = [] } = useStoreProducts()
+  const { data: products } = useStoreProducts()
   const { data: user } = useUser()
   const { cart, addToCart, removeFromCart, clearCart } = useCart()
   const purchaseMutation = usePurchase()
@@ -53,17 +42,17 @@ export const Marketplace = () => {
   filtered = filterObjArr(filtered, productTypeFilter, 'storeType')
 
   return (
-    <StyledGrid container spacing={6}>
-      <StickyGrid size="grow">
+    <Grid container spacing={6} sx={{ position: 'relative' }}>
+      <Grid size="grow" sx={{ height: '100%', position: 'sticky', top: 0 }}>
         <SpacecraftFilter onFilterClick={setSpacecraftFilter} />
         <StoreTypeFilter onFilterClick={setProductTypeFilter} />
-      </StickyGrid>
+      </Grid>
       <Grid size={8}>
         <Products onAddClick={handleAddToCart} products={filtered} />
       </Grid>
-      <StickyGrid size="grow">
+      <Grid size="grow" sx={{ height: '100%', position: 'sticky', top: 0 }}>
         <Cart credits={user?.credits ?? 0} cart={cart} onRemove={handleRemoveFromCart} onPurchase={handlePurchase} />
-      </StickyGrid>
-    </StyledGrid>
+      </Grid>
+    </Grid>
   )
 }
