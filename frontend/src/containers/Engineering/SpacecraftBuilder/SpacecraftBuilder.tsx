@@ -12,7 +12,7 @@ import type { Upgrade } from 'models'
 import { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 
-const SpacecraftBuilder = () => {
+export const SpacecraftBuilder = () => {
   const { spacecraftId } = useParams()
   const { data: spacecraft } = useSpacecraft(spacecraftId)
   const { data: upgrades = [] } = useUpgrades()
@@ -64,5 +64,3 @@ const SpacecraftBuilder = () => {
     </Box>
   )
 }
-
-export default SpacecraftBuilder

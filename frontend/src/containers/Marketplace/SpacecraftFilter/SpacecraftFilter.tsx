@@ -15,7 +15,7 @@ const initialFilters: Record<string, ProductFilter> = {
   tellrx5: { id: 'tellrx5', value: false, label: 'Tellus R X5' }
 }
 
-const SpacecraftFilter = (props: Props) => {
+export const SpacecraftFilter = (props: Props) => {
   const { onFilterClick } = props
 
   const [filters, setFilters] = useState(initialFilters)
@@ -37,5 +37,3 @@ const SpacecraftFilter = (props: Props) => {
 
   return <ProductFilterGroup title="spacecrafts" filters={toArray(filters)} onFilterClick={handleFilterClick} />
 }
-
-export default SpacecraftFilter

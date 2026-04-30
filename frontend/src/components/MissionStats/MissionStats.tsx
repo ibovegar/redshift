@@ -17,7 +17,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   mission: Mission
 }
 
-const MissionStats = (props: Props) => {
+export const MissionStats = (props: Props) => {
   const { mission, className, style } = props
 
   const avatarSx = {
@@ -71,5 +71,3 @@ const MissionStats = (props: Props) => {
     </List>
   )
 }
-
-export default MissionStats

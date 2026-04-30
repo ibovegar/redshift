@@ -16,7 +16,7 @@ const initialFilters: Record<string, ProductFilter> = {
   stabilizer: { id: 'stabilizer', value: false, label: 'Stabilizer' }
 }
 
-const StoreTypeFilter = (props: Props) => {
+export const StoreTypeFilter = (props: Props) => {
   const { onFilterClick } = props
 
   const [filters, setFilters] = useState(initialFilters)
@@ -38,5 +38,3 @@ const StoreTypeFilter = (props: Props) => {
 
   return <ProductFilterGroup title="Product category" filters={toArray(filters)} onFilterClick={handleFilterClick} />
 }
-
-export default StoreTypeFilter

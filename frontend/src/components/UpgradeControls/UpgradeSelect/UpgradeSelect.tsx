@@ -3,7 +3,7 @@ import { Box, Divider, Popover, Typography } from '@mui/material'
 import type { PopoverOrigin } from '@mui/material/Popover'
 import type { Upgrade } from 'models'
 import React from 'react'
-import { ActiveInput, Dropdown, GainAvatar, Input } from './UpgradeSelect.styles'
+import { ActiveInput, Dropdown, GainAvatar, Input } from './styles'
 
 interface Props {
   value: Upgrade
@@ -15,7 +15,7 @@ interface Props {
   onHoverEnd?: () => void
 }
 
-const UpgradeSelect = (props: Props) => {
+export const UpgradeSelect = (props: Props) => {
   const { value, options, type, onSelect, onDeselect, onHover, onHoverEnd } = props
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null)
 
@@ -117,5 +117,3 @@ const UpgradeSelect = (props: Props) => {
     </div>
   )
 }
-
-export default UpgradeSelect

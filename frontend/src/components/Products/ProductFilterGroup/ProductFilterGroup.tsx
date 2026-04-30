@@ -1,8 +1,16 @@
 import { CheckBox, CheckBoxOutlineBlank, ExpandMore } from '@mui/icons-material'
-import { Accordion, AccordionSummary, Divider, FormControlLabel, Typography } from '@mui/material'
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Checkbox,
+  Divider,
+  FormControlLabel,
+  FormGroup,
+  Typography
+} from '@mui/material'
 import type { ProductFilter } from 'models'
 import React from 'react'
-import { StyledAccordionDetails, StyledCheckbox, StyledFormGroup } from './ProductFilterGroup.styles'
 
 interface Props {
   title: string
@@ -11,7 +19,7 @@ interface Props {
   onFilterClick: (filter: ProductFilter) => void
 }
 
-const ProductFilterGroup = (props: Props) => {
+export const ProductFilterGroup = (props: Props) => {
   const { filters, title, onFilterClick, defaultExpanded } = props
 
   return (
@@ -19,15 +27,16 @@ const ProductFilterGroup = (props: Props) => {
       <AccordionSummary expandIcon={<ExpandMore />}>
         <Typography variant="overline">{title}</Typography>
       </AccordionSummary>
-      <StyledAccordionDetails>
-        <StyledFormGroup>
+      <AccordionDetails sx={{ p: 0 }}>
+        <FormGroup sx={{ width: '100%' }}>
           {filters.map((filter, _index) => (
             <React.Fragment key={filter.id}>
               <Divider />
               <FormControlLabel
                 key={filter.id}
                 control={
-                  <StyledCheckbox
+                  <Checkbox
+                    sx={{ p: '14px', ml: 4 }}
                     value={filter.value}
                     icon={<CheckBoxOutlineBlank fontSize="small" />}
                     checkedIcon={<CheckBox fontSize="small" />}
@@ -38,10 +47,8 @@ const ProductFilterGroup = (props: Props) => {
               />
             </React.Fragment>
           ))}
-        </StyledFormGroup>
-      </StyledAccordionDetails>
+        </FormGroup>
+      </AccordionDetails>
     </Accordion>
   )
 }
-
-export default ProductFilterGroup

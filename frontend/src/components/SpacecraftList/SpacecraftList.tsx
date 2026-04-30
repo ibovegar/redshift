@@ -2,7 +2,7 @@ import { styled } from '@mui/material/styles'
 import type { Spacecraft } from 'models'
 import type React from 'react'
 import { NavLink } from 'react-router'
-import SpacecraftCard from './SpacecraftCard/SpacecraftCard'
+import { SpacecraftCard } from './SpacecraftCard/SpacecraftCard'
 
 const StyledNavLink = styled(NavLink)(({ theme }) => ({
   border: `1px dashed${theme.palette.grey[700]}`,
@@ -32,7 +32,7 @@ interface StateProps {
   onSpacecraftClick?: (event: React.MouseEvent) => void
 }
 
-const SpacecraftList = (props: StateProps) => {
+export const SpacecraftList = (props: StateProps) => {
   const { spacecrafts, onSpacecraftClick } = props
 
   return (
@@ -50,5 +50,3 @@ const SpacecraftList = (props: StateProps) => {
     </>
   )
 }
-
-export default SpacecraftList

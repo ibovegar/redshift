@@ -1,4 +1,4 @@
-import { Box, Button, Divider, Typography } from '@mui/material'
+import { Box, Button, Divider, Stack, Typography } from '@mui/material'
 import type { Spacecraft, Upgrade } from 'models'
 import React from 'react'
 import { formatCurrency } from 'utils/helpers'
@@ -10,7 +10,7 @@ interface Props {
   onPurchase: () => void
 }
 
-const Cart = (props: Props) => {
+export const Cart = (props: Props) => {
   const { cart, credits, onRemove, onPurchase } = props
 
   const totalPrice = cart.reduce((sum, i) => {
@@ -20,13 +20,11 @@ const Cart = (props: Props) => {
   const isPurchasable = cart.length > 0 && totalPrice < credits
 
   return (
-    <Box
+    <Stack
       sx={{
         border: 1,
         borderColor: 'grey.800',
-        p: 2,
-        display: 'flex',
-        flexDirection: 'column'
+        p: 2
       }}
     >
       {cart.map((product, index) => (
@@ -64,8 +62,6 @@ const Cart = (props: Props) => {
       <Button color="primary" disabled={!isPurchasable} variant="contained" onClick={onPurchase}>
         {totalPrice > credits ? 'INSUFFICIENT FUNDS' : 'PURCHASE'}
       </Button>
-    </Box>
+    </Stack>
   )
 }
-
-export default Cart

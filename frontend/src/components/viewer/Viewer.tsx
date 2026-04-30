@@ -3,8 +3,8 @@ import Plus from 'assets/images/plus.svg'
 import { Widget } from 'components'
 import type { AttachedUpgrades, Spacecraft } from 'models'
 import { useCallback, useState } from 'react'
-import Canvas from './Canvas/Canvas'
-import Stats from './Stats/Stats'
+import { Canvas } from './Canvas/Canvas'
+import { Stats } from './Stats/Stats'
 
 const Crosses = styled('div')({
   height: '100%',
@@ -18,7 +18,7 @@ interface Props {
   previewType?: string | null
 }
 
-const Viewer = (props: Props) => {
+export const Viewer = (props: Props) => {
   const { spacecraft, attachedUpgrades, previewType } = props
 
   const [isLoading, setIsLoading] = useState(true)
@@ -45,5 +45,3 @@ const Viewer = (props: Props) => {
     </Widget>
   )
 }
-
-export default Viewer

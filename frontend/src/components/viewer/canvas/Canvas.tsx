@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { getAspectRatio } from 'utils/helpers'
-import upgradeMap from './upgrade-map'
+import { meshMap } from './mesh-map'
 
 interface Props {
   spacecraft: Spacecraft
@@ -17,7 +17,7 @@ const FADE_SPEED = 0.03
 const PREVIEW_OPACITY = 0.4
 const PREVIEW_TINT = new THREE.Color(0.2, 0.6, 1.5)
 
-const Canvas = (props: Props) => {
+export const Canvas = (props: Props) => {
   const { spacecraft, attachedUpgrades, previewType, onLoaded } = props
   const canvasRef = useRef<HTMLDivElement>(null)
   // biome-ignore lint/style/noNonNullAssertion: Three.js refs are assigned in useEffect before use
@@ -130,10 +130,10 @@ const Canvas = (props: Props) => {
         // Hide all upgrade parts immediately before first render
         const registry = propsRef.current.spacecraft.spacecraftRegistry
         const attached = propsRef.current.attachedUpgrades
-        const upgradeTypes = Object.keys(upgradeMap[registry])
+        const upgradeTypes = Object.keys(meshMap[registry])
         for (const type of upgradeTypes) {
           const isAttached = !!attached[type as keyof typeof attached]
-          for (const modelName of upgradeMap[registry][type]) {
+          for (const modelName of meshMap[registry][type]) {
             // biome-ignore lint/suspicious/noExplicitAny: Three.js GLTF scene children
             const model = spacecraftModelRef.current.children.find((m: any) => m.name === modelName)
             if (model) model.visible = isAttached
@@ -195,7 +195,7 @@ const Canvas = (props: Props) => {
     }
 
     const updateModel = (upgradeType: string, isVisible: boolean) => {
-      const map = upgradeMap[spacecraft.spacecraftRegistry][upgradeType]
+      const map = meshMap[spacecraft.spacecraftRegistry][upgradeType]
       for (const modelName of map) {
         // biome-ignore lint/suspicious/noExplicitAny: Three.js scene children
         const part = model.children.find((m: any) => m.name === modelName)
@@ -224,7 +224,7 @@ const Canvas = (props: Props) => {
 
     const setPreview = (upgradeType: string, show: boolean) => {
       const registry = spacecraft.spacecraftRegistry
-      const map = upgradeMap[registry][upgradeType]
+      const map = meshMap[registry][upgradeType]
       if (!map) return
 
       for (const modelName of map) {
@@ -289,5 +289,3 @@ const Canvas = (props: Props) => {
     />
   )
 }
-
-export default Canvas

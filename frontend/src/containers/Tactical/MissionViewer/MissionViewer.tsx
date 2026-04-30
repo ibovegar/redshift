@@ -1,7 +1,7 @@
 import CloseIcon from '@mui/icons-material/Close'
 import { Avatar, Button, Card, CardActions, CardContent, CardHeader, IconButton, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { MissionProgress, MissionStats } from 'components/ui'
+import { MissionProgress, MissionStats } from 'components'
 import { useCompleteMission, useMissions } from 'hooks'
 import { useState } from 'react'
 import { Navigate, useParams } from 'react-router'
@@ -24,7 +24,7 @@ const StyledCardActions = styled(CardActions)({
   justifyContent: 'center'
 })
 
-const MissionViewer = () => {
+export const MissionViewer = () => {
   const [redirect, setRedirect] = useState(false)
   const [inProgress, setInProgress] = useState(false)
   const { missionId } = useParams()
@@ -95,5 +95,3 @@ const MissionViewer = () => {
     </Root>
   )
 }
-
-export default MissionViewer

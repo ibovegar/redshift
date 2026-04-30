@@ -7,7 +7,7 @@ const StyledFormControl = styled(FormControl)(({ theme }) => ({
   minWidth: 200
 }))
 
-const Inventory = () => {
+export const Inventory = () => {
   const [age, setAge] = useState('')
 
   const handleChange = (event: SelectChangeEvent) => {
@@ -35,5 +35,3 @@ const Inventory = () => {
     </StyledFormControl>
   )
 }
-
-export default Inventory

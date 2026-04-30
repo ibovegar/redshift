@@ -1,9 +1,9 @@
-import Layout from 'components/Layout/Layout'
+import { Layout } from 'components/Layout/Layout'
 import { Engineering, Inventory, Marketplace, Tactical } from 'containers'
 import { useUser } from 'hooks'
 import { Navigate, Route, Routes } from 'react-router'
 
-const App = () => {
+export const App = () => {
   const { data: user } = useUser()
 
   return (
@@ -18,5 +18,3 @@ const App = () => {
     </Layout>
   )
 }
-
-export default App

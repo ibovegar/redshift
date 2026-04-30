@@ -120,7 +120,7 @@ const components: Components<Theme> = {
   // }
 }
 
-export default createTheme({
+export const ThemeDark = createTheme({
   spacing,
   palette,
   components,

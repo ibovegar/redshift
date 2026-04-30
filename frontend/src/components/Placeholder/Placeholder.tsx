@@ -32,7 +32,7 @@ interface Props {
   message: string
 }
 
-const Placeholder = (props: Props) => {
+export const Placeholder = (props: Props) => {
   const { action } = props
 
   return (
@@ -46,5 +46,3 @@ const Placeholder = (props: Props) => {
     </Root>
   )
 }
-
-export default Placeholder

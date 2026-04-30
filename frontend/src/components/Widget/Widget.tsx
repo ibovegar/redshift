@@ -19,7 +19,7 @@ interface Props {
   children: ReactNode
 }
 
-const Widget = (props: Props) => {
+export const Widget = (props: Props) => {
   const { children } = props
 
   return (
@@ -28,5 +28,3 @@ const Widget = (props: Props) => {
     </StyledCard>
   )
 }
-
-export default Widget

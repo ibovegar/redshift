@@ -1,9 +1,9 @@
-import { MissionTag } from 'components/ui'
+import { MissionTag } from 'components'
 import { useMissions, useSpacecrafts } from 'hooks'
 import type { Mission } from 'models'
 import { useCallback } from 'react'
 import { Route, Routes, useLocation, useNavigate } from 'react-router'
-import MissionViewer from './MissionViewer/MissionViewer'
+import { MissionViewer } from './MissionViewer/MissionViewer'
 
 const tagPositions: { x: number; y: number }[] = [
   {
@@ -28,7 +28,7 @@ const tagPositions: { x: number; y: number }[] = [
   }
 ]
 
-const Tactical = () => {
+export const Tactical = () => {
   const { data: missions = [] } = useMissions()
   useSpacecrafts()
   const navigate = useNavigate()
@@ -60,5 +60,3 @@ const Tactical = () => {
     </>
   )
 }
-
-export default Tactical

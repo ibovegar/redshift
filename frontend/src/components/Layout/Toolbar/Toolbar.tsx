@@ -1,7 +1,7 @@
 import { Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { formatCurrency } from 'utils/helpers'
-import Nav from '../Nav/Nav'
+import { Nav } from '../Nav/Nav'
 
 const Root = styled('div')(({ theme }) => ({
   borderStyle: 'solid',
@@ -29,7 +29,7 @@ interface Props {
   credits: number
 }
 
-const Toolbar = (props: Props) => {
+export const Toolbar = (props: Props) => {
   const { credits } = props
   return (
     <Root>
@@ -42,5 +42,3 @@ const Toolbar = (props: Props) => {
     </Root>
   )
 }
-
-export default Toolbar

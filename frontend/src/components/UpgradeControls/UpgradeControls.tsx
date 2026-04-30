@@ -1,5 +1,5 @@
 import type { AttachedUpgrades, AvailableUpgrades, Spacecraft, Upgrade } from 'models'
-import UpgradeSelect from './UpgradeSelect/UpgradeSelect'
+import { UpgradeSelect } from './UpgradeSelect/UpgradeSelect'
 
 interface Props {
   spacecraft: Spacecraft
@@ -11,7 +11,7 @@ interface Props {
   onHoverEnd?: () => void
 }
 
-const UpgradeControls = (props: Props) => {
+export const UpgradeControls = (props: Props) => {
   const {
     availableUpgrades: available,
     attachedUpgrades: attached,
@@ -74,5 +74,3 @@ const UpgradeControls = (props: Props) => {
     </>
   )
 }
-
-export default UpgradeControls

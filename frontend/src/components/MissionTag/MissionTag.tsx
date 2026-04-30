@@ -68,7 +68,7 @@ interface Props {
   onSelect: () => void
 }
 
-const MissionTag = (props: Props) => {
+export const MissionTag = (props: Props) => {
   const { mission, position, onSelect, disabled } = props
 
   return (
@@ -83,5 +83,3 @@ const MissionTag = (props: Props) => {
     </Root>
   )
 }
-
-export default MissionTag

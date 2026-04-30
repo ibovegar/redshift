@@ -1,13 +1,13 @@
 import { Grid } from '@mui/material'
 import type { Spacecraft, Upgrade } from 'models'
-import ProductCard from './ProductCard/ProductCard'
+import { ProductCard } from './ProductCard/ProductCard'
 
 interface Props {
   products: (Spacecraft | Upgrade)[]
   onAddClick: (product: Spacecraft | Upgrade) => void
 }
 
-const Products = (props: Props) => {
+export const Products = (props: Props) => {
   const { products, onAddClick } = props
 
   return (
@@ -20,5 +20,3 @@ const Products = (props: Props) => {
     </Grid>
   )
 }
-
-export default Products

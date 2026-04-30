@@ -9,7 +9,7 @@ const StyledIcon = styled(AddBoxIcon)(({ theme }) => ({
 
 const buttonSx = { px: 4 } as const
 
-const Nav = () => {
+export const Nav = () => {
   return (
     <Grid container sx={{ alignItems: 'center' }} spacing={4}>
       <Grid>
@@ -48,5 +48,3 @@ const Nav = () => {
     </Grid>
   )
 }
-
-export default Nav

@@ -6,8 +6,8 @@ import { useCart } from 'hooks/useCart'
 import type { Spacecraft, Upgrade } from 'models'
 import { useCallback, useState } from 'react'
 import { filterObjArr } from 'utils/helpers'
-import SpacecraftFilter from './SpacecraftFilter/SpacecraftFilter'
-import StoreTypeFilter from './StoreTypeFilter/StoreTypeFilter'
+import { SpacecraftFilter } from './SpacecraftFilter/SpacecraftFilter'
+import { StoreTypeFilter } from './StoreTypeFilter/StoreTypeFilter'
 
 const StyledGrid = styled(Grid)({
   position: 'relative'
@@ -19,7 +19,7 @@ const StickyGrid = styled(Grid)({
   top: 0
 })
 
-const Marketplace = () => {
+export const Marketplace = () => {
   const { data: products = [] } = useStoreProducts()
   const { data: user } = useUser()
   const { cart, addToCart, removeFromCart, clearCart } = useCart()
@@ -67,5 +67,3 @@ const Marketplace = () => {
     </StyledGrid>
   )
 }
-
-export default Marketplace

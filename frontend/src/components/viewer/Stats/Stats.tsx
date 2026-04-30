@@ -6,7 +6,7 @@ interface Props {
   attachedUpgrades: AttachedUpgrades
 }
 
-const Stats = (props: Props) => {
+export const Stats = (props: Props) => {
   const { spacecraft, attachedUpgrades } = props
   // Only rerender if buffs changes
   const { baseStats } = spacecraft
@@ -68,5 +68,3 @@ const Stats = (props: Props) => {
     </Box>
   )
 }
-
-export default Stats

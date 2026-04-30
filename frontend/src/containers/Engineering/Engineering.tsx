@@ -1,14 +1,13 @@
-import { Button } from '@mui/material'
+import { Button, Stack } from '@mui/material'
 import Box from '@mui/material/Box'
-import { SpacecraftList } from 'components'
-import { Placeholder } from 'components/ui'
+import { Placeholder, SpacecraftList } from 'components'
 import { useSpacecrafts, useUpgrades } from 'hooks'
 import type React from 'react'
 import { useCallback } from 'react'
 import { Link, Route, Routes, useNavigate } from 'react-router'
-import SpacecraftBuilder from './SpacecraftBuilder/SpacecraftBuilder'
+import { SpacecraftBuilder } from './SpacecraftBuilder/SpacecraftBuilder'
 
-const Engineering = () => {
+export const Engineering = () => {
   const { data: spacecrafts = [], isLoading: isLoadingSpacecrafts } = useSpacecrafts()
   const { isLoading: isLoadingUpgrades } = useUpgrades()
   const navigate = useNavigate()
@@ -38,7 +37,7 @@ const Engineering = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', height: '100%' }}>
+    <Stack direction="row" sx={{ height: '100%' }}>
       <Box
         sx={{
           width: 340,
@@ -55,8 +54,6 @@ const Engineering = () => {
           <Route path="/" element={<Placeholder message="PLEASE SELECT A SPACECRAFT" />} />
         </Routes>
       </Box>
-    </Box>
+    </Stack>
   )
 }
-
-export default Engineering

@@ -1,9 +1,9 @@
-import { Box } from '@mui/material'
+import { Box, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import backgroundImage from 'assets/images/15.jpg'
 import React, { type ReactNode } from 'react'
 import { useLocation } from 'react-router'
-import Toolbar from './Toolbar/Toolbar'
+import { Toolbar } from './Toolbar/Toolbar'
 
 const Background = styled('img')({
   position: 'fixed',
@@ -33,7 +33,7 @@ interface Props {
   children: ReactNode
 }
 
-const Layout = (props: Props) => {
+export const Layout = (props: Props) => {
   const { children, credits } = props
   const location = useLocation()
   const isTactical = location.pathname === '/tactical'
@@ -41,23 +41,12 @@ const Layout = (props: Props) => {
   const Wrapper = isTactical ? TacticalWrapper : React.Fragment
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        height: '100vh',
-        flexDirection: 'column',
-        p: 6
-      }}
-    >
+    <Stack sx={{ height: '100vh', p: 6 }}>
       <Wrapper>
         <Background alt=" " />
       </Wrapper>
       <Toolbar credits={credits} />
-      <Box sx={{ flex: 1, mt: 6 }} style={{ minHeight: 0 }}>
-        {children}
-      </Box>
-    </Box>
+      <Box sx={{ flex: 1, mt: 6, minHeight: 0 }}>{children}</Box>
+    </Stack>
   )
 }
-
-export default Layout
