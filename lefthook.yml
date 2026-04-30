@@ -1,0 +1,13 @@
+pre-commit:
+  commands:
+    typecheck:
+      root: frontend/
+      glob: "frontend/**/*.{ts,tsx}"
+      run: pnpm run typecheck
+
+pre-push:
+  commands:
+    lint:
+      root: frontend/
+      glob: "frontend/**/*.{ts,tsx}"
+      run: pnpm run lint
