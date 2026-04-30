@@ -13,9 +13,9 @@ import { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 
 export const SpacecraftBuilder = () => {
-  const { spacecraftId } = useParams()
-  const { data: spacecraft } = useSpacecraft(spacecraftId)
-  const { data: upgrades = [] } = useUpgrades()
+  const { spacecraftId } = useParams<{ spacecraftId: string }>()
+  const { data: spacecraft } = useSpacecraft(spacecraftId as string)
+  const { data: upgrades } = useUpgrades()
   const attachMutation = useAttachUpgrade()
   const detachMutation = useDetachUpgrade()
 
@@ -26,7 +26,6 @@ export const SpacecraftBuilder = () => {
 
   const handleSelectUpgrade = useCallback(
     (oldUpgrade: Upgrade, newUpgrade: Upgrade) => {
-      if (!spacecraft) return
       if (oldUpgrade) detachMutation.mutate({ spacecraftId: spacecraft.id, upgradeId: oldUpgrade.id })
       attachMutation.mutate({ spacecraftId: spacecraft.id, upgradeId: newUpgrade.id })
     },
@@ -35,15 +34,10 @@ export const SpacecraftBuilder = () => {
 
   const handleDeselectUpgrade = useCallback(
     (upgrade: Upgrade) => {
-      if (!spacecraft) return
       detachMutation.mutate({ spacecraftId: spacecraft.id, upgradeId: upgrade.id })
     },
     [spacecraft, detachMutation]
   )
-
-  if (!spacecraft) {
-    return <div>Loading...</div>
-  }
 
   return (
     <Box sx={{ display: 'flex', height: '100%' }}>

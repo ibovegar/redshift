@@ -1,10 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import * as upgradesApi from 'api/upgrades'
 import { AttachedUpgrades, AvailableUpgrades, type Spacecraft, type Upgrade } from 'models'
 import { queryKeys } from './queryKeys'
 
 export const useUpgrades = () =>
-  useQuery({
+  useSuspenseQuery({
     queryKey: queryKeys.upgrades,
     queryFn: upgradesApi.getAll
   })

@@ -1,15 +1,14 @@
 import { Button, Stack } from '@mui/material'
 import Box from '@mui/material/Box'
 import { Placeholder, SpacecraftList } from 'components'
-import { useSpacecrafts, useUpgrades } from 'hooks'
+import { useSpacecrafts } from 'hooks'
 import type React from 'react'
 import { useCallback } from 'react'
 import { Link, Route, Routes, useNavigate } from 'react-router'
 import { SpacecraftBuilder } from './SpacecraftBuilder/SpacecraftBuilder'
 
 export const Engineering = () => {
-  const { data: spacecrafts = [], isLoading: isLoadingSpacecrafts } = useSpacecrafts()
-  const { isLoading: isLoadingUpgrades } = useUpgrades()
+  const { data: spacecrafts } = useSpacecrafts()
   const navigate = useNavigate()
 
   const handleSelectSpacecraft = useCallback(
@@ -19,7 +18,7 @@ export const Engineering = () => {
     [navigate]
   )
 
-  if (!spacecrafts.length && !isLoadingSpacecrafts) {
+  if (!spacecrafts.length) {
     return (
       <Placeholder
         message="INVENTORY IS EMPTY"
@@ -30,10 +29,6 @@ export const Engineering = () => {
         }
       />
     )
-  }
-
-  if (isLoadingSpacecrafts || isLoadingUpgrades) {
-    return <div>Loading...</div>
   }
 
   return (

@@ -1,10 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import * as missionsApi from 'api/missions'
 import type { Mission } from 'models'
 import { queryKeys } from './queryKeys'
 
 export const useMissions = () =>
-  useQuery({
+  useSuspenseQuery({
     queryKey: queryKeys.missions,
     queryFn: missionsApi.getAll
   })

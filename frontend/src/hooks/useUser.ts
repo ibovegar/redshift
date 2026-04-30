@@ -1,9 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import * as userApi from 'api/user'
 import { queryKeys } from './queryKeys'
 
 export const useUser = () =>
-  useQuery({
+  useSuspenseQuery({
     queryKey: queryKeys.user,
     queryFn: userApi.get
   })
