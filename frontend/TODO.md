@@ -1,4 +1,5 @@
 Feat:
+change font
 Fancy on-hover animation
 modal expand animation
 Loading, login and splash screens screen

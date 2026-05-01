@@ -6,22 +6,16 @@ import { GridButton } from '../GridButton/GridButton'
 import { SpacecraftCard } from './SpacecraftCard/SpacecraftCard'
 
 const StyledNavLink = styled(NavLink)(({ theme }) => ({
-  margin: 10,
   display: 'flex',
   textDecoration: 'none',
   color: theme.palette.text.primary,
   outline: 'none',
   backgroundColor: theme.palette.grey[500],
-  transition: 'margin 0.1s ease-out',
   clipPath: `polygon(
     0 0, 0 0,
     calc(100% - 10px) 0%, 100% 10px,
     100% 100%, 100% 100%,
     10px 100%, 0% calc(100% - 10px))`,
-  '&:hover': {
-    marginLeft: 8,
-    marginRight: 8
-  },
   '&.active': {
     backgroundColor: theme.palette.grey[600],
     border: 'none',
@@ -56,10 +50,10 @@ export const SpacecraftList = (props: StateProps) => {
   const { spacecrafts, onSpacecraftClick } = props
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {spacecrafts.map((spacecraft: Spacecraft) => (
         <SpacecraftItem key={spacecraft.id} spacecraft={spacecraft} onClick={onSpacecraftClick} />
       ))}
-    </>
+    </div>
   )
 }

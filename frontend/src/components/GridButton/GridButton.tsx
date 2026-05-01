@@ -1,7 +1,7 @@
 import { keyframes, styled } from '@mui/material/styles'
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 
-const BOX_SIZE = 5
+const BOX_SIZE = 10
 
 function parseColor(color: string): { r: number; g: number; b: number } {
   const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
@@ -116,7 +116,7 @@ export const GridButton = (props: GridButtonProps) => {
     const boxes = shades.map((color, i) => ({
       key: `${i}-${color}`,
       color,
-      delay: 15 + Math.round(Math.random() * 250)
+      delay: 10 + Math.round(Math.random() * 150)
     }))
     setGrid({ columns, rows, boxes })
   }, [])
