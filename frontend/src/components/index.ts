@@ -1,6 +1,7 @@
 export { BarButton } from './BarButton/BarButton'
 export { Cart } from './Cart/Cart'
 export { ErrorBoundary } from './ErrorBoundary/ErrorBoundary'
+export { GridButton } from './GridButton/GridButton'
 export { MissionProgress } from './MissionProgress/MissionProgress'
 export { MissionStats } from './MissionStats/MissionStats'
 export { MissionTag } from './MissionTag/MissionTag'

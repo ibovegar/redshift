@@ -1,29 +1,31 @@
 import { styled } from '@mui/material/styles'
 import type { Spacecraft } from 'models'
 import type React from 'react'
-import { NavLink } from 'react-router'
+import { NavLink, useMatch } from 'react-router'
+import { GridButton } from '../GridButton/GridButton'
 import { SpacecraftCard } from './SpacecraftCard/SpacecraftCard'
 
 const StyledNavLink = styled(NavLink)(({ theme }) => ({
-  border: `1px dashed${theme.palette.grey[700]}`,
   margin: 10,
   display: 'flex',
   textDecoration: 'none',
   color: theme.palette.text.primary,
   outline: 'none',
-  backgroundColor: theme.palette.grey[50],
+  backgroundColor: theme.palette.grey[500],
+  transition: 'margin 0.1s ease-out',
+  clipPath: `polygon(
+    0 0, 0 0,
+    calc(100% - 10px) 0%, 100% 10px,
+    100% 100%, 100% 100%,
+    10px 100%, 0% calc(100% - 10px))`,
   '&:hover': {
-    backgroundColor: theme.palette.grey[400]
+    marginLeft: 8,
+    marginRight: 8
   },
   '&.active': {
-    backgroundColor: `${theme.palette.primary.main}!important`,
+    backgroundColor: theme.palette.grey[600],
     border: 'none',
-    borderRadius: 2,
-    clipPath: `polygon(
-      0 0, 0 0,
-      calc(100% - 10px) 0%, 100% 10px,
-      100% 100%, 100% 100%,
-      10px 100%, 0% calc(100% - 10px))`
+    borderRadius: 2
   }
 }))
 
@@ -32,20 +34,31 @@ interface StateProps {
   onSpacecraftClick?: (event: React.MouseEvent) => void
 }
 
+const SpacecraftItem = ({
+  spacecraft,
+  onClick
+}: {
+  spacecraft: Spacecraft
+  onClick?: (event: React.MouseEvent) => void
+}) => {
+  const isActive = useMatch(`/engineering/${spacecraft.id}`)
+
+  return (
+    <StyledNavLink to={`/engineering/${spacecraft.id}`} onClick={onClick} id={spacecraft.id}>
+      <GridButton active={!!isActive}>
+        <SpacecraftCard spacecraft={spacecraft} />
+      </GridButton>
+    </StyledNavLink>
+  )
+}
+
 export const SpacecraftList = (props: StateProps) => {
   const { spacecrafts, onSpacecraftClick } = props
 
   return (
     <>
       {spacecrafts.map((spacecraft: Spacecraft) => (
-        <StyledNavLink
-          key={spacecraft.id}
-          to={`/engineering/${spacecraft.id}`}
-          onClick={onSpacecraftClick}
-          id={spacecraft.id}
-        >
-          <SpacecraftCard spacecraft={spacecraft} />
-        </StyledNavLink>
+        <SpacecraftItem key={spacecraft.id} spacecraft={spacecraft} onClick={onSpacecraftClick} />
       ))}
     </>
   )

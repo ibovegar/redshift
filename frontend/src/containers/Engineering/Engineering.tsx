@@ -36,9 +36,7 @@ export const Engineering = () => {
       <Box
         sx={{
           width: 340,
-          height: '100%',
-          border: 1,
-          borderColor: 'grey.700'
+          height: '100%'
         }}
       >
         <SpacecraftList spacecrafts={spacecrafts} onSpacecraftClick={handleSelectSpacecraft} />

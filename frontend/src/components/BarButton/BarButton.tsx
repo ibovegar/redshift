@@ -1,5 +1,5 @@
 import { keyframes, styled } from '@mui/material/styles'
-import { type ReactNode, useCallback, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 
 const BAR_WIDTH = 2
 
@@ -74,44 +74,57 @@ const BarContainer = styled('span')({
   zIndex: 1
 })
 
-const Bar = styled('span')<{ color: string; delay: number; easing: string }>(({ color, delay, easing }) => ({
-  flex: 1,
-  height: '100%',
-  backgroundColor: color,
-  opacity: 0.3,
-  transform: 'translateY(100%)',
-  animation: `${barRise} 0.25s ${easing} ${delay}ms forwards`
-}))
+const Bar = styled('span')<{ color: string; delay: number; easing: string; animate: boolean }>(
+  ({ color, delay, easing, animate }) => ({
+    flex: 1,
+    height: '100%',
+    backgroundColor: color,
+    opacity: 0,
+    transform: 'translateY(100%)',
+    ...(animate && {
+      animation: `${barRise} 0.25s ${easing} ${delay}ms forwards`
+    })
+  })
+)
 
 export const BarButton = (props: BarButtonProps) => {
   const { children } = props
 
   const rootRef = useRef<HTMLSpanElement>(null)
   const [animKey, setAnimKey] = useState(0)
-  const [active, setActive] = useState(false)
-  const [bars, setBars] = useState<{ color: string; delay: number; easing: string }[]>([])
+  const [animate, setAnimate] = useState(false)
+  const [bars, setBars] = useState<{ key: string; color: string; delay: number; easing: string }[]>([])
 
-  const handleMouseEnter = useCallback(() => {
-    const width = rootRef.current?.offsetWidth ?? 0
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    const width = el.offsetWidth
     const barCount = Math.max(1, Math.round(width / BAR_WIDTH))
     const colors = generateColors(barCount)
     const shuffled = colors.sort(() => Math.random() - 0.5)
-    const randomBars = shuffled.map((color) => ({
+    const randomBars = shuffled.map((color, i) => ({
+      key: `${i}-${color}`,
       color,
       delay: Math.round(Math.random() * 100),
       easing: randomEasing()
     }))
     setBars(randomBars)
-    setAnimKey((k) => k + 1)
-    setActive(true)
+  }, [])
+
+  const handleMouseEnter = useCallback(() => {
+    setAnimate(false)
+    requestAnimationFrame(() => {
+      setAnimKey((k) => k + 1)
+      setAnimate(true)
+    })
   }, [])
 
   return (
     <Root ref={rootRef} onMouseEnter={handleMouseEnter}>
-      {active && (
+      {bars.length > 0 && (
         <BarContainer key={animKey}>
           {bars.map((bar) => (
-            <Bar key={bar.color} color={bar.color} delay={bar.delay} easing={bar.easing} />
+            <Bar key={bar.key} color={bar.color} delay={bar.delay} easing={bar.easing} animate={animate} />
           ))}
         </BarContainer>
       )}
