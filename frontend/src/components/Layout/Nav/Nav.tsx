@@ -5,7 +5,7 @@ import { NavLink, useMatch } from 'react-router'
 import { BarButton } from '../../BarButton/BarButton'
 
 const StyledIcon = styled(AddBoxIcon)(({ theme }) => ({
-  marginRight: theme.spacing(4)
+  marginRight: theme.spacing(2)
 }))
 
 const buttonSx = {
@@ -17,6 +17,7 @@ const buttonSx = {
   boxShadow: 'none',
   border: 'none',
   clipPath: 'none',
+  lineHeight: 1,
   '&:hover': {
     backgroundColor: 'transparent',
     color: '#fff',
@@ -65,7 +66,7 @@ export const Nav = () => {
         <BarButton>
           <Button sx={buttonSx} variant="contained" size="small" disabled>
             <StyledIcon fontSize="small" />
-            SOMETHING
+            RESEARCH
           </Button>
         </BarButton>
       </Grid>
@@ -73,7 +74,7 @@ export const Nav = () => {
         <BarButton>
           <Button sx={buttonSx} variant="contained" size="small" disabled>
             <StyledIcon fontSize="small" />
-            INVENTORY
+            GALAXY
           </Button>
         </BarButton>
       </Grid>
