@@ -42,7 +42,12 @@ export const SpacecraftBuilder = () => {
   return (
     <Box sx={{ display: 'flex', height: '100%' }}>
       <Box sx={{ flex: 1, width: 900, ml: 6 }}>
-        <Viewer spacecraft={spacecraft} attachedUpgrades={attachedUpgrades} previewType={previewType} />
+        <Viewer
+          key={spacecraft.id}
+          spacecraft={spacecraft}
+          attachedUpgrades={attachedUpgrades}
+          previewType={previewType}
+        />
       </Box>
       <Box sx={{ width: 300, ml: 6 }}>
         <UpgradeControls
