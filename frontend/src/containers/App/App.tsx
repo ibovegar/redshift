@@ -14,7 +14,7 @@ export const App = () => {
         <Suspense fallback={<div>Loading...</div>}>
           <Routes>
             <Route path="/" element={<Navigate to="/tactical" replace />} />
-            <Route path="/tactical/*" element={<Tactical />} />
+            <Route path="/tactical" element={<Tactical />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/engineering/*" element={<Engineering />} />

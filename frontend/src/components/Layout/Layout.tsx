@@ -43,7 +43,7 @@ export const Layout = (props: Props) => {
   return (
     <Stack sx={{ height: '100vh', p: 6 }}>
       <Wrapper>
-        <Background alt=" " />
+        <Background id="app-background" alt=" " />
       </Wrapper>
       <Toolbar credits={credits} />
       <Box sx={{ flex: 1, mt: 6, minHeight: 0 }}>{children}</Box>

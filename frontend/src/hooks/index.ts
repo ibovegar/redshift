@@ -1,4 +1,5 @@
 export { queryKeys } from './queryKeys'
+export { useCardExpandAnimation } from './useCardExpandAnimation'
 export { CartProvider, useCart } from './useCart'
 export { useCompleteMission, useMissions } from './useMissions'
 export { useSpacecraft, useSpacecrafts } from './useSpacecrafts'

@@ -65,14 +65,18 @@ interface Props {
   mission: Mission
   position: { x: number; y: number }
   disabled?: boolean
-  onSelect: () => void
+  onSelect: (element: HTMLElement) => void
 }
 
 export const MissionTag = (props: Props) => {
   const { mission, position, onSelect, disabled } = props
 
   return (
-    <Root disabled={disabled} style={{ left: `${position.x}%`, top: `${position.y}%` }} onClick={() => onSelect()}>
+    <Root
+      disabled={disabled}
+      style={{ left: `${position.x}%`, top: `${position.y}%` }}
+      onClick={(e) => onSelect(e.currentTarget)}
+    >
       <Tag>
         <Typography variant="h6">{mission.title}</Typography>
         <Typography variant="overline" color="textSecondary" sx={{ lineHeight: 1 }}>
