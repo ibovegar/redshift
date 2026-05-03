@@ -1,8 +1,8 @@
 import { type AttachedUpgrades, type Spacecraft, UpgradeType } from 'models'
 import { useCallback, useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { getAspectRatio } from 'utils/helpers'
 import { meshMap } from './mesh-map'
 
@@ -20,14 +20,10 @@ const PREVIEW_TINT = new THREE.Color(0.2, 0.6, 1.5)
 export const Canvas = (props: Props) => {
   const { spacecraft, attachedUpgrades, previewType, onLoaded } = props
   const canvasRef = useRef<HTMLDivElement>(null)
-  // biome-ignore lint/style/noNonNullAssertion: Three.js refs are assigned in useEffect before use
-  const cameraRef = useRef<THREE.PerspectiveCamera>(null!)
-  // biome-ignore lint/style/noNonNullAssertion: Three.js refs are assigned in useEffect before use
-  const sceneRef = useRef<THREE.Scene>(null!)
-  // biome-ignore lint/style/noNonNullAssertion: Three.js refs are assigned in useEffect before use
-  const rendererRef = useRef<THREE.WebGLRenderer>(null!)
-  // biome-ignore lint/style/noNonNullAssertion: Three.js refs are assigned in useEffect before use
-  const controlsRef = useRef<OrbitControls>(null!)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const sceneRef = useRef<THREE.Scene | null>(null)
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+  const controlsRef = useRef<OrbitControls | null>(null)
   const frameIdRef = useRef<number | null>(null)
   const spacecraftModelRef = useRef<THREE.Group | null>(null)
   const fadeTargetsRef = useRef(new Map<THREE.Object3D, number>())
@@ -46,9 +42,8 @@ export const Canvas = (props: Props) => {
   const updateFades = useCallback(() => {
     fadeTargetsRef.current.forEach((targetOpacity, model) => {
       let done = true
-      // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
-      model.traverse((child: any) => {
-        if (child.isMesh && child.material) {
+      model.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
           const current = child.material.opacity
           if (Math.abs(current - targetOpacity) > 0.01) {
             child.material.opacity += (targetOpacity - current) * FADE_SPEED * 3
@@ -66,24 +61,26 @@ export const Canvas = (props: Props) => {
   }, [])
 
   const renderScene = useCallback(() => {
-    rendererRef.current.render(sceneRef.current, cameraRef.current)
+    if (rendererRef.current && sceneRef.current && cameraRef.current) {
+      rendererRef.current.render(sceneRef.current, cameraRef.current)
+    }
   }, [])
 
   const animate = useCallback(() => {
-    controlsRef.current.update()
+    controlsRef.current?.update()
     updateFades()
     renderScene()
     frameIdRef.current = window.requestAnimationFrame(animate)
   }, [updateFades, renderScene])
 
   const handleClick = useCallback(() => {
-    controlsRef.current.autoRotate = false
+    if (controlsRef.current) controlsRef.current.autoRotate = false
   }, [])
 
   // Initialize Three.js scene (runs once on mount)
   useEffect(() => {
-    // biome-ignore lint/style/noNonNullAssertion: ref is guaranteed to be set at this point
-    const canvas = canvasRef.current!
+    const canvas = canvasRef.current
+    if (!canvas) return
     const aspectRatio = getAspectRatio(canvas)
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(40, aspectRatio, 0.1, 100)
@@ -134,8 +131,7 @@ export const Canvas = (props: Props) => {
         for (const type of upgradeTypes) {
           const isAttached = !!attached[type as keyof typeof attached]
           for (const modelName of meshMap[registry][type]) {
-            // biome-ignore lint/suspicious/noExplicitAny: Three.js GLTF scene children
-            const model = spacecraftModelRef.current.children.find((m: any) => m.name === modelName)
+            const model = spacecraftModelRef.current.children.find((m) => m.name === modelName)
             if (model) model.visible = isAttached
           }
         }
@@ -182,11 +178,13 @@ export const Canvas = (props: Props) => {
     const model = spacecraftModelRef.current
     if (!model) return
 
-    // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
-    const cloneMaterials = (part: any) => {
-      // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
-      part.traverse((child: any) => {
-        if (child.isMesh && child.material && !clonedMaterialsRef.current.has(child)) {
+    const cloneMaterials = (part: THREE.Object3D) => {
+      part.traverse((child) => {
+        if (
+          child instanceof THREE.Mesh &&
+          child.material instanceof THREE.MeshStandardMaterial &&
+          !clonedMaterialsRef.current.has(child)
+        ) {
           child.material = child.material.clone()
           child.material.transparent = true
           clonedMaterialsRef.current.add(child)
@@ -197,8 +195,7 @@ export const Canvas = (props: Props) => {
     const updateModel = (upgradeType: string, isVisible: boolean) => {
       const map = meshMap[spacecraft.spacecraftRegistry][upgradeType]
       for (const modelName of map) {
-        // biome-ignore lint/suspicious/noExplicitAny: Three.js scene children
-        const part = model.children.find((m: any) => m.name === modelName)
+        const part = model.children.find((m) => m.name === modelName)
         if (!part) continue
         cloneMaterials(part)
         if (isVisible) part.visible = true
@@ -228,13 +225,15 @@ export const Canvas = (props: Props) => {
       if (!map) return
 
       for (const modelName of map) {
-        // biome-ignore lint/suspicious/noExplicitAny: Three.js scene children
-        const part = model.children.find((m: any) => m.name === modelName)
+        const part = model.children.find((m) => m.name === modelName)
         if (!part) continue
 
-        // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
-        part.traverse((child: any) => {
-          if (child.isMesh && child.material && !clonedMaterialsRef.current.has(child)) {
+        part.traverse((child) => {
+          if (
+            child instanceof THREE.Mesh &&
+            child.material instanceof THREE.MeshStandardMaterial &&
+            !clonedMaterialsRef.current.has(child)
+          ) {
             child.material = child.material.clone()
             child.material.transparent = true
             clonedMaterialsRef.current.add(child)
@@ -243,9 +242,8 @@ export const Canvas = (props: Props) => {
 
         if (show) {
           part.visible = true
-          // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
-          part.traverse((child: any) => {
-            if (child.isMesh && child.material) {
+          part.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
               if (!originalColorsRef.current.has(child)) {
                 originalColorsRef.current.set(child, child.material.color.clone())
               }
@@ -256,9 +254,8 @@ export const Canvas = (props: Props) => {
           })
           fadeTargetsRef.current.set(part, PREVIEW_OPACITY)
         } else {
-          // biome-ignore lint/suspicious/noExplicitAny: Three.js traverse callback requires dynamic mesh access
-          part.traverse((child: any) => {
-            if (child.isMesh && child.material) {
+          part.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
               const orig = originalColorsRef.current.get(child)
               if (orig) child.material.color.copy(orig)
               if (child.material.emissive) {
