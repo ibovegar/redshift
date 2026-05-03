@@ -1,23 +1,17 @@
 import { type Components, createTheme, type PaletteOptions, type Theme } from '@mui/material/styles'
 
-// import { ThemeStyle } from '@mui/material/styles';
-
 const spacing = 4
 
-// const typography: ThemeStyle = {
-//   h1: {
-//     fontSize: '2rem'
-//   }
-// };
+const sapphire = {
+  light: '#809fff',
+  main: '#2040e0',
+  dark: '#152a8a',
+  contrastText: '#fff'
+}
 
 const palette: PaletteOptions = {
   mode: 'dark',
-  primary: {
-    light: '#ff6b60',
-    main: '#f44336', // AppBar
-    dark: '#c42115',
-    contrastText: '#fff'
-  },
+  primary: sapphire,
   secondary: {
     light: '#f4c5c2', // progress light red
     main: '#f44336', // progress red
@@ -40,12 +34,6 @@ const palette: PaletteOptions = {
     A400: '#606770',
     A700: '#81878e'
   },
-  // text: {
-  //   primary: 'rgba(0, 0, 0, 0.87)',
-  //   secondary: 'rgba(0, 0, 0, 0.54)',
-  //   disabled: 'rgba(0, 0, 0, 0.38)',
-  //   hint: 'rgba(0, 0, 0, 0.38)'
-  // },
   background: {
     paper: 'rgba(21,30,42, 0.9)', // '#16212e',
     default: '#13161f'
@@ -62,13 +50,6 @@ const palette: PaletteOptions = {
 }
 
 const components: Components<Theme> = {
-  MuiCard: {
-    styleOverrides: {
-      root: {
-        // boxShadow: 'none'
-      }
-    }
-  },
   MuiAppBar: {
     styleOverrides: {
       root: {
@@ -79,17 +60,16 @@ const components: Components<Theme> = {
   MuiButton: {
     styleOverrides: {
       root: {
-        // boxShadow: 'none',
         borderRadius: 2,
         clipPath: `polygon(
           0 0, 0 0, /* top-left */
           100% 0%, 100% 0, /* top-right */ 
           100% 100%, 100% 100%, /* bottom-right */
           10px 100%, 0% calc(100% - 10px)) /* bottom-left */`,
-        transition: 'none',
-        '&:hover': {
-          backgroundColor: 'inherit'
-        }
+        transition: 'none'
+        // '&:hover': {
+        //   backgroundColor: 'rgba(128, 159, 255, 0.25)'
+        // }
       }
     }
   },
@@ -105,23 +85,9 @@ const components: Components<Theme> = {
       paper: {
         backgroundColor: '#202b37',
         borderRadius: '2px'
-        // boxShadow: 'none'
       }
     }
   }
-
-  // MuiMenuItem: {
-  //   styleOverrides: {
-  //     root: {
-  //       '&:hover': {
-  //         backgroundColor: palette.grey![100]
-  //       },
-  //       '&.Mui-selected': {
-  //         backgroundColor: palette.grey![500]
-  //       }
-  //     }
-  //   }
-  // }
 }
 
 export const ThemeDark = createTheme({

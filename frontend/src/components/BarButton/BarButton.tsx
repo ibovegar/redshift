@@ -1,4 +1,4 @@
-import { keyframes, styled } from '@mui/material/styles'
+import { keyframes, styled, useTheme } from '@mui/material/styles'
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 
 const BAR_WIDTH = 6
@@ -16,16 +16,31 @@ function randomEasing(): string {
   return EASINGS[Math.floor(Math.random() * EASINGS.length)]
 }
 
-function generateColors(count: number): string[] {
+function hexToHue(hex: string): number {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const d = max - min
+  if (d === 0) return 0
+  let h = 0
+  if (max === r) h = ((g - b) / d) % 6
+  else if (max === g) h = (b - r) / d + 2
+  else h = (r - g) / d + 4
+  return Math.round(h * 60 + 360) % 360
+}
+
+function generateColors(count: number, baseHue: number): string[] {
   return Array.from({ length: count }, () => {
-    const hue = 0 + Math.round(Math.random() * 50 - 25)
+    const hue = baseHue + Math.round(Math.random() * 50 - 25)
     const lightness = 30 + Math.round(Math.random() * 40)
     return `hsl(${hue}, 75%, ${lightness}%)`
   })
 }
 
-function generateActiveColors(count: number): string[] {
-  return Array.from({ length: count }, () => '#f44336')
+function generateActiveColors(count: number, color: string): string[] {
+  return Array.from({ length: count }, () => color)
 }
 
 interface BarButtonProps {
@@ -88,18 +103,21 @@ const BarContainer = styled('span')({
   zIndex: 1
 })
 
-const Bar = styled('span')<{ color: string; delay: number; easing: string; animate: boolean }>(
-  ({ color, delay, easing, animate }) => ({
-    flex: 1,
-    height: '100%',
-    backgroundColor: color,
-    opacity: 0,
-    transform: 'translateY(100%)',
-    ...(animate && {
-      animation: `${barRise} 0.25s ${easing} ${delay}ms forwards`
-    })
+const Bar = styled('span')<{
+  color: string
+  delay: number
+  easing: string
+  animate: boolean
+}>(({ color, delay, easing, animate }) => ({
+  flex: 1,
+  height: '100%',
+  backgroundColor: color,
+  opacity: 0,
+  transform: 'translateY(100%)',
+  ...(animate && {
+    animation: `${barRise} 0.25s ${easing} ${delay}ms forwards`
   })
-)
+}))
 
 const StaticBar = styled('span')<{ color: string }>(({ color }) => ({
   flex: 1,
@@ -109,6 +127,7 @@ const StaticBar = styled('span')<{ color: string }>(({ color }) => ({
 
 export const BarButton = (props: BarButtonProps) => {
   const { children, active } = props
+  const theme = useTheme()
 
   const rootRef = useRef<HTMLSpanElement>(null)
   const [animKey, setAnimKey] = useState(0)
@@ -121,7 +140,8 @@ export const BarButton = (props: BarButtonProps) => {
     if (!el) return
     const width = el.offsetWidth
     const barCount = Math.max(1, Math.round(width / BAR_WIDTH))
-    const colors = generateColors(barCount)
+    const primaryHue = hexToHue(theme.palette.primary.main)
+    const colors = generateColors(barCount, primaryHue)
     const shuffled = colors.sort(() => Math.random() - 0.5)
     const randomBars = shuffled.map((color, i) => ({
       key: `${i}-${color}`,
@@ -131,9 +151,9 @@ export const BarButton = (props: BarButtonProps) => {
     }))
     setBars(randomBars)
 
-    const activeColors = generateActiveColors(barCount)
+    const activeColors = generateActiveColors(barCount, theme.palette.primary.main)
     setActiveBars(activeColors.map((color, i) => ({ key: `a${i}-${color}`, color })))
-  }, [])
+  }, [theme.palette.primary.main])
 
   const handleMouseEnter = useCallback(() => {
     setAnimate(false)
