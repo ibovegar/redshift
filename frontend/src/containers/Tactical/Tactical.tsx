@@ -1,16 +1,17 @@
-import { MissionTag } from 'components'
-import { useMissions } from 'hooks'
+// import { MissionTag } from 'components'
+// import { useMissions } from 'hooks'
 import type { Mission } from 'models'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ExpandModal } from '../../components/ExpandModal/ExpandModal'
 import { useCardExpandAnimation } from '../../hooks/useCardExpandAnimation'
 import { MissionViewer } from './MissionViewer/MissionViewer'
-import { tagPositions } from './tag-positions'
+import { TacticalBackground } from './TacticalBackground/TacticalBackground'
+// import { tagPositions } from './tag-positions'
 
 export const Tactical = () => {
-  const { data: missions } = useMissions()
+  // const { data: missions } = useMissions()
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null)
-  const originElementRef = useRef<HTMLElement | null>(null)
+  // const originElementRef = useRef<HTMLElement | null>(null)
 
   const animation = useCardExpandAnimation(() => {
     setSelectedMission(null)
@@ -32,18 +33,19 @@ export const Tactical = () => {
     }
   }, [animation.isOpen, animation.isClosing])
 
-  const handleSelectMission = useCallback(
-    (mission: Mission, element: HTMLElement) => {
-      originElementRef.current = element
-      setSelectedMission(mission)
-      animation.open(element)
-    },
-    [animation.open]
-  )
+  // const handleSelectMission = useCallback(
+  //   (_mission: Mission, element: HTMLElement) => {
+  //     originElementRef.current = element
+  //     setSelectedMission(_mission)
+  //     animation.open(element)
+  //   },
+  //   [animation.open]
+  // )
 
   return (
     <>
-      {missions.map((mission: Mission, index: number) => (
+      <TacticalBackground />
+      {/* {missions.map((mission: Mission, index: number) => (
         <MissionTag
           key={mission.id}
           mission={mission}
@@ -51,7 +53,7 @@ export const Tactical = () => {
           disabled={(animation.isOpen && !animation.isClosing) || mission.completed}
           onSelect={(element) => handleSelectMission(mission, element)}
         />
-      ))}
+      ))} */}
       {animation.isOpen && selectedMission && (
         <ExpandModal
           isClosing={animation.isClosing}
