@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { Ship } from './Ship'
 
 const ASTEROID_COUNT_FAR = 600
 const ASTEROID_COUNT_NEAR = 150
@@ -12,19 +14,49 @@ const SPREAD_Z = 1.8
 const CHUNK_COUNT = 16
 
 function createAsteroidGeometry(radius: number, seed: number): THREE.BufferGeometry {
-  const geo = new THREE.IcosahedronGeometry(radius, 2)
+  const geo = new THREE.IcosahedronGeometry(radius, 3)
   const pos = geo.attributes.position
   const rng = (s: number) => {
     s = Math.sin(s * 127.1 + 311.7) * 43758.5453
     return s - Math.floor(s)
   }
+
+  // Per-axis scale gives fundamentally different shapes: flat, elongated, or round
+  const scaleX = 0.15 + rng(seed * 1.1 + 0.1) * 2.5
+  const scaleY = 0.15 + rng(seed * 2.3 + 0.2) * 2.5
+  const scaleZ = 0.15 + rng(seed * 3.7 + 0.3) * 2.5
+
+  // Random dent/bulge directions for organic shapes
+  const dents = 4 + Math.floor(rng(seed * 5.1) * 5) // 4-8 dents per asteroid
+  const dentDirs: [number, number, number, number][] = []
+  for (let d = 0; d < dents; d++) {
+    const dx = rng(seed * 11.3 + d * 7.1) * 2 - 1
+    const dy = rng(seed * 13.7 + d * 9.3) * 2 - 1
+    const dz = rng(seed * 17.1 + d * 11.7) * 2 - 1
+    const len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1
+    const strength = (rng(seed * 19.3 + d * 3.1) - 0.5) * 0.9
+    dentDirs.push([dx / len, dy / len, dz / len, strength])
+  }
+
+  // Fine displacement for subtle surface roughness
+  const displaceStrength = 0.1 + rng(seed * 4.9 + 0.4) * 0.25
+
   for (let i = 0; i < pos.count; i++) {
     const nx = pos.getX(i) / radius
     const ny = pos.getY(i) / radius
     const nz = pos.getZ(i) / radius
-    const noise = rng(nx * 7.3 + ny * 13.1 + nz * 5.7 + seed) * 0.45 + 0.75
-    const stretch = 1.0 + (rng(seed + 0.5) - 0.5) * 0.4
-    pos.setXYZ(i, pos.getX(i) * noise * stretch, pos.getY(i) * noise, (pos.getZ(i) * noise) / stretch)
+
+    // Smooth dents/bulges based on dot product with random directions
+    let dentFactor = 1.0
+    for (const [dx, dy, dz, str] of dentDirs) {
+      const dot = nx * dx + ny * dy + nz * dz
+      const influence = Math.max(0, dot) ** 2
+      dentFactor += str * influence
+    }
+
+    const noise = 1.0 + (rng(nx * 7.3 + ny * 13.1 + nz * 5.7 + seed) - 0.5) * displaceStrength
+    const factor = noise * dentFactor
+    pos.setXYZ(i, pos.getX(i) * factor * scaleX, pos.getY(i) * factor * scaleY, pos.getZ(i) * factor * scaleZ)
   }
   geo.computeVertexNormals()
   return geo
@@ -57,7 +89,7 @@ function createAsteroidData(count: number, spreadX: number, spreadY: number, spr
     rotationSpeeds[i3 + 1] = (Math.random() - 0.5) * 0.001
     rotationSpeeds[i3 + 2] = (Math.random() - 0.5) * 0.001
 
-    scales[i] = 0.03 + Math.random() ** 4 * 7.0
+    scales[i] = 0.01 + Math.random() ** 3 * 4.0
   }
 
   return { positions, rotations, rotationSpeeds, scales }
@@ -109,6 +141,7 @@ function updateAsteroids(
 
 export const TacticalBackground = () => {
   const containerRef = useRef<HTMLDivElement>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -233,7 +266,7 @@ export const TacticalBackground = () => {
     cloudTexture.minFilter = THREE.LinearMipmapLinearFilter
     cloudTexture.magFilter = THREE.LinearFilter
     cloudTexture.anisotropy = renderer.capabilities.getMaxAnisotropy()
-    const cloudGeo = new THREE.SphereGeometry(18.6, 128, 128)
+    const cloudGeo = new THREE.SphereGeometry(18.7, 128, 128)
     const cloudMat = new THREE.ShaderMaterial({
       uniforms: {
         uSunDir: { value: sunDirection },
@@ -258,7 +291,7 @@ export const TacticalBackground = () => {
           cloud = smoothstep(0.15, 0.65, cloud);
           float light = dot(vNormal, uSunDir);
           light = smoothstep(0.08, 0.38, light) * 1.35;
-          vec3 color = vec3(0.9, 0.55, 0.35) * cloud * light;
+          vec3 color = vec3(0.95, 0.9, 0.85) * cloud * light;
           gl_FragColor = vec4(color, cloud * light);
         }
       `,
@@ -364,15 +397,15 @@ export const TacticalBackground = () => {
     scene.add(sunGlow)
 
     // Lighting for asteroids
-    const asteroidLight = new THREE.DirectionalLight(0xffffff, 4)
+    const asteroidLight = new THREE.DirectionalLight(0xffffff, 7)
     asteroidLight.position.set(12, 4, -10)
     scene.add(asteroidLight)
 
-    const asteroidFill = new THREE.DirectionalLight(0x667799, 0.5)
+    const asteroidFill = new THREE.DirectionalLight(0x667799, 1.5)
     asteroidFill.position.set(-10, -2, 5)
     scene.add(asteroidFill)
 
-    const asteroidAmbient = new THREE.AmbientLight(0x445566, 0.3)
+    const asteroidAmbient = new THREE.AmbientLight(0x445566, 0.8)
     scene.add(asteroidAmbient)
 
     // Asteroid chunk textures
@@ -388,18 +421,18 @@ export const TacticalBackground = () => {
       (tex) =>
         new THREE.MeshStandardMaterial({
           map: tex,
-          color: 0xffffff,
-          roughness: 0.8,
-          metalness: 0.2
+          color: 0xaaccff,
+          roughness: 0.7,
+          metalness: 0.05
         })
     )
     const nearAsteroidMats = asteroidTextures.map(
       (tex) =>
         new THREE.MeshStandardMaterial({
           map: tex,
-          color: 0xffffff,
-          roughness: 0.75,
-          metalness: 0.25
+          color: 0xaaccff,
+          roughness: 0.65,
+          metalness: 0.05
         })
     )
 
@@ -423,7 +456,7 @@ export const TacticalBackground = () => {
     })
     const farData = createAsteroidData(ASTEROID_COUNT_FAR, SPREAD_X, SPREAD_Y * 0.5, SPREAD_Z)
     for (let i = 0; i < ASTEROID_COUNT_FAR; i++) {
-      farData.positions[i * 3 + 1] += 0.1
+      farData.positions[i * 3 + 1] -= 0.2
     }
     scene.add(farGroup)
 
@@ -437,7 +470,7 @@ export const TacticalBackground = () => {
     })
     const nearData = createAsteroidData(ASTEROID_COUNT_NEAR, SPREAD_X, SPREAD_Y * 0.45, 0.9)
     for (let i = 0; i < ASTEROID_COUNT_NEAR; i++) {
-      nearData.positions[i * 3 + 1] -= 0.2
+      nearData.positions[i * 3 + 1] -= 0.5
       nearData.positions[i * 3 + 2] += 0.6
       nearData.scales[i] *= 1.4
     }
@@ -450,6 +483,20 @@ export const TacticalBackground = () => {
     // Set initial instance matrices
     updateAsteroids(farData, farMeshes, farAssignments, farCounters, 0, SPREAD_X, dummy, -1)
     updateAsteroids(nearData, nearMeshes, nearAssignments, nearCounters, 0, SPREAD_X, dummy, -1)
+
+    // --- Ships ---
+    const gltfLoader = new GLTFLoader()
+    const ship = new Ship({
+      modelPath: '/models/tellrx5.glb',
+      name: 'TELLUS RX 5',
+      position: [1.2, 0.25, -3.5],
+      rotation: [0.2, -0.6, 0.12],
+      scale: 0.012,
+      camOffset: 0.4,
+      ringTilt: [0.7, -0.4, 0.2]
+    })
+    ship.addToScene(scene)
+    ship.load(gltfLoader)
 
     // --- God Rays setup ---
     const occlusionScene = new THREE.Scene()
@@ -598,7 +645,7 @@ export const TacticalBackground = () => {
     const sunScreenHelper = new THREE.Vector3()
 
     // Hover raycasting
-    // const raycaster = new THREE.Raycaster()
+    const raycaster = new THREE.Raycaster()
     const mouse = new THREE.Vector2()
     // let hoverTarget = 0
     // let hoverCurrent = 0
@@ -611,17 +658,84 @@ export const TacticalBackground = () => {
     let panTargetX = 0
     let panTargetY = 0
     const PAN_AMOUNT = 0.3
+    let isDragging = false
+    let prevDragX = 0
+    let prevDragY = 0
+    let planetVelX = 0
+    let planetVelY = 0
+    let planetRotX = 0
+    let planetRotY = 0
+    const ROTATE_SPEED = 0.0015
+    const DAMPING_FACTOR = 0.04
+
+    // Ship zoom state
+    let zoomProgress = 0
+    let t = 0
+    const ZOOM_SPEED = 0.01
+    const defaultCamZ = 5
+
+    const handleMouseDown = (e: MouseEvent) => {
+      isDragging = true
+      prevDragX = e.clientX
+      prevDragY = e.clientY
+      planetVelX = 0
+      planetVelY = 0
+    }
+    const handleMouseUp = () => {
+      isDragging = false
+    }
+    const handleClick = (e: MouseEvent) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
+      raycaster.setFromCamera(mouse, camera)
+      if (ship.raycast(raycaster)) {
+        ship.toggleZoom()
+        return
+      }
+      if (ship.isZoomed) {
+        ship.zoomOut()
+      }
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && ship.isZoomed) {
+        ship.zoomOut()
+      }
+    }
     const handleMouseMove = (e: MouseEvent) => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
-      panTargetX = mouse.x * PAN_AMOUNT
-      panTargetY = mouse.y * PAN_AMOUNT
-      // raycaster.setFromCamera(mouse, camera)
-      // const planetHits = raycaster.intersectObject(planet)
-      // hoverTarget = planetHits.length > 0 ? 1 : 0
-      // const asteroidHits = raycaster.intersectObjects([...farMeshes, ...nearMeshes])
-      // asteroidHoverTarget = asteroidHits.length > 0 ? 1 : 0
+      if (!ship.isZoomed) {
+        panTargetX = mouse.x * PAN_AMOUNT
+        panTargetY = mouse.y * PAN_AMOUNT
+      }
+      raycaster.setFromCamera(mouse, camera)
+      let cursor = 'default'
+      if (ship.raycast(raycaster)) {
+        cursor = 'pointer'
+        ship.hoverTarget = 1
+      } else {
+        ship.hoverTarget = 0
+      }
+      if (cursor === 'default') {
+        const hits = raycaster.intersectObject(planet)
+        if (hits.length > 0) cursor = 'pointer'
+      }
+      if (container) container.style.cursor = cursor
+      if (isDragging && !ship.isZoomed) {
+        const dx = (e.clientX - prevDragX) * ROTATE_SPEED
+        const dy = (e.clientY - prevDragY) * ROTATE_SPEED
+        planetVelY = dx
+        planetVelX = dy
+        planetRotY += dx
+        planetRotX += dy
+        prevDragX = e.clientX
+        prevDragY = e.clientY
+      }
     }
+    window.addEventListener('mousedown', handleMouseDown)
+    window.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('click', handleClick)
+    window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('mousemove', handleMouseMove)
 
     // Animation loop
@@ -631,10 +745,25 @@ export const TacticalBackground = () => {
     const animate = () => {
       const dt = clock.getDelta()
       elapsed += dt
+      // Zoom in: fast ease-out. Zoom out: ease start and end
+      if (ship.isZoomed) {
+        zoomProgress = Math.min(1, zoomProgress + ZOOM_SPEED)
+        t = 1 - Math.pow(1 - zoomProgress, 9)
+      } else {
+        zoomProgress = Math.max(0, zoomProgress - ZOOM_SPEED * 2.5 * Math.max(0.3, zoomProgress))
+        const p = 1 - zoomProgress
+        t = 1 - (6 * Math.pow(p, 5) - 15 * Math.pow(p, 4) + 10 * Math.pow(p, 3))
+      }
+
       panX += (panTargetX - panX) * 0.03
       panY += (panTargetY - panY) * 0.03
-      camera.position.x = panX
-      camera.position.y = panY
+      const baseX = panX
+      const baseY = panY
+      const baseZ = defaultCamZ
+      const camTarget = ship.getCamTarget()
+      camera.position.x = baseX + (camTarget.x - baseX) * t
+      camera.position.y = baseY + (camTarget.y - baseY) * t
+      camera.position.z = baseZ + (camTarget.z - baseZ) * t
 
       // Reduce apparent pan on asteroids and sun by partially following the camera
       farGroup.position.x = panX * 0.6
@@ -653,12 +782,37 @@ export const TacticalBackground = () => {
       // asteroidHoverCurrent += (asteroidHoverTarget - asteroidHoverCurrent) * 0.08
       // farAsteroidMats.forEach((m) => m.emissive.lerpColors(blackEmissive, blueEmissive, asteroidHoverCurrent))
       // nearAsteroidMats.forEach((m) => m.emissive.lerpColors(blackEmissive, blueEmissive, asteroidHoverCurrent))
-      planet.rotation.y -= 0.00008
-      clouds.rotation.y -= 0.00012
+      planetRotY += 0.00005
+      if (!isDragging) {
+        planetVelX *= 1 - DAMPING_FACTOR
+        planetVelY *= 1 - DAMPING_FACTOR
+        planetRotX += planetVelX
+        planetRotY += planetVelY
+      }
+      planet.rotation.x = 0.3 + planetRotX
+      planet.rotation.y = planetRotY
+      clouds.rotation.x = 0.3 + planetRotX
+      clouds.rotation.y = planetRotY * 1.15 + elapsed * 0.003
       sunGlowMat.uniforms.uTime.value = elapsed
 
       updateAsteroids(farData, farMeshes, farAssignments, farCounters, FAR_SPEED, SPREAD_X, dummy, -1)
       updateAsteroids(nearData, nearMeshes, nearAssignments, nearCounters, NEAR_SPEED, SPREAD_X, dummy, -1)
+
+      // Ship update
+      ship.update(elapsed, panX, panY, t)
+
+      // Position tooltip above ship
+      if (tooltipRef.current) {
+        const showTooltip = ship.hoverCurrent > 0.1 && !ship.isZoomed
+        tooltipRef.current.style.opacity = showTooltip ? '1' : '0'
+        if (showTooltip) {
+          const screenPos = ship.getScreenPosition(camera)
+          if (screenPos) {
+            tooltipRef.current.style.left = `${screenPos.x}px`
+            tooltipRef.current.style.top = `${screenPos.y - 100}px`
+          }
+        }
+      }
 
       // Sun screen position for god rays & lens flare (offset by pan so sun stays static)
       sunScreenHelper.set(sunPos.x + panX, sunPos.y + panY, sunPos.z).project(camera)
@@ -702,6 +856,10 @@ export const TacticalBackground = () => {
     return () => {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mousedown', handleMouseDown)
+      window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('click', handleClick)
+      window.removeEventListener('keydown', handleKeyDown)
       cancelAnimationFrame(frameId)
       container.removeChild(renderer.domElement)
       renderer.dispose()
@@ -742,21 +900,60 @@ export const TacticalBackground = () => {
       godRayMat.dispose()
       lensFlareGeo.dispose()
       lensFlareMat.dispose()
+      ship.dispose()
     }
   }, [])
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 0,
-        pointerEvents: 'auto'
-      }}
-    />
+    <>
+      <div
+        ref={containerRef}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 0,
+          pointerEvents: 'auto'
+        }}
+      />
+      <div
+        ref={tooltipRef}
+        style={{
+          position: 'fixed',
+          opacity: 0,
+          pointerEvents: 'none',
+          transform: 'translateX(-50%)',
+          transition: 'opacity 0.15s',
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
+        <div
+          style={{
+            background: '#2040e0',
+            color: '#ffffff',
+            padding: '4px 10px',
+            borderRadius: '2px',
+            fontSize: '12px',
+            fontFamily: 'monospace',
+            letterSpacing: '1px',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          TELLUS RX 5
+        </div>
+        <div
+          style={{
+            width: '2px',
+            height: '60px',
+            background: 'linear-gradient(to bottom, #2040e0, rgba(32, 64, 224, 0))'
+          }}
+        />
+      </div>
+    </>
   )
 }
