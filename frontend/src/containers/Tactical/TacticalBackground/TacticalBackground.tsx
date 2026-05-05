@@ -142,6 +142,8 @@ function updateAsteroids(
 export const TacticalBackground = () => {
   const containerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const travelLineRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -498,6 +500,33 @@ export const TacticalBackground = () => {
     ship.addToScene(scene)
     ship.load(gltfLoader)
 
+    // --- Travel mode line (ship to cursor) ---
+    const travelLineMat = new THREE.LineDashedMaterial({
+      color: 0x66ccff,
+      dashSize: 0.04,
+      gapSize: 0.03,
+      transparent: true,
+      opacity: 0.85
+    })
+    const travelLineGeo = new THREE.BufferGeometry()
+    travelLineGeo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0], 3))
+    const travelLine = new THREE.Line(travelLineGeo, travelLineMat)
+    travelLine.visible = false
+    scene.add(travelLine)
+
+    // --- Asteroid hover highlight ---
+    const highlightMat = new THREE.MeshBasicMaterial({
+      color: 0x66ccff,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    })
+    const highlightMesh = new THREE.Mesh(new THREE.BufferGeometry(), highlightMat)
+    highlightMesh.visible = false
+    highlightMesh.matrixAutoUpdate = false
+    scene.add(highlightMesh)
+
     // --- God Rays setup ---
     const occlusionScene = new THREE.Scene()
     occlusionScene.background = new THREE.Color(0x000000)
@@ -674,6 +703,18 @@ export const TacticalBackground = () => {
     const ZOOM_SPEED = 0.01
     const defaultCamZ = 5
 
+    // Travel mode state
+    let travelMode = false
+    const travelCursorWorld = new THREE.Vector3()
+    let travelCursorScreen = { x: 0, y: 0 }
+    let lastMouseScreen = { x: 0, y: 0 }
+    let highlightedAsteroidIdx = -1
+    let highlightedMesh: THREE.InstancedMesh | null = null
+    const instanceMatrix = new THREE.Matrix4()
+    let shipTravelTarget: THREE.Vector3 | null = null
+    let shipTravelStart: THREE.Vector3 | null = null
+    let shipTravelProgress = 0
+
     const handleMouseDown = (e: MouseEvent) => {
       isDragging = true
       prevDragX = e.clientX
@@ -685,43 +726,125 @@ export const TacticalBackground = () => {
       isDragging = false
     }
     const handleClick = (e: MouseEvent) => {
+      // Check if click is on menu
+      if (menuRef.current?.contains(e.target as Node)) return
+
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
       raycaster.setFromCamera(mouse, camera)
+
+      // Travel mode: click on asteroid to move ship there
+      if (travelMode) {
+        if (highlightedAsteroidIdx >= 0 && highlightedMesh) {
+          highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
+          const pos = new THREE.Vector3()
+          pos.setFromMatrixPosition(instanceMatrix)
+          shipTravelTarget = pos
+          shipTravelStart = new THREE.Vector3(...ship.config.position)
+          shipTravelProgress = 0
+          travelMode = false
+          travelLine.visible = false
+          if (travelLineRef.current) travelLineRef.current.style.display = 'none'
+          highlightedAsteroidIdx = -1
+          highlightedMesh = null
+        }
+        return
+      }
+
       if (ship.raycast(raycaster)) {
         ship.toggleZoom()
+        if (ship.isZoomed && menuRef.current) {
+          menuRef.current.style.opacity = '1'
+          menuRef.current.style.pointerEvents = 'auto'
+        } else if (menuRef.current) {
+          menuRef.current.style.opacity = '0'
+          menuRef.current.style.pointerEvents = 'none'
+        }
         return
       }
       if (ship.isZoomed) {
         ship.zoomOut()
+        if (menuRef.current) {
+          menuRef.current.style.opacity = '0'
+          menuRef.current.style.pointerEvents = 'none'
+        }
       }
     }
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && ship.isZoomed) {
-        ship.zoomOut()
+      if (e.key === 'Escape') {
+        if (travelMode) {
+          travelMode = false
+          travelLine.visible = false
+          if (travelLineRef.current) travelLineRef.current.style.display = 'none'
+          highlightedAsteroidIdx = -1
+          highlightedMesh = null
+        } else if (ship.isZoomed) {
+          ship.zoomOut()
+          if (menuRef.current) {
+            menuRef.current.style.opacity = '0'
+            menuRef.current.style.pointerEvents = 'none'
+          }
+        }
       }
     }
     const handleMouseMove = (e: MouseEvent) => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
+      lastMouseScreen = { x: e.clientX, y: e.clientY }
       if (!ship.isZoomed) {
         panTargetX = mouse.x * PAN_AMOUNT
         panTargetY = mouse.y * PAN_AMOUNT
       }
       raycaster.setFromCamera(mouse, camera)
       let cursor = 'default'
-      if (ship.raycast(raycaster)) {
-        cursor = 'pointer'
-        ship.hoverTarget = 1
+
+      if (travelMode) {
+        cursor = 'crosshair'
+        // Update cursor world position for travel line
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 3.5)
+        raycaster.ray.intersectPlane(plane, travelCursorWorld)
+
+        // Check asteroid hover
+        highlightedAsteroidIdx = -1
+        highlightedMesh = null
+        for (const mesh of nearMeshes) {
+          const hits = raycaster.intersectObject(mesh)
+          if (hits.length > 0) {
+            highlightedAsteroidIdx = hits[0].instanceId ?? -1
+            highlightedMesh = mesh
+            cursor = 'pointer'
+            break
+          }
+        }
+        if (highlightedAsteroidIdx < 0) {
+          for (const mesh of farMeshes) {
+            const hits = raycaster.intersectObject(mesh)
+            if (hits.length > 0) {
+              highlightedAsteroidIdx = hits[0].instanceId ?? -1
+              highlightedMesh = mesh
+              cursor = 'pointer'
+              break
+            }
+          }
+        }
+
+        // Store cursor screen position for travel line (drawn in animation loop)
+        travelCursorScreen = { x: e.clientX, y: e.clientY }
       } else {
-        ship.hoverTarget = 0
+        if (ship.raycast(raycaster)) {
+          cursor = 'pointer'
+          ship.hoverTarget = 1
+        } else {
+          ship.hoverTarget = 0
+        }
+        if (cursor === 'default') {
+          const hits = raycaster.intersectObject(planet)
+          if (hits.length > 0) cursor = 'pointer'
+        }
       }
-      if (cursor === 'default') {
-        const hits = raycaster.intersectObject(planet)
-        if (hits.length > 0) cursor = 'pointer'
-      }
+
       if (container) container.style.cursor = cursor
-      if (isDragging && !ship.isZoomed) {
+      if (isDragging && !ship.isZoomed && !travelMode) {
         const dx = (e.clientX - prevDragX) * ROTATE_SPEED
         const dy = (e.clientY - prevDragY) * ROTATE_SPEED
         planetVelY = dx
@@ -798,18 +921,106 @@ export const TacticalBackground = () => {
       updateAsteroids(farData, farMeshes, farAssignments, farCounters, FAR_SPEED, SPREAD_X, dummy, -1)
       updateAsteroids(nearData, nearMeshes, nearAssignments, nearCounters, NEAR_SPEED, SPREAD_X, dummy, -1)
 
+      // Asteroid hover highlight
+      if (travelMode && highlightedAsteroidIdx >= 0 && highlightedMesh) {
+        highlightMesh.geometry = highlightedMesh.geometry
+        highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
+        instanceMatrix.scale(new THREE.Vector3(1.3, 1.3, 1.3))
+        instanceMatrix.premultiply(highlightedMesh.matrixWorld)
+        highlightMesh.matrix.copy(instanceMatrix)
+        highlightMesh.visible = true
+      } else {
+        highlightMesh.visible = false
+      }
+
       // Ship update
       ship.update(elapsed, panX, panY, t)
 
+      // Ship travel animation
+      if (shipTravelTarget && shipTravelStart && ship.model) {
+        shipTravelProgress = Math.min(1, shipTravelProgress + 0.005)
+        const easeT = 1 - Math.pow(1 - shipTravelProgress, 3)
+        ship.config.position[0] = shipTravelStart.x + (shipTravelTarget.x - shipTravelStart.x) * easeT
+        ship.config.position[1] = shipTravelStart.y + (shipTravelTarget.y - shipTravelStart.y) * easeT
+        ship.config.position[2] = shipTravelStart.z + (shipTravelTarget.z - shipTravelStart.z) * easeT
+        if (shipTravelProgress >= 1) {
+          ship.config.position = [shipTravelTarget.x, shipTravelTarget.y, shipTravelTarget.z]
+          shipTravelTarget = null
+          shipTravelStart = null
+        }
+      }
+
       // Position tooltip above ship
       if (tooltipRef.current) {
-        const showTooltip = ship.hoverCurrent > 0.1 && !ship.isZoomed
+        const showTooltip = ship.hoverCurrent > 0.1 && !ship.isZoomed && !travelMode
         tooltipRef.current.style.opacity = showTooltip ? '1' : '0'
         if (showTooltip) {
           const screenPos = ship.getScreenPosition(camera)
           if (screenPos) {
             tooltipRef.current.style.left = `${screenPos.x}px`
             tooltipRef.current.style.top = `${screenPos.y - 100}px`
+          }
+        }
+      }
+
+      // Position menu when zoomed
+      if (menuRef.current && ship.isZoomed) {
+        const screenPos = ship.getScreenPosition(camera)
+        if (screenPos) {
+          menuRef.current.style.left = `${screenPos.x + 80}px`
+          menuRef.current.style.top = `${screenPos.y - 40}px`
+        }
+      }
+
+      // Draw animated travel line
+      if (travelMode && travelLineRef.current) {
+        const canvas = travelLineRef.current
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          const dpr = window.devicePixelRatio || 1
+          canvas.width = window.innerWidth * dpr
+          canvas.height = window.innerHeight * dpr
+          ctx.scale(dpr, dpr)
+          ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
+          const shipScreen = ship.getScreenPosition(camera)
+          if (shipScreen) {
+            const dashAnim = -(elapsed * 50) % 11
+            const segments = 24
+            const dx = travelCursorScreen.x - shipScreen.x
+            const dy = travelCursorScreen.y - shipScreen.y
+            const totalLen = Math.sqrt(dx * dx + dy * dy)
+            const dashPattern = [4, 7]
+
+            ctx.lineCap = 'round'
+            ctx.setLineDash(dashPattern)
+
+            for (let i = 0; i < segments; i++) {
+              const t0 = i / segments
+              const t1 = (i + 1) / segments
+              const x0 = shipScreen.x + dx * t0
+              const y0 = shipScreen.y + dy * t0
+              const x1 = shipScreen.x + dx * t1
+              const y1 = shipScreen.y + dy * t1
+              const segOffset = dashAnim - t0 * totalLen
+              const scale = 0.03 + t0 * t0 * 0.97
+
+              // Glow
+              ctx.lineDashOffset = segOffset
+              ctx.strokeStyle = 'rgba(68, 136, 255, 0.35)'
+              ctx.lineWidth = 18 * scale
+              ctx.beginPath()
+              ctx.moveTo(x0, y0)
+              ctx.lineTo(x1, y1)
+              ctx.stroke()
+
+              // Core
+              ctx.strokeStyle = '#66ccff'
+              ctx.lineWidth = 5 * scale
+              ctx.beginPath()
+              ctx.moveTo(x0, y0)
+              ctx.lineTo(x1, y1)
+              ctx.stroke()
+            }
           }
         }
       }
@@ -853,7 +1064,24 @@ export const TacticalBackground = () => {
     }
     window.addEventListener('resize', handleResize)
 
+    // Travel button handler
+    const handleTravelClick = () => {
+      travelMode = true
+      travelCursorScreen = { x: lastMouseScreen.x, y: lastMouseScreen.y }
+      ship.zoomOut()
+      if (menuRef.current) {
+        menuRef.current.style.opacity = '0'
+        menuRef.current.style.pointerEvents = 'none'
+      }
+      if (travelLineRef.current) {
+        travelLineRef.current.style.display = 'block'
+      }
+    }
+    const travelBtn = document.getElementById('travel-btn')
+    if (travelBtn) travelBtn.addEventListener('click', handleTravelClick)
+
     return () => {
+      if (travelBtn) travelBtn.removeEventListener('click', handleTravelClick)
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mousedown', handleMouseDown)
@@ -900,6 +1128,9 @@ export const TacticalBackground = () => {
       godRayMat.dispose()
       lensFlareGeo.dispose()
       lensFlareMat.dispose()
+      travelLineGeo.dispose()
+      travelLineMat.dispose()
+      highlightMat.dispose()
       ship.dispose()
     }
   }, [])
@@ -954,6 +1185,54 @@ export const TacticalBackground = () => {
           }}
         />
       </div>
+      <div
+        ref={menuRef}
+        style={{
+          position: 'fixed',
+          opacity: 0,
+          pointerEvents: 'none',
+          transition: 'opacity 0.2s',
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px'
+        }}
+      >
+        {['Travel', 'Dock', 'Scan'].map((label) => (
+          <button
+            type="button"
+            key={label}
+            id={label === 'Travel' ? 'travel-btn' : undefined}
+            style={{
+              background: 'rgba(0, 10, 30, 0.85)',
+              color: '#ffffff',
+              border: '1px solid rgba(100, 200, 255, 0.3)',
+              borderRadius: '2px',
+              padding: '6px 16px',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              letterSpacing: '1px',
+              cursor: 'pointer',
+              textTransform: 'uppercase'
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <canvas
+        ref={travelLineRef}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 5,
+          display: 'none'
+        }}
+      />
     </>
   )
 }
