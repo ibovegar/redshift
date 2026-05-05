@@ -174,20 +174,23 @@ export class Ship {
     this.hoverCurrent = 0
   }
 
-  update(elapsed: number, panX: number, panY: number, zoomT: number) {
+  update(elapsed: number, panX: number, panY: number, zoomT: number, panScale = 0.85) {
+    this.camTarget.set(this.config.position[0], this.config.position[1] + 0.01, this.config.position[2] + 0.4)
     const bobScale = 1 - zoomT * 0.92
-    const shipX = this.config.position[0] + panX * 0.85 * (1 - zoomT)
-    const shipY = this.config.position[1] + panY * 0.85 * (1 - zoomT)
+    const shipX = this.config.position[0] + panX * panScale * (1 - zoomT)
+    const shipY = this.config.position[1] + panY * panScale * (1 - zoomT)
     const bobY = Math.sin(elapsed * 0.4) * 0.03 * bobScale
 
     if (this.model) {
       this.model.position.x = shipX
       this.model.position.y = shipY + bobY
+      this.model.position.z = this.config.position[2]
       this.model.rotation.z = this.config.rotation[2] + Math.sin(elapsed * 0.25) * 0.01 * bobScale
     }
 
     this.ringGroup.position.x = shipX
     this.ringGroup.position.y = shipY + bobY
+    this.ringGroup.position.z = this.config.position[2]
     this.blockRingGroup.rotation.y = elapsed * 0.2
     const blockScale = Math.max(0.3, 1 - zoomT * 0.7)
     this.blockRingGroup.scale.set(1, blockScale, 1)

@@ -1,3 +1,5 @@
+import { Button } from '@mui/material'
+import { BarButton } from 'components/BarButton/BarButton'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
@@ -143,6 +145,7 @@ export const TacticalBackground = () => {
   const containerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const menuLineRef = useRef<SVGLineElement>(null)
   const travelLineRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -714,6 +717,9 @@ export const TacticalBackground = () => {
     let shipTravelTarget: THREE.Vector3 | null = null
     let shipTravelStart: THREE.Vector3 | null = null
     let shipTravelProgress = 0
+    let dockedMesh: THREE.InstancedMesh | null = null
+    let dockedInstanceId = -1
+    let dockOffset = new THREE.Vector3()
 
     const handleMouseDown = (e: MouseEvent) => {
       isDragging = true
@@ -737,14 +743,19 @@ export const TacticalBackground = () => {
       if (travelMode) {
         if (highlightedAsteroidIdx >= 0 && highlightedMesh) {
           highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
+          instanceMatrix.premultiply(highlightedMesh.matrixWorld)
           const pos = new THREE.Vector3()
           pos.setFromMatrixPosition(instanceMatrix)
-          shipTravelTarget = pos
+          // Offset so ship stops beside the asteroid
+          const dir = new THREE.Vector3().subVectors(pos, new THREE.Vector3(...ship.config.position)).normalize()
+          dockOffset = dir.multiplyScalar(-0.12)
+          shipTravelTarget = pos.clone().add(dockOffset)
           shipTravelStart = new THREE.Vector3(...ship.config.position)
           shipTravelProgress = 0
+          dockedMesh = highlightedMesh
+          dockedInstanceId = highlightedAsteroidIdx
           travelMode = false
-          travelLine.visible = false
-          if (travelLineRef.current) travelLineRef.current.style.display = 'none'
+          ship.ringGroup.visible = false
           highlightedAsteroidIdx = -1
           highlightedMesh = null
         }
@@ -753,10 +764,7 @@ export const TacticalBackground = () => {
 
       if (ship.raycast(raycaster)) {
         ship.toggleZoom()
-        if (ship.isZoomed && menuRef.current) {
-          menuRef.current.style.opacity = '1'
-          menuRef.current.style.pointerEvents = 'auto'
-        } else if (menuRef.current) {
+        if (!ship.isZoomed && menuRef.current) {
           menuRef.current.style.opacity = '0'
           menuRef.current.style.pointerEvents = 'none'
         }
@@ -871,11 +879,11 @@ export const TacticalBackground = () => {
       // Zoom in: fast ease-out. Zoom out: ease start and end
       if (ship.isZoomed) {
         zoomProgress = Math.min(1, zoomProgress + ZOOM_SPEED)
-        t = 1 - Math.pow(1 - zoomProgress, 9)
+        t = 1 - (1 - zoomProgress) ** 9
       } else {
         zoomProgress = Math.max(0, zoomProgress - ZOOM_SPEED * 2.5 * Math.max(0.3, zoomProgress))
         const p = 1 - zoomProgress
-        t = 1 - (6 * Math.pow(p, 5) - 15 * Math.pow(p, 4) + 10 * Math.pow(p, 3))
+        t = 1 - (6 * p ** 5 - 15 * p ** 4 + 10 * p ** 3)
       }
 
       panX += (panTargetX - panX) * 0.03
@@ -918,8 +926,26 @@ export const TacticalBackground = () => {
       clouds.rotation.y = planetRotY * 1.15 + elapsed * 0.003
       sunGlowMat.uniforms.uTime.value = elapsed
 
-      updateAsteroids(farData, farMeshes, farAssignments, farCounters, FAR_SPEED, SPREAD_X, dummy, -1)
-      updateAsteroids(nearData, nearMeshes, nearAssignments, nearCounters, NEAR_SPEED, SPREAD_X, dummy, -1)
+      updateAsteroids(
+        farData,
+        farMeshes,
+        farAssignments,
+        farCounters,
+        !shipTravelTarget && !dockedMesh ? FAR_SPEED : 0,
+        SPREAD_X,
+        dummy,
+        -1
+      )
+      updateAsteroids(
+        nearData,
+        nearMeshes,
+        nearAssignments,
+        nearCounters,
+        !shipTravelTarget && !dockedMesh ? NEAR_SPEED : 0,
+        SPREAD_X,
+        dummy,
+        -1
+      )
 
       // Asteroid hover highlight
       if (travelMode && highlightedAsteroidIdx >= 0 && highlightedMesh) {
@@ -934,20 +960,52 @@ export const TacticalBackground = () => {
       }
 
       // Ship update
-      ship.update(elapsed, panX, panY, t)
+      const shipPanScale = dockedMesh ? 0 : 0.85
+      ship.update(elapsed, panX, panY, t, shipPanScale)
 
       // Ship travel animation
       if (shipTravelTarget && shipTravelStart && ship.model) {
-        shipTravelProgress = Math.min(1, shipTravelProgress + 0.005)
-        const easeT = 1 - Math.pow(1 - shipTravelProgress, 3)
+        // Update travel target to follow moving asteroid
+        if (dockedMesh && dockedInstanceId >= 0) {
+          dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
+          instanceMatrix.premultiply(dockedMesh.matrixWorld)
+          const asteroidPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
+          shipTravelTarget.copy(asteroidPos).add(dockOffset)
+        }
+        shipTravelProgress = Math.min(1, shipTravelProgress + 0.0004)
+        const easeT = 1 - (1 - shipTravelProgress) ** 3
         ship.config.position[0] = shipTravelStart.x + (shipTravelTarget.x - shipTravelStart.x) * easeT
         ship.config.position[1] = shipTravelStart.y + (shipTravelTarget.y - shipTravelStart.y) * easeT
         ship.config.position[2] = shipTravelStart.z + (shipTravelTarget.z - shipTravelStart.z) * easeT
+
+        // Face travel direction
+        const dirX = shipTravelTarget.x - shipTravelStart.x
+        const dirZ = shipTravelTarget.z - shipTravelStart.z
+        const targetYaw = Math.atan2(dirX, dirZ)
+        const turnT = Math.min(1, shipTravelProgress * 5)
+        ship.model.rotation.x = ship.config.rotation[0]
+        ship.model.rotation.y = ship.config.rotation[1] + (targetYaw - ship.config.rotation[1]) * turnT
+
         if (shipTravelProgress >= 1) {
           ship.config.position = [shipTravelTarget.x, shipTravelTarget.y, shipTravelTarget.z]
+          ship.model.rotation.set(...ship.config.rotation)
           shipTravelTarget = null
           shipTravelStart = null
+          ship.ringGroup.visible = true
+          if (travelLineRef.current) travelLineRef.current.style.display = 'none'
+          if (dockedMesh && menuRef.current) {
+            menuRef.current.style.opacity = '1'
+            menuRef.current.style.pointerEvents = 'auto'
+          }
         }
+      } else if (dockedMesh && dockedInstanceId >= 0) {
+        // After arrival, keep following the asteroid
+        dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
+        instanceMatrix.premultiply(dockedMesh.matrixWorld)
+        const pos = new THREE.Vector3()
+        pos.setFromMatrixPosition(instanceMatrix)
+        pos.add(dockOffset)
+        ship.config.position = [pos.x, pos.y, pos.z]
       }
 
       // Position tooltip above ship
@@ -963,17 +1021,35 @@ export const TacticalBackground = () => {
         }
       }
 
-      // Position menu when zoomed
-      if (menuRef.current && ship.isZoomed) {
+      // Position menu when zoomed or docked
+      if (menuRef.current && (ship.isZoomed || dockedMesh)) {
         const screenPos = ship.getScreenPosition(camera)
         if (screenPos) {
-          menuRef.current.style.left = `${screenPos.x + 80}px`
-          menuRef.current.style.top = `${screenPos.y - 40}px`
+          const offset = ship.isZoomed ? 420 : 140
+          const menuX = screenPos.x + offset
+          const menuY = screenPos.y - 100
+          menuRef.current.style.left = `${menuX}px`
+          menuRef.current.style.top = `${menuY}px`
+          menuRef.current.style.transform = 'translateY(-50%)'
+          if (ship.isZoomed) {
+            const menuOpacity = Math.min(1, Math.max(0, (t - 0.6) / 0.4))
+            menuRef.current.style.opacity = String(menuOpacity)
+            menuRef.current.style.pointerEvents = menuOpacity > 0.5 ? 'auto' : 'none'
+          }
+          if (menuLineRef.current) {
+            menuLineRef.current.setAttribute('x1', String(screenPos.x))
+            menuLineRef.current.setAttribute('y1', String(screenPos.y))
+            menuLineRef.current.setAttribute('x2', String(menuX))
+            menuLineRef.current.setAttribute('y2', String(menuY))
+            menuLineRef.current.setAttribute('opacity', menuRef.current.style.opacity)
+          }
         }
+      } else if (menuLineRef.current) {
+        menuLineRef.current.setAttribute('opacity', '0')
       }
 
       // Draw animated travel line
-      if (travelMode && travelLineRef.current) {
+      if ((travelMode || shipTravelTarget) && travelLineRef.current) {
         const canvas = travelLineRef.current
         const ctx = canvas.getContext('2d')
         if (ctx) {
@@ -984,10 +1060,18 @@ export const TacticalBackground = () => {
           ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
           const shipScreen = ship.getScreenPosition(camera)
           if (shipScreen) {
+            // Determine line endpoint: target asteroid during travel, cursor during travel mode
+            let endX = travelCursorScreen.x
+            let endY = travelCursorScreen.y
+            if (shipTravelTarget) {
+              const targetScreen = shipTravelTarget.clone().project(camera)
+              endX = (targetScreen.x * 0.5 + 0.5) * window.innerWidth
+              endY = (-targetScreen.y * 0.5 + 0.5) * window.innerHeight
+            }
             const dashAnim = -(elapsed * 50) % 11
             const segments = 24
-            const dx = travelCursorScreen.x - shipScreen.x
-            const dy = travelCursorScreen.y - shipScreen.y
+            const dx = endX - shipScreen.x
+            const dy = endY - shipScreen.y
             const totalLen = Math.sqrt(dx * dx + dy * dy)
             const dashPattern = [4, 7]
 
@@ -1068,6 +1152,8 @@ export const TacticalBackground = () => {
     const handleTravelClick = () => {
       travelMode = true
       travelCursorScreen = { x: lastMouseScreen.x, y: lastMouseScreen.y }
+      dockedMesh = null
+      dockedInstanceId = -1
       ship.zoomOut()
       if (menuRef.current) {
         menuRef.current.style.opacity = '0'
@@ -1080,8 +1166,29 @@ export const TacticalBackground = () => {
     const travelBtn = document.getElementById('travel-btn')
     if (travelBtn) travelBtn.addEventListener('click', handleTravelClick)
 
+    // Dock button handler
+    const handleDockClick = () => {
+      dockedMesh = null
+      dockedInstanceId = -1
+      shipTravelTarget = new THREE.Vector3(1.2, 0.25, -3.5)
+      shipTravelStart = new THREE.Vector3(...ship.config.position)
+      shipTravelProgress = 0
+      ship.ringGroup.visible = false
+      ship.zoomOut()
+      if (menuRef.current) {
+        menuRef.current.style.opacity = '0'
+        menuRef.current.style.pointerEvents = 'none'
+      }
+      if (travelLineRef.current) {
+        travelLineRef.current.style.display = 'block'
+      }
+    }
+    const dockBtn = document.getElementById('dock-btn')
+    if (dockBtn) dockBtn.addEventListener('click', handleDockClick)
+
     return () => {
       if (travelBtn) travelBtn.removeEventListener('click', handleTravelClick)
+      if (dockBtn) dockBtn.removeEventListener('click', handleDockClick)
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mousedown', handleMouseDown)
@@ -1185,6 +1292,21 @@ export const TacticalBackground = () => {
           }}
         />
       </div>
+      <svg
+        role="img"
+        aria-label="Menu connector line"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 9
+        }}
+      >
+        <line ref={menuLineRef} stroke="#ffffff" strokeWidth="1" opacity="0" />
+      </svg>
       <div
         ref={menuRef}
         style={{
@@ -1195,29 +1317,39 @@ export const TacticalBackground = () => {
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
-          gap: '6px'
+          gap: '6px',
+          border: '1px dashed #ffffff',
+          padding: '20px'
         }}
       >
         {['Travel', 'Dock', 'Scan'].map((label) => (
-          <button
-            type="button"
-            key={label}
-            id={label === 'Travel' ? 'travel-btn' : undefined}
-            style={{
-              background: 'rgba(0, 10, 30, 0.85)',
-              color: '#ffffff',
-              border: '1px solid rgba(100, 200, 255, 0.3)',
-              borderRadius: '2px',
-              padding: '6px 16px',
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              letterSpacing: '1px',
-              cursor: 'pointer',
-              textTransform: 'uppercase'
-            }}
-          >
-            {label}
-          </button>
+          <BarButton key={label}>
+            <Button
+              id={label === 'Travel' ? 'travel-btn' : label === 'Dock' ? 'dock-btn' : undefined}
+              sx={{
+                px: 4,
+                backgroundColor: '#fff',
+                color: '#000',
+                position: 'relative',
+                zIndex: 2,
+                boxShadow: 'none',
+                border: 'none',
+                clipPath: 'none',
+                lineHeight: 1,
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  color: '#fff',
+                  boxShadow: 'none'
+                }
+              }}
+              color="primary"
+              variant="contained"
+              size="small"
+              disableRipple
+            >
+              {label}
+            </Button>
+          </BarButton>
         ))}
       </div>
       <canvas

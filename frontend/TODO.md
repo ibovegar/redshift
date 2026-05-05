@@ -1,4 +1,6 @@
 Feat:
+make selected asteroid when ship has arrived transparent when zoomed in
+make a game engine using state machine or something.
 Changelog
 Performace fix (use pre created 3d models for ateroids etc.)
 change font

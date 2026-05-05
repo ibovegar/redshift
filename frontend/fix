@@ -1,7 +1,0 @@
-
-> react-spacedock@0.1.0 lint C:\Users\Vegar Eeg\workspace\react-spacedock-2\frontend
-> biome check src
-
-Checked 92 files in 14ms. No fixes applied.
-Found 10 errors.
- ELIFECYCLE  Command failed with exit code 1.

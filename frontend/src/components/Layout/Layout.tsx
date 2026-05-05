@@ -2,7 +2,7 @@ import { Box, Stack } from '@mui/material'
 // import { styled } from '@mui/material/styles'
 // import backgroundImage from 'assets/images/15.jpg'
 // import React, { type ReactNode } from 'react'
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 // import { useLocation } from 'react-router'
 import { Toolbar } from './Toolbar/Toolbar'
 
