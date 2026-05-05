@@ -1030,7 +1030,9 @@ export const TacticalBackground = () => {
           const menuY = screenPos.y - 100
           menuRef.current.style.left = `${menuX}px`
           menuRef.current.style.top = `${menuY}px`
-          menuRef.current.style.transform = 'translateY(-50%)'
+          const rx = mouse.y * 10
+          const ry = -12 + mouse.x * 8
+          menuRef.current.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) skewY(2deg) translateY(-50%)`
           if (ship.isZoomed) {
             const menuOpacity = Math.min(1, Math.max(0, (t - 0.6) / 0.4))
             menuRef.current.style.opacity = String(menuOpacity)
@@ -1319,7 +1321,9 @@ export const TacticalBackground = () => {
           flexDirection: 'column',
           gap: '6px',
           border: '1px dashed #ffffff',
-          padding: '20px'
+          padding: '20px',
+          transform: 'perspective(600px) rotateY(-12deg) skewY(2deg)',
+          transformOrigin: 'left center'
         }}
       >
         {['Travel', 'Dock', 'Scan'].map((label) => (
