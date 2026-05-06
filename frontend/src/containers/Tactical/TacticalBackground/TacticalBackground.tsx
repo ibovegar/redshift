@@ -147,6 +147,7 @@ export const TacticalBackground = () => {
   const menuRef = useRef<HTMLDivElement>(null)
   const menuLineRef = useRef<SVGLineElement>(null)
   const travelLineRef = useRef<HTMLCanvasElement>(null)
+  const scanBarRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -402,15 +403,15 @@ export const TacticalBackground = () => {
     scene.add(sunGlow)
 
     // Lighting for asteroids
-    const asteroidLight = new THREE.DirectionalLight(0xffffff, 7)
+    const asteroidLight = new THREE.DirectionalLight(0xffffff, 4)
     asteroidLight.position.set(12, 4, -10)
     scene.add(asteroidLight)
 
-    const asteroidFill = new THREE.DirectionalLight(0x667799, 1.5)
+    const asteroidFill = new THREE.DirectionalLight(0x667799, 0.8)
     asteroidFill.position.set(-10, -2, 5)
     scene.add(asteroidFill)
 
-    const asteroidAmbient = new THREE.AmbientLight(0x445566, 0.8)
+    const asteroidAmbient = new THREE.AmbientLight(0x445566, 0.5)
     scene.add(asteroidAmbient)
 
     // Asteroid chunk textures
@@ -720,6 +721,10 @@ export const TacticalBackground = () => {
     let dockedMesh: THREE.InstancedMesh | null = null
     let dockedInstanceId = -1
     let dockOffset = new THREE.Vector3()
+    let scanning = false
+    let scanProgress = 0
+    let scanDuration = 0
+    let scanStartTime = 0
 
     const handleMouseDown = (e: MouseEvent) => {
       isDragging = true
@@ -967,7 +972,11 @@ export const TacticalBackground = () => {
         instanceMatrix.scale(new THREE.Vector3(1.1, 1.1, 1.1))
         instanceMatrix.premultiply(dockedMesh.matrixWorld)
         highlightMesh.matrix.copy(instanceMatrix)
-        highlightMesh.visible = true
+        if (scanning) {
+          highlightMesh.visible = Math.sin(elapsed * 20) > 0
+        } else {
+          highlightMesh.visible = true
+        }
       } else {
         highlightMesh.visible = false
       }
@@ -1084,11 +1093,40 @@ export const TacticalBackground = () => {
         if (wrapper) wrapper.style.pointerEvents = shouldDisable ? 'none' : ''
       }
       if (scanBtnEl) {
-        const shouldDisable = !dockedMesh
+        const shouldDisable = !dockedMesh || scanning
         scanBtnEl.disabled = shouldDisable
         scanBtnEl.classList.toggle('Mui-disabled', shouldDisable)
         const wrapper = scanBtnEl.closest('[data-bar-button]') as HTMLElement | null
         if (wrapper) wrapper.style.pointerEvents = shouldDisable ? 'none' : ''
+      }
+
+      // Scan progress
+      if (scanning && scanBarRef.current) {
+        const now = performance.now()
+        scanProgress = Math.min(1, (now - scanStartTime) / scanDuration)
+        scanBarRef.current.style.opacity = '1'
+
+        // Position over docked asteroid
+        if (dockedMesh && dockedInstanceId >= 0) {
+          dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
+          instanceMatrix.premultiply(dockedMesh.matrixWorld)
+          const asteroidPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
+          asteroidPos.project(camera)
+          const sx = (asteroidPos.x * 0.5 + 0.5) * window.innerWidth
+          const sy = (-asteroidPos.y * 0.5 + 0.5) * window.innerHeight
+          scanBarRef.current.style.left = `${sx}px`
+          scanBarRef.current.style.top = `${sy - 70}px`
+        }
+
+        const fill = scanBarRef.current.firstElementChild as HTMLElement | null
+        if (fill) fill.style.width = `${scanProgress * 100}%`
+
+        if (scanProgress >= 1) {
+          scanning = false
+          scanBarRef.current.style.opacity = '0'
+        }
+      } else if (scanBarRef.current) {
+        scanBarRef.current.style.opacity = '0'
       }
 
       // Draw animated travel line
@@ -1229,9 +1267,26 @@ export const TacticalBackground = () => {
     const dockBtn = document.getElementById('dock-btn')
     if (dockBtn) dockBtn.addEventListener('click', handleDockClick)
 
+    // Scan button handler
+    const handleScanClick = () => {
+      if (!dockedMesh || dockedInstanceId < 0 || scanning) return
+      dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
+      const scale = new THREE.Vector3()
+      scale.setFromMatrixScale(instanceMatrix)
+      const avgScale = (scale.x + scale.y + scale.z) / 3
+      scanDuration = 2000 + avgScale * 8000 * Math.random()
+      if (scanDuration > 10000) scanDuration = 10000
+      scanStartTime = performance.now()
+      scanProgress = 0
+      scanning = true
+    }
+    const scanBtn = document.getElementById('scan-btn')
+    if (scanBtn) scanBtn.addEventListener('click', handleScanClick)
+
     return () => {
       if (travelBtn) travelBtn.removeEventListener('click', handleTravelClick)
       if (dockBtn) dockBtn.removeEventListener('click', handleDockClick)
+      if (scanBtn) scanBtn.removeEventListener('click', handleScanClick)
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mousedown', handleMouseDown)
@@ -1332,6 +1387,32 @@ export const TacticalBackground = () => {
             width: '2px',
             height: '60px',
             background: 'linear-gradient(to bottom, #2040e0, rgba(32, 64, 224, 0))'
+          }}
+        />
+      </div>
+      <div
+        ref={scanBarRef}
+        style={{
+          position: 'fixed',
+          opacity: 0,
+          pointerEvents: 'none',
+          transform: 'translateX(-50%)',
+          transition: 'opacity 0.3s',
+          zIndex: 10,
+          width: '80px',
+          height: '6px',
+          background: 'rgba(0, 0, 0, 0.6)',
+          border: '1px solid rgba(102, 204, 255, 0.6)',
+          overflow: 'hidden'
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            width: '0%',
+            background: 'linear-gradient(90deg, #66ccff, #44aaff)',
+            boxShadow: '0 0 6px rgba(102, 204, 255, 0.8)',
+            transition: 'width 0.1s linear'
           }}
         />
       </div>

@@ -2,6 +2,7 @@
 
 ## 2026-05-06
 
+- Asteroid scanning effect with progress bar on Scan button click (random duration based on size, max 10s)
 - Docked asteroid shows blue additive highlight overlay (same as travel hover)
 - Dock button disabled when at home dock, Scan button disabled when not at asteroid
 - Static 3D perspective transform on ship tooltip
