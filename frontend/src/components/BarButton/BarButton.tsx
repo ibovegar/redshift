@@ -164,7 +164,7 @@ export const BarButton = (props: BarButtonProps) => {
   }, [])
 
   return (
-    <Root ref={rootRef} onMouseEnter={handleMouseEnter}>
+    <Root ref={rootRef} onMouseEnter={handleMouseEnter} data-bar-button>
       {bars.length > 0 && animate && !active && (
         <BarContainer key={animKey}>
           {bars.map((bar) => (

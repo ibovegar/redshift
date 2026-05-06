@@ -748,7 +748,7 @@ export const TacticalBackground = () => {
           pos.setFromMatrixPosition(instanceMatrix)
           // Offset so ship stops beside the asteroid
           const dir = new THREE.Vector3().subVectors(pos, new THREE.Vector3(...ship.config.position)).normalize()
-          dockOffset = dir.multiplyScalar(-0.12)
+          dockOffset = dir.multiplyScalar(-0.22)
           shipTravelTarget = pos.clone().add(dockOffset)
           shipTravelStart = new THREE.Vector3(...ship.config.position)
           shipTravelProgress = 0
@@ -776,6 +776,9 @@ export const TacticalBackground = () => {
           menuRef.current.style.opacity = '0'
           menuRef.current.style.pointerEvents = 'none'
         }
+      } else if (dockedMesh && menuRef.current) {
+        menuRef.current.style.opacity = '0'
+        menuRef.current.style.pointerEvents = 'none'
       }
     }
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -792,6 +795,9 @@ export const TacticalBackground = () => {
             menuRef.current.style.opacity = '0'
             menuRef.current.style.pointerEvents = 'none'
           }
+        } else if (dockedMesh && menuRef.current) {
+          menuRef.current.style.opacity = '0'
+          menuRef.current.style.pointerEvents = 'none'
         }
       }
     }
@@ -951,8 +957,15 @@ export const TacticalBackground = () => {
       if (travelMode && highlightedAsteroidIdx >= 0 && highlightedMesh) {
         highlightMesh.geometry = highlightedMesh.geometry
         highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
-        instanceMatrix.scale(new THREE.Vector3(1.3, 1.3, 1.3))
+        instanceMatrix.scale(new THREE.Vector3(1.1, 1.1, 1.1))
         instanceMatrix.premultiply(highlightedMesh.matrixWorld)
+        highlightMesh.matrix.copy(instanceMatrix)
+        highlightMesh.visible = true
+      } else if (dockedMesh && dockedInstanceId >= 0) {
+        highlightMesh.geometry = dockedMesh.geometry
+        dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
+        instanceMatrix.scale(new THREE.Vector3(1.1, 1.1, 1.1))
+        instanceMatrix.premultiply(dockedMesh.matrixWorld)
         highlightMesh.matrix.copy(instanceMatrix)
         highlightMesh.visible = true
       } else {
@@ -982,7 +995,7 @@ export const TacticalBackground = () => {
           const asteroidPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
           shipTravelTarget.copy(asteroidPos).add(dockOffset)
         }
-        shipTravelProgress = Math.min(1, shipTravelProgress + 0.0004)
+        shipTravelProgress = Math.min(1, shipTravelProgress + 0.001)
         const easeT = 1 - (1 - shipTravelProgress) ** 3
         ship.config.position[0] = shipTravelStart.x + (shipTravelTarget.x - shipTravelStart.x) * easeT
         ship.config.position[1] = shipTravelStart.y + (shipTravelTarget.y - shipTravelStart.y) * easeT
@@ -1058,6 +1071,24 @@ export const TacticalBackground = () => {
         }
       } else if (menuLineRef.current) {
         menuLineRef.current.setAttribute('opacity', '0')
+      }
+
+      // Update button disabled states
+      const dockBtnEl = document.getElementById('dock-btn') as HTMLButtonElement | null
+      const scanBtnEl = document.getElementById('scan-btn') as HTMLButtonElement | null
+      if (dockBtnEl) {
+        const shouldDisable = !dockedMesh
+        dockBtnEl.disabled = shouldDisable
+        dockBtnEl.classList.toggle('Mui-disabled', shouldDisable)
+        const wrapper = dockBtnEl.closest('[data-bar-button]') as HTMLElement | null
+        if (wrapper) wrapper.style.pointerEvents = shouldDisable ? 'none' : ''
+      }
+      if (scanBtnEl) {
+        const shouldDisable = !dockedMesh
+        scanBtnEl.disabled = shouldDisable
+        scanBtnEl.classList.toggle('Mui-disabled', shouldDisable)
+        const wrapper = scanBtnEl.closest('[data-bar-button]') as HTMLElement | null
+        if (wrapper) wrapper.style.pointerEvents = shouldDisable ? 'none' : ''
       }
 
       // Draw animated travel line
@@ -1274,7 +1305,7 @@ export const TacticalBackground = () => {
           position: 'fixed',
           opacity: 0,
           pointerEvents: 'none',
-          transform: 'translateX(-50%)',
+          transform: 'translateX(-50%) perspective(300px) rotateX(20deg) rotateY(-14deg) skewY(4deg)',
           transition: 'opacity 0.15s',
           zIndex: 10,
           display: 'flex',
@@ -1317,7 +1348,7 @@ export const TacticalBackground = () => {
           zIndex: 9
         }}
       >
-        <line ref={menuLineRef} stroke="#ffffff" strokeWidth="1" opacity="0" />
+        <line ref={menuLineRef} stroke="#ffffff" strokeWidth="1" opacity="0" strokeDasharray="6 4" />
       </svg>
       <div
         ref={menuRef}
@@ -1339,7 +1370,15 @@ export const TacticalBackground = () => {
         {['Travel', 'Dock', 'Scan'].map((label) => (
           <BarButton key={label}>
             <Button
-              id={label === 'Travel' ? 'travel-btn' : label === 'Dock' ? 'dock-btn' : undefined}
+              id={
+                label === 'Travel'
+                  ? 'travel-btn'
+                  : label === 'Dock'
+                    ? 'dock-btn'
+                    : label === 'Scan'
+                      ? 'scan-btn'
+                      : undefined
+              }
               sx={{
                 px: 4,
                 backgroundColor: '#fff',
@@ -1354,6 +1393,11 @@ export const TacticalBackground = () => {
                   backgroundColor: 'transparent',
                   color: '#fff',
                   boxShadow: 'none'
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#555',
+                  color: '#999',
+                  opacity: 0.5
                 }
               }}
               color="primary"

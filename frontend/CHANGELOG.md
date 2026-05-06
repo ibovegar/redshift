@@ -2,6 +2,14 @@
 
 ## 2026-05-06
 
+- Docked asteroid shows blue additive highlight overlay (same as travel hover)
+- Dock button disabled when at home dock, Scan button disabled when not at asteroid
+- Static 3D perspective transform on ship tooltip
+- Docked menu dismisses on Escape or click outside
+- Increased ship travel speed (0.0004 → 0.001 per frame)
+- Increased ship parking distance from asteroid (0.12 → 0.22)
+- Made the menu-to-ship connector line dashed
+- Increased spacecraft menu hover animation (longer duration and wider stagger)
 - Ship turns to face cursor while in travel mode (before selecting a target)
 
 ## 2026-05-05

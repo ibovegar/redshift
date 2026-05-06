@@ -79,7 +79,7 @@ const Box = styled('span')<{ color: string; delay: number }>(({ color, delay }) 
   backgroundColor: color,
   transform: 'scale(0)',
   outline: `1px solid ${color}`,
-  animation: `${boxPulse} 0.1s ease-out ${delay}ms forwards`
+  animation: `${boxPulse} 0.2s ease-out ${delay}ms forwards`
 }))
 
 const StaticBox = styled('span')<{ color: string }>(({ color }) => ({
@@ -116,7 +116,7 @@ export const GridButton = (props: GridButtonProps) => {
     const boxes = shades.map((color, i) => ({
       key: `${i}-${color}`,
       color,
-      delay: 10 + Math.round(Math.random() * 150)
+      delay: 10 + Math.round(Math.random() * 250)
     }))
     setGrid({ columns, rows, boxes })
   }, [])
