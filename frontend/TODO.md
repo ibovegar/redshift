@@ -1,11 +1,8 @@
 Feat:
 make selected asteroid when ship has arrived transparent when zoomed in
 make a game engine using state machine or something.
-Changelog
+Remove the second asteroid belt, or make in more pronounced but non selectable and in the background
 Performace fix (use pre created 3d models for ateroids etc.)
-change font
-Fancy on-hover animation
-modal expand animation
 Loading, login and splash screens screen
 Mission page asteroid animation
 Research -> blueprints

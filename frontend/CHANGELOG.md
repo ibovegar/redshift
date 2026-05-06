@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-06
+
+- Ship turns to face cursor while in travel mode (before selecting a target)
+
 ## 2026-05-05
 
 - Refactored ship into reusable `Ship` class (`TacticalBackground/Ship.ts`)

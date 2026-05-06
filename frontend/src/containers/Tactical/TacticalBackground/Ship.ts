@@ -150,6 +150,10 @@ export class Ship {
       this.model.position.set(...this.config.position)
       this.model.rotation.set(...this.config.rotation)
       this.model.scale.setScalar(this.config.scale)
+      // Attach a light so the ship and nearby asteroids are lit during rotation
+      const shipLight = new THREE.PointLight(0xddeeff, 1, 3)
+      shipLight.position.set(0, 8, 15)
+      this.model.add(shipLight)
       this.ringGroup.parent?.add(this.model)
     })
   }

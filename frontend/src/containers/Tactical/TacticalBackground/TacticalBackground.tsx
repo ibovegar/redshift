@@ -963,6 +963,16 @@ export const TacticalBackground = () => {
       const shipPanScale = dockedMesh ? 0 : 0.85
       ship.update(elapsed, panX, panY, t, shipPanScale)
 
+      // Face cursor in travel mode (before picking a target)
+      if (travelMode && !shipTravelTarget && ship.model) {
+        const dx = travelCursorWorld.x - ship.model.position.x
+        const targetYaw = Math.atan2(dx, 3)
+        ship.model.rotation.y += (targetYaw - ship.model.rotation.y) * 0.08
+      } else if (!travelMode && !shipTravelTarget && ship.model) {
+        // Smoothly return to default rotation
+        ship.model.rotation.y += (ship.config.rotation[1] - ship.model.rotation.y) * 0.05
+      }
+
       // Ship travel animation
       if (shipTravelTarget && shipTravelStart && ship.model) {
         // Update travel target to follow moving asteroid
