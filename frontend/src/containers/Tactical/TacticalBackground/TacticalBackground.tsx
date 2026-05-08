@@ -782,6 +782,7 @@ export const TacticalBackground = () => {
     let panTargetY = 0
     const PAN_AMOUNT = 0.3
     let isDragging = false
+    let isDraggingPlanet = false
     let prevDragX = 0
     let prevDragY = 0
     let planetVelX = 0
@@ -844,11 +845,19 @@ export const TacticalBackground = () => {
       isDragging = true
       prevDragX = e.clientX
       prevDragY = e.clientY
-      planetVelX = 0
-      planetVelY = 0
+      // Check if mousedown is on the planet
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
+      raycaster.setFromCamera(mouse, camera)
+      isDraggingPlanet = raycaster.intersectObject(planet).length > 0
+      if (isDraggingPlanet) {
+        planetVelX = 0
+        planetVelY = 0
+      }
     }
     const handleMouseUp = () => {
       isDragging = false
+      isDraggingPlanet = false
     }
     const handleClick = (e: MouseEvent) => {
       // Check if click is on menu
@@ -1048,10 +1057,6 @@ export const TacticalBackground = () => {
         } else {
           ship.hoverTarget = 0
         }
-        if (cursor === 'default') {
-          const hits = raycaster.intersectObject(planet)
-          if (hits.length > 0) cursor = 'pointer'
-        }
         if (cursor === 'default' && !scanning) {
           const allMeshes = [...nearMeshes, ...farMeshes]
           for (const mesh of allMeshes) {
@@ -1069,7 +1074,7 @@ export const TacticalBackground = () => {
       }
 
       if (container) container.style.cursor = cursor
-      if (isDragging && !ship.isZoomed && !travelMode) {
+      if (isDraggingPlanet && !ship.isZoomed && !travelMode) {
         const dx = (e.clientX - prevDragX) * ROTATE_SPEED
         const dy = (e.clientY - prevDragY) * ROTATE_SPEED
         planetVelY = dx
