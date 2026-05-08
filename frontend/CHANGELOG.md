@@ -2,6 +2,15 @@
 
 ## 2026-05-08
 
+- Refactored TacticalBackground.tsx into smaller modules: asteroid-belt, CameraZoom, create-planet, create-sun, create-god-rays, create-lens-flare, create-solar-wave
+- Renamed TacticalBackground helper files to kebab-case: asteroid-highlight, camera-zoom, scanned-indicators, ship, solar-event
+- Converted factory functions to classes: Planet, Sun, GodRays, LensFlare, SolarWave (with dispose methods)
+- Moved TacticalBackground scene modules into scene/ subfolder
+- Moved scan overlay/reveal CSS from inline `<style>` to Emotion keyframes in ScanResult
+- Extracted ShipTooltip and ConnectorLines components from TacticalBackground JSX
+- Moved Exit button into ShipStats header
+- Created FullscreenLayer styled component; applied to Three.js container and ConnectorLines SVG
+- Extracted AsteroidBelts, Stars, TravelLine classes and SceneUI helpers from TacticalBackground
 - Ship menu flips to the opposite side of the ship when it would overflow the viewport edge
 - Added Details button to ship menu; ship click shows menu, Details triggers zoom
 - Ship stats panel appears on opposite side of ship when entering details mode
@@ -9,6 +18,9 @@
 - Moved spacecraft stat/type labels to data/labels.ts
 - Wired ShipStats to real spacecraft API data; added Tellus RX 5 to user spacecrafts
 - Added solar event system with radiation warnings, expanding wave overlay, and sun/asteroid/planet visual effects
+- Removed commented-out dead code from TacticalBackground
+- Extracted showMenu/hideMenu helpers, replacing 12 duplicated menu toggle patterns
+- Moved solar wave animation state and logic into SolarWave.update() method
 - Added HudCard size prop (small/medium/large) with padding and min-width presets
 - Ship selection: ring indicator only shows when ship is selected; click to select, click outside or Escape to deselect
 - Simplified asteroid movement condition with shipDocked boolean

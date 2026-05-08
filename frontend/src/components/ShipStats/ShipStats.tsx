@@ -1,4 +1,5 @@
 import { Box, Stack, Typography } from '@mui/material'
+import { HudButton } from 'components/HudButton/HudButton'
 import { HudCard } from 'components/HudCard/HudCard'
 import { ProgressBar } from 'components/ProgressBar/ProgressBar'
 import { STAT_LABELS, TYPE_LABELS } from 'data'
@@ -81,13 +82,16 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, 
   return (
     <HudCard ref={ref} visible={visible} size="large">
       <Stack spacing={2.5}>
-        <Box>
-          <Typography variant="body2" sx={{ fontSize: 20, letterSpacing: 2, fontWeight: 'bold' }}>
-            {spacecraft.name}
-          </Typography>
-          <Typography variant="caption" sx={{ fontSize: 13, color: 'rgba(0,0,0,0.5)', letterSpacing: 0.5 }}>
-            {TYPE_LABELS[spacecraft.type]} · {spacecraft.spacecraftRegistry.toUpperCase()} · {spacecraft.manufactured}
-          </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="body2" sx={{ fontSize: 20, letterSpacing: 2, fontWeight: 'bold' }}>
+              {spacecraft.name}
+            </Typography>
+            <Typography variant="caption" sx={{ fontSize: 13, color: 'rgba(0,0,0,0.5)', letterSpacing: 0.5 }}>
+              {TYPE_LABELS[spacecraft.type]} · {spacecraft.spacecraftRegistry.toUpperCase()} · {spacecraft.manufactured}
+            </Typography>
+          </Box>
+          <HudButton id="exit-details-btn">Exit</HudButton>
         </Box>
         <Stack direction="row" sx={{ justifyContent: 'center', gap: 6, py: 1.5 }}>
           <ArcGauge value={spacecraft.fuel} label="FUEL" color="#1976d2" />

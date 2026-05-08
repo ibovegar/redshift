@@ -23,9 +23,9 @@ export class SolarEvent {
   private nextEventTime = 0
   warningDuration = 30
   private activeDuration = 20
-  private cooldownDuration = 15
+  readonly cooldownDuration = 15
 
-  private phaseStartTime = 0
+  phaseStartTime = 0
   countdown = 0
   radiationActive = false
 
@@ -128,9 +128,9 @@ export class SolarEvent {
         const burstCycle1 = (activeElapsed * 2) % 1.0
         const burstCycle2 = (activeElapsed * 3.5 + 0.3) % 1.0
         const burstCycle3 = (activeElapsed * 5.5 + 0.7) % 1.0
-        const burst1 = burstCycle1 < 0.08 ? Math.pow(1 - burstCycle1 / 0.08, 2) * 4 * burstScale : 0
-        const burst2 = burstCycle2 < 0.05 ? Math.pow(1 - burstCycle2 / 0.05, 2) * 3 * burstScale : 0
-        const burst3 = burstCycle3 < 0.03 ? Math.pow(1 - burstCycle3 / 0.03, 2) * 2.5 * burstScale : 0
+        const burst1 = burstCycle1 < 0.08 ? (1 - burstCycle1 / 0.08) ** 2 * 4 * burstScale : 0
+        const burst2 = burstCycle2 < 0.05 ? (1 - burstCycle2 / 0.05) ** 2 * 3 * burstScale : 0
+        const burst3 = burstCycle3 < 0.03 ? (1 - burstCycle3 / 0.03) ** 2 * 2.5 * burstScale : 0
         this.currentFlareIntensity += burst1 + burst2 + burst3
         // Deal damage if not docked
         if (!this.isShipDocked(shipPos)) {
@@ -149,12 +149,12 @@ export class SolarEvent {
         this.radiationActive = false
         // Diminishing bursts during cooldown — slow down toward the end
         const cooldownT = cooldownElapsed / this.cooldownDuration
-        const fade = Math.pow(Math.max(0, 1 - cooldownT), 2)
+        const fade = Math.max(0, 1 - cooldownT) ** 2
         const speed = 1 + (1 - cooldownT) * 2
         const cdCycle1 = (cooldownElapsed * speed) % 1.0
         const cdCycle2 = (cooldownElapsed * speed * 1.6 + 0.4) % 1.0
-        const cdBurst1 = cdCycle1 < 0.06 ? Math.pow(1 - cdCycle1 / 0.06, 2) * 3 * fade : 0
-        const cdBurst2 = cdCycle2 < 0.04 ? Math.pow(1 - cdCycle2 / 0.04, 2) * 2 * fade : 0
+        const cdBurst1 = cdCycle1 < 0.06 ? (1 - cdCycle1 / 0.06) ** 2 * 3 * fade : 0
+        const cdBurst2 = cdCycle2 < 0.04 ? (1 - cdCycle2 / 0.04) ** 2 * 2 * fade : 0
         this.currentFlareIntensity += cdBurst1 + cdBurst2
         if (cooldownElapsed >= this.cooldownDuration) {
           this.phase = 'idle'

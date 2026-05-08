@@ -1,7 +1,7 @@
 import { WarningRounded } from '@mui/icons-material'
 import { Box, Typography, type TypographyProps } from '@mui/material'
 import type { SxProps, Theme } from '@mui/material/styles'
-import type { SolarEventPhase } from 'containers/Tactical/TacticalBackground/SolarEvent'
+import type { SolarEventPhase } from 'containers/Tactical/TacticalBackground/scene/solar-event'
 import type { ReactNode } from 'react'
 
 interface RadiationWarningProps {

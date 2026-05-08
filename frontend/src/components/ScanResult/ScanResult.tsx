@@ -1,10 +1,21 @@
 import { Box, Stack, Typography } from '@mui/material'
+import { keyframes } from '@mui/material/styles'
 import { HudButton } from 'components/HudButton/HudButton'
 import { HudCard } from 'components/HudCard/HudCard'
 import { ProgressBar } from 'components/ProgressBar/ProgressBar'
 import { MATERIAL_ICONS, MATERIAL_NAMES, RARITY_COLORS, RARITY_LABELS } from 'data'
 import type { Asteroid, AsteroidMaterial, ResourceRarity } from 'models/asteroid'
 import { forwardRef } from 'react'
+
+const revealSlide = keyframes`
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+`
+
+const contentFadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`
 
 export interface ScanResultProps {
   visible: boolean
@@ -86,11 +97,50 @@ function renderDeposits(asteroid: Asteroid, revealed: boolean, progress: number)
     const isRevealed = revealed || progress >= revealThreshold
     const rarityColor = RARITY_COLORS[d.rarity as ResourceRarity] ?? '#aaa'
     const animating = isRevealed && !revealed
-    const overlayClass = animating ? 'scan-reveal' : !isRevealed ? 'scan-overlay' : undefined
+    const overlaySx = animating
+      ? {
+          '&::before': {
+            content: "''",
+            position: 'absolute',
+            inset: '-1px',
+            background: '#e0e0e0',
+            borderRadius: '2px',
+            animation: `${revealSlide} 0.2s ease-out forwards`,
+            zIndex: 2
+          },
+          '& > *': {
+            opacity: 0,
+            animation: `${contentFadeIn} 0.15s ease-in 0.2s forwards`
+          }
+        }
+      : !isRevealed
+        ? {
+            '&::before': {
+              content: "''",
+              position: 'absolute',
+              inset: '-1px',
+              background: '#e0e0e0',
+              borderRadius: '2px',
+              zIndex: 2
+            },
+            '&::after': {
+              content: "'UNKNOWN'",
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '10px',
+              letterSpacing: '0.5px',
+              color: 'rgba(0,0,0,0.35)',
+              zIndex: 3
+            },
+            '& > *': { opacity: 0 }
+          }
+        : {}
     return (
       <Stack
         key={d.material}
-        className={overlayClass}
         direction="row"
         sx={{
           alignItems: 'center',
@@ -99,7 +149,8 @@ function renderDeposits(asteroid: Asteroid, revealed: boolean, progress: number)
           position: 'relative',
           overflow: 'hidden',
           borderRadius: '2px',
-          gap: '20px'
+          gap: '20px',
+          ...overlaySx
         }}
       >
         <Box
