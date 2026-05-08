@@ -22,6 +22,9 @@ export class Ship {
   blockMat: THREE.MeshBasicMaterial
   blockGlowMat: THREE.MeshBasicMaterial
   solidRingMat: THREE.MeshBasicMaterial
+  strobeLight: THREE.PointLight
+  strobeGlareMat: THREE.ShaderMaterial
+  strobeGlare: THREE.Mesh
   hoverTarget = 0
   hoverCurrent = 0
   isZoomed = false
@@ -146,11 +149,62 @@ export class Ship {
     this.blockRingGroup.add(solidRing)
     this.ringGroup.add(this.blockRingGroup)
     this.ringGroup.visible = false
+
+    // Strobe light (visible when unselected)
+    const glareGeo = new THREE.PlaneGeometry(0.12, 0.12)
+    this.strobeLight = new THREE.PointLight(0x88ccff, 0, 1.5)
+    this.strobeLight.position.set(...config.position)
+    this.strobeGlareMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uIntensity: { value: 0.0 },
+        uColor: { value: new THREE.Vector3(0.5, 0.85, 1.0) }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float uIntensity;
+        uniform vec3 uColor;
+        varying vec2 vUv;
+        void main() {
+          vec2 c = vUv - 0.5;
+          float d = length(c) * 2.0;
+          float angle = atan(c.y, c.x);
+          float core = exp(-d * 20.0) * 5.0;
+          float glow = exp(-d * 6.0) * 1.5;
+          float rays = 0.0;
+          float ra0 = 0.4; float ra1 = 1.3; float ra2 = 2.6;
+          float ra3 = 3.5; float ra4 = 4.9; float ra5 = 5.7;
+          float rl0 = 2.0; float rl1 = 4.5; float rl2 = 1.8;
+          float rl3 = 5.0; float rl4 = 2.5; float rl5 = 3.5;
+          rays += pow(max(cos(angle - ra0), 0.0), 120.0) * exp(-d * rl0) * 1.2;
+          rays += pow(max(cos(angle - ra1), 0.0), 120.0) * exp(-d * rl1) * 1.2;
+          rays += pow(max(cos(angle - ra2), 0.0), 120.0) * exp(-d * rl2) * 1.2;
+          rays += pow(max(cos(angle - ra3), 0.0), 120.0) * exp(-d * rl3) * 1.2;
+          rays += pow(max(cos(angle - ra4), 0.0), 120.0) * exp(-d * rl4) * 1.2;
+          rays += pow(max(cos(angle - ra5), 0.0), 120.0) * exp(-d * rl5) * 1.2;
+          float total = (core + glow + rays) * uIntensity;
+          vec3 color = uColor * total;
+          gl_FragColor = vec4(color, total);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    })
+    this.strobeGlare = new THREE.Mesh(glareGeo, this.strobeGlareMat)
+    this.strobeGlare.position.set(...config.position)
   }
 
   addToScene(scene: THREE.Scene) {
     scene.add(this.ringGroup)
     scene.add(this.hitGroup)
+    scene.add(this.strobeLight)
+    scene.add(this.strobeGlare)
   }
 
   load(loader: GLTFLoader) {
@@ -231,6 +285,21 @@ export class Ship {
     this.reticleMat.uniforms.uTime.value = elapsed
     this.reticleMat.uniforms.uHover.value = this.hoverCurrent
     this.reticleMat.uniforms.uZoom.value = zoomT
+
+    // Strobe: two rapid blinks then pause
+    this.strobeLight.position.set(shipX, shipY + 0.07, this.config.position[2] + 0.05)
+    this.strobeGlare.position.set(shipX, shipY + 0.07, this.config.position[2] + 0.05)
+    if (!this.isSelected) {
+      const cycle = (elapsed * 0.8) % 1.0
+      let blink = 0
+      if (cycle < 0.03) blink = 1
+      else if (cycle > 0.07 && cycle < 0.1) blink = 1
+      this.strobeLight.intensity = blink * 50
+      this.strobeGlareMat.uniforms.uIntensity.value = blink
+    } else {
+      this.strobeLight.intensity = 0
+      this.strobeGlareMat.uniforms.uIntensity.value = 0
+    }
   }
 
   getScreenPosition(camera: THREE.Camera): { x: number; y: number } | null {
