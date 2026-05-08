@@ -22,6 +22,8 @@ export const spacecrafts: Spacecraft[] = [
       damage: 0,
       manuvrability: 10
     },
+    condition: 95,
+    fuel: 88,
     id: '1',
     attachedUpgrades: []
   },
@@ -42,7 +44,31 @@ export const spacecrafts: Spacecraft[] = [
       damage: 60,
       manuvrability: 80
     },
+    condition: 71,
+    fuel: 42,
     id: '2',
+    attachedUpgrades: []
+  },
+  {
+    name: 'Tellus RX 5',
+    spacecraftRegistry: 'tellrx5',
+    manufacturer: 'Cygnia Corporation',
+    manufactured: 2157,
+    storeType: 'spacecraft',
+    type: 'support',
+    height: 219,
+    length: 456,
+    price: 5000000,
+    baseStats: {
+      speed: 45,
+      hull: 70,
+      shield: 55,
+      damage: 20,
+      manuvrability: 35
+    },
+    condition: 82,
+    fuel: 64,
+    id: '3',
     attachedUpgrades: []
   }
 ]
@@ -236,6 +262,8 @@ export const store: (Spacecraft | Upgrade)[] = [
       manuvrability: 80
     },
     id: 'xlx_JF5wn2s',
+    condition: 100,
+    fuel: 100,
     attachedUpgrades: []
   },
   {
@@ -256,6 +284,8 @@ export const store: (Spacecraft | Upgrade)[] = [
       manuvrability: 10
     },
     id: 'ZlxiBZwJNzQ',
+    condition: 100,
+    fuel: 100,
     attachedUpgrades: []
   },
   {
@@ -276,6 +306,8 @@ export const store: (Spacecraft | Upgrade)[] = [
       manuvrability: 10
     },
     id: '7HPjuzsjfqA',
+    condition: 100,
+    fuel: 100,
     attachedUpgrades: []
   },
   {
@@ -296,6 +328,8 @@ export const store: (Spacecraft | Upgrade)[] = [
       manuvrability: 10
     },
     id: '2xicbh7qnyM',
+    condition: 100,
+    fuel: 100,
     attachedUpgrades: []
   },
   {
@@ -316,6 +350,8 @@ export const store: (Spacecraft | Upgrade)[] = [
       manuvrability: 10
     },
     id: '91jnAAKoBKg',
+    condition: 100,
+    fuel: 100,
     attachedUpgrades: []
   },
   {

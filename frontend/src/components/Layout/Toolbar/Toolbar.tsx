@@ -9,7 +9,13 @@ const Root = styled('div')(({ theme }) => ({
   borderColor: theme.palette.grey[800],
   display: 'flex',
   alignItems: 'center',
-  height: 60
+  height: 60,
+  pointerEvents: 'auto',
+  position: 'fixed',
+  top: theme.spacing(6),
+  left: theme.spacing(6),
+  right: theme.spacing(6),
+  zIndex: 20
 }))
 
 const Left = styled('div')({

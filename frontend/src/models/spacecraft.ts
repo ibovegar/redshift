@@ -12,5 +12,7 @@ export interface Spacecraft {
   length: number
   price: number
   baseStats: BaseStats
+  condition: number
+  fuel: number
   attachedUpgrades: string[]
 }

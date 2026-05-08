@@ -75,21 +75,9 @@ const barRise = keyframes`
 const Root = styled('span')({
   position: 'relative',
   display: 'inline-flex',
-  overflow: 'hidden',
-  borderRadius: 2,
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    width: 0,
-    height: 0,
-    borderStyle: 'solid',
-    borderWidth: '10px 0 0 10px',
-    borderColor: 'transparent transparent transparent var(--bar-button-bg, #000)',
-    zIndex: 3,
-    pointerEvents: 'none'
-  }
+  width: 'fit-content',
+  clipPath: 'polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px))',
+  borderRadius: 2
 })
 
 const BarContainer = styled('span')({

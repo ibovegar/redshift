@@ -1,5 +1,9 @@
+import { HudButton } from 'components/HudButton/HudButton'
+import { HudPanel } from 'components/HudPanel/HudPanel'
 import { ScanResult } from 'components/ScanResult/ScanResult'
-import { ShipMenuContainer } from 'components/ShipMenuContainer/ShipMenuContainer'
+import { ShipMenu } from 'components/ShipMenu/ShipMenu'
+import { ShipStats } from 'components/ShipStats/ShipStats'
+import { useSpacecraft } from 'hooks'
 import type { Asteroid } from 'models/asteroid'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
@@ -205,6 +209,7 @@ interface ScanResultState {
 }
 
 export const TacticalBackground = () => {
+  const { data: spacecraft } = useSpacecraft('3')
   const containerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -212,6 +217,8 @@ export const TacticalBackground = () => {
   const scanLineRef = useRef<SVGLineElement>(null)
   const travelLineRef = useRef<HTMLCanvasElement>(null)
   const standaloneScanRef = useRef<HTMLDivElement>(null)
+  const shipStatsRef = useRef<HTMLDivElement>(null)
+  const [detailsMode, setDetailsMode] = useState(false)
   const [scanResult, setScanResult] = useState<ScanResultState>({
     visible: false,
     asteroid: null,
@@ -930,22 +937,29 @@ export const TacticalBackground = () => {
       }
 
       if (ship.raycast(raycaster)) {
-        maxZoom = 1
-        ship.toggleZoom()
-        if (!ship.isZoomed && menuRef.current) {
-          menuRef.current.style.opacity = '0'
-          menuRef.current.style.pointerEvents = 'none'
+        if (ship.isZoomed) {
+          maxZoom = 1
+          ship.zoomOut()
+          setDetailsMode(false)
+          if (menuRef.current) {
+            menuRef.current.style.opacity = '0'
+            menuRef.current.style.pointerEvents = 'none'
+          }
+        } else if (menuRef.current) {
+          menuRef.current.style.opacity = '1'
+          menuRef.current.style.pointerEvents = 'auto'
         }
         return
       }
       if (ship.isZoomed) {
         maxZoom = 1
         ship.zoomOut()
+        setDetailsMode(false)
         if (menuRef.current) {
           menuRef.current.style.opacity = '0'
           menuRef.current.style.pointerEvents = 'none'
         }
-      } else if (dockedMesh && menuRef.current) {
+      } else if (menuRef.current) {
         menuRef.current.style.opacity = '0'
         menuRef.current.style.pointerEvents = 'none'
       }
@@ -961,6 +975,7 @@ export const TacticalBackground = () => {
         } else if (ship.isZoomed) {
           maxZoom = 1
           ship.zoomOut()
+          setDetailsMode(false)
           if (menuRef.current) {
             menuRef.current.style.opacity = '0'
             menuRef.current.style.pointerEvents = 'none'
@@ -1135,22 +1150,14 @@ export const TacticalBackground = () => {
       clouds.rotation.y = planetRotY * 1.15 + elapsed * 0.003
       sunGlowMat.uniforms.uTime.value = elapsed
 
-      updateAsteroids(
-        farData,
-        farMeshes,
-        farAssignments,
-        farCounters,
-        !shipTravelTarget && !dockedMesh && !travelMode ? FAR_SPEED : 0,
-        SPREAD_X,
-        dummy,
-        -1
-      )
+      const shipDocked = !shipTravelTarget && !dockedMesh && !travelMode
+      updateAsteroids(farData, farMeshes, farAssignments, farCounters, shipDocked ? FAR_SPEED : 0, SPREAD_X, dummy, -1)
       updateAsteroids(
         nearData,
         nearMeshes,
         nearAssignments,
         nearCounters,
-        !shipTravelTarget && !dockedMesh && !travelMode ? NEAR_SPEED : 0,
+        shipDocked ? NEAR_SPEED : 0,
         SPREAD_X,
         dummy,
         -1
@@ -1245,15 +1252,17 @@ export const TacticalBackground = () => {
         }
       }
 
-      // Position menu when zoomed or docked
-      if (menuRef.current && (ship.isZoomed || dockedMesh)) {
+      // Position menu when visible
+      const menuVisible = menuRef.current && !ship.isZoomed && (dockedMesh || menuRef.current.style.opacity !== '0')
+      if (menuRef.current && menuVisible) {
         const screenPos = ship.getScreenPosition(camera)
         if (screenPos) {
-          const offset = 140
+          const offset = 140 + t * 280
           const menuWidth = menuRef.current.offsetWidth
           const rightX = screenPos.x + offset
           const flipped = rightX + menuWidth > window.innerWidth - 8
-          const menuX = flipped ? screenPos.x - 60 - menuWidth : rightX
+          const flippedOffset = 60 + t * 120
+          const menuX = flipped ? screenPos.x - flippedOffset - menuWidth : rightX
           const menuY = screenPos.y - 100
           menuRef.current.style.left = `${menuX}px`
           menuRef.current.style.top = `${menuY}px`
@@ -1281,6 +1290,32 @@ export const TacticalBackground = () => {
         }
       } else if (menuLineRef.current) {
         menuLineRef.current.setAttribute('opacity', '0')
+      }
+
+      // Position ship stats panel on opposite side of menu when in details mode
+      if (shipStatsRef.current && ship.isZoomed) {
+        const screenPos = ship.getScreenPosition(camera)
+        if (screenPos) {
+          const statsWidth = shipStatsRef.current.offsetWidth
+          const menuOnRight = menuRef.current ? parseFloat(menuRef.current.style.left || '0') > screenPos.x : true
+          const statsOffset = 140 + t * 280
+          const statsX = menuOnRight ? screenPos.x - statsOffset - statsWidth : screenPos.x + statsOffset
+          const statsY = screenPos.y - 100
+          shipStatsRef.current.style.left = `${statsX}px`
+          shipStatsRef.current.style.top = `${statsY}px`
+          const statsOrigin = menuOnRight ? 'right center' : 'left center'
+          shipStatsRef.current.style.transformOrigin = statsOrigin
+          const srx = mouse.y * 2
+          const sry = menuOnRight ? 3 - mouse.x * 2 : -3 + mouse.x * 2
+          const sskew = menuOnRight ? -0.5 : 0.5
+          shipStatsRef.current.style.transform = `perspective(600px) rotateX(${srx}deg) rotateY(${sry}deg) skewY(${sskew}deg) translateY(-50%)`
+          const fadeStart = maxZoom * 0.6
+          const fadeRange = maxZoom * 0.4
+          const statsOpacity = Math.min(1, Math.max(0, (t - fadeStart) / fadeRange))
+          shipStatsRef.current.style.opacity = String(statsOpacity)
+        }
+      } else if (shipStatsRef.current) {
+        shipStatsRef.current.style.opacity = '0'
       }
 
       // Update button disabled states
@@ -1351,6 +1386,7 @@ export const TacticalBackground = () => {
         const sry = panelFlipped ? 3 - mouse.x * 2 : -3 + mouse.x * 2
         const sskew = panelFlipped ? -0.5 : 0.5
         standaloneScanRef.current.style.transform = `perspective(800px) rotateX(${srx}deg) rotateY(${sry}deg) skewY(${sskew}deg)`
+        standaloneScanRef.current.style.opacity = String(Math.min(1, asteroidZoom.progress * 3))
 
         // Draw dashed connector line from asteroid to scan result panel
         if (scanLineRef.current) {
@@ -1365,8 +1401,9 @@ export const TacticalBackground = () => {
           scanLineRef.current.setAttribute('y2', String(lineEndY))
           scanLineRef.current.setAttribute('opacity', String(scanOpacity))
         }
-      } else if (scanLineRef.current) {
-        scanLineRef.current.setAttribute('opacity', '0')
+      } else {
+        if (standaloneScanRef.current) standaloneScanRef.current.style.opacity = '0'
+        if (scanLineRef.current) scanLineRef.current.setAttribute('opacity', '0')
       }
 
       // Draw animated travel line
@@ -1477,6 +1514,7 @@ export const TacticalBackground = () => {
       dockedInstanceId = -1
       dockedAsteroid = null
       ship.zoomOut()
+      setDetailsMode(false)
       if (menuRef.current) {
         menuRef.current.style.opacity = '0'
         menuRef.current.style.pointerEvents = 'none'
@@ -1499,6 +1537,7 @@ export const TacticalBackground = () => {
       shipTravelProgress = 0
       ship.ringGroup.visible = false
       ship.zoomOut()
+      setDetailsMode(false)
       if (menuRef.current) {
         menuRef.current.style.opacity = '0'
         menuRef.current.style.pointerEvents = 'none'
@@ -1527,11 +1566,6 @@ export const TacticalBackground = () => {
         instanceMatrix.premultiply(dockedMesh.matrixWorld)
         scanZoom.zoomTo(new THREE.Vector3().setFromMatrixPosition(instanceMatrix))
       }
-      // Zoom in on ship and keep menu visible
-      if (!ship.isZoomed) {
-        maxZoom = 0.5
-        ship.isZoomed = true
-      }
       renderScanResult(dockedAsteroid, false, true)
     }
     const scanBtn = document.getElementById('scan-btn')
@@ -1549,11 +1583,36 @@ export const TacticalBackground = () => {
     const miningBtn = document.getElementById('mining-btn')
     if (miningBtn) miningBtn.addEventListener('click', handleMiningClick)
 
+    // Details button handler — zoom in on ship
+    const handleDetailsClick = () => {
+      maxZoom = 1
+      ship.toggleZoom()
+      setDetailsMode(ship.isZoomed)
+      if (menuRef.current) {
+        menuRef.current.style.opacity = '0'
+        menuRef.current.style.pointerEvents = 'none'
+      }
+    }
+    const detailsBtn = document.getElementById('details-btn')
+    if (detailsBtn) detailsBtn.addEventListener('click', handleDetailsClick)
+
+    // Exit details button handler — zoom out
+    const handleExitDetailsClick = () => {
+      if (!ship.isZoomed) return
+      maxZoom = 1
+      ship.zoomOut()
+      setDetailsMode(false)
+    }
+    const exitDetailsBtn = document.getElementById('exit-details-btn')
+    if (exitDetailsBtn) exitDetailsBtn.addEventListener('click', handleExitDetailsClick)
+
     return () => {
       if (travelBtn) travelBtn.removeEventListener('click', handleTravelClick)
       if (dockBtn) dockBtn.removeEventListener('click', handleDockClick)
       if (scanBtn) scanBtn.removeEventListener('click', handleScanClick)
       if (miningBtn) miningBtn.removeEventListener('click', handleMiningClick)
+      if (detailsBtn) detailsBtn.removeEventListener('click', handleDetailsClick)
+      if (exitDetailsBtn) exitDetailsBtn.removeEventListener('click', handleExitDetailsClick)
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mousedown', handleMouseDown)
@@ -1704,14 +1763,7 @@ export const TacticalBackground = () => {
           }}
         />
       </div>
-      <div
-        ref={standaloneScanRef}
-        style={{
-          position: 'fixed',
-          zIndex: 10,
-          pointerEvents: 'none'
-        }}
-      >
+      <HudPanel ref={standaloneScanRef}>
         {scanResult.visible && scanResult.isRemote && (
           <ScanResult
             visible
@@ -1720,7 +1772,7 @@ export const TacticalBackground = () => {
             progress={scanResult.progress}
           />
         )}
-      </div>
+      </HudPanel>
       <svg
         role="img"
         aria-label="Menu connector line"
@@ -1737,11 +1789,35 @@ export const TacticalBackground = () => {
         <line ref={menuLineRef} stroke="#ffffff" strokeWidth="1" opacity="0" strokeDasharray="6 4" />
         <line ref={scanLineRef} stroke="#ffffff" strokeWidth="1" opacity="0" strokeDasharray="6 4" />
       </svg>
-      <ShipMenuContainer
-        ref={menuRef}
-        scanResult={scanResult.isRemote ? undefined : scanResult}
-        onMiningStart={handleMiningStartClick}
-      />
+      <HudPanel ref={menuRef}>
+        <ShipMenu />
+        {scanResult.visible && !scanResult.isRemote && scanResult.asteroid && (
+          <ScanResult
+            visible={scanResult.visible}
+            asteroid={scanResult.asteroid}
+            revealed={scanResult.revealed}
+            progress={scanResult.progress}
+            onMiningStart={handleMiningStartClick}
+          />
+        )}
+      </HudPanel>
+      <HudPanel ref={shipStatsRef}>
+        <ShipStats visible={detailsMode} spacecraft={spacecraft} />
+      </HudPanel>
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 40,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          opacity: detailsMode ? 1 : 0,
+          pointerEvents: detailsMode ? 'auto' : 'none',
+          transition: 'opacity 0.4s'
+        }}
+      >
+        <HudButton id="exit-details-btn">Exit</HudButton>
+      </div>
       <canvas
         ref={travelLineRef}
         style={{

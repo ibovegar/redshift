@@ -3,6 +3,11 @@
 ## 2026-05-08
 
 - Ship menu flips to the opposite side of the ship when it would overflow the viewport edge
+- Added Details button to ship menu; ship click shows menu, Details triggers zoom
+- Ship stats panel appears on opposite side of ship when entering details mode
+- Extracted reusable HudPanel component for tactical overlay layout; removed ShipMenuContainer in favor of composition
+- Moved spacecraft stat/type labels to data/labels.ts
+- Wired ShipStats to real spacecraft API data; added Tellus RX 5 to user spacecrafts
 
 ## 2026-05-07
 

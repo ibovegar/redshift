@@ -42,12 +42,12 @@ export const Layout = (props: Props) => {
   // const Wrapper = isTactical ? TacticalWrapper : React.Fragment
 
   return (
-    <Stack sx={{ height: '100vh', p: 6 }}>
+    <Stack sx={{ height: '100vh', p: 6, position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
       {/* <Wrapper>
         <Background id="app-background" alt=" " />
       </Wrapper> */}
       <Toolbar credits={credits} />
-      <Box sx={{ flex: 1, mt: 6, minHeight: 0 }}>{children}</Box>
+      <Box sx={{ flex: 1, mt: 6, minHeight: 0, pointerEvents: 'auto' }}>{children}</Box>
     </Stack>
   )
 }

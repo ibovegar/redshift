@@ -1,5 +1,7 @@
-import { Box, Button, LinearProgress, Paper, Stack, Typography } from '@mui/material'
-import { BarButton } from 'components/BarButton/BarButton'
+import { Box, Stack, Typography } from '@mui/material'
+import { HudButton } from 'components/HudButton/HudButton'
+import { HudCard } from 'components/HudCard/HudCard'
+import { ProgressBar } from 'components/ProgressBar/ProgressBar'
 import { MATERIAL_ICONS, MATERIAL_NAMES, RARITY_COLORS, RARITY_LABELS } from 'data'
 import type { Asteroid, AsteroidMaterial, ResourceRarity } from 'models/asteroid'
 import { forwardRef } from 'react'
@@ -15,25 +17,8 @@ export interface ScanResultProps {
 export const ScanResult = forwardRef<HTMLDivElement, ScanResultProps>(
   ({ visible, asteroid, revealed, progress, onMiningStart }, ref) => {
     return (
-      <Box
-        ref={ref}
-        sx={{
-          opacity: visible ? 1 : 0,
-          pointerEvents: visible && revealed ? 'auto' : 'none',
-          transition: 'opacity 0.4s'
-        }}
-      >
-        <Paper
-          elevation={4}
-          sx={{
-            borderRadius: '2px',
-            p: '20px 24px',
-            fontFamily: 'monospace',
-            color: '#111',
-            minWidth: '260px',
-            bgcolor: '#ffffff'
-          }}
-        >
+      <Box ref={ref}>
+        <HudCard visible={visible} interactive={visible && revealed} size="medium">
           {asteroid && (
             <Stack spacing={0}>
               <Typography variant="body2" sx={{ fontSize: 15, letterSpacing: 1, mb: 1, fontWeight: 'bold' }}>
@@ -54,52 +39,17 @@ export const ScanResult = forwardRef<HTMLDivElement, ScanResultProps>(
                   <Typography variant="overline" sx={{ fontSize: 9, color: 'rgba(0,0,0,0.4)', letterSpacing: 1 }}>
                     SCANNING...
                   </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={(progress ?? 0) * 100}
-                    sx={{
-                      width: '100%',
-                      height: 6,
-                      borderRadius: 0,
-                      backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                      '& .MuiLinearProgress-bar': {
-                        transition: 'transform 0.1s linear'
-                      }
-                    }}
-                  />
+                  <ProgressBar value={(progress ?? 0) * 100} size="large" animated />
                 </Stack>
               )}
             </Stack>
           )}
-        </Paper>
+        </HudCard>
         {asteroid && revealed && onMiningStart && (
           <Box sx={{ mt: 1.5 }}>
-            <BarButton color="secondary">
-              <Button
-                onClick={onMiningStart}
-                sx={{
-                  px: 4,
-                  backgroundColor: 'primary.main',
-                  color: '#fff',
-                  position: 'relative',
-                  zIndex: 2,
-                  boxShadow: 'none',
-                  border: 'none',
-                  clipPath: 'none',
-                  lineHeight: 1,
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    color: '#fff',
-                    boxShadow: 'none'
-                  }
-                }}
-                color="primary"
-                variant="contained"
-                size="small"
-              >
-                START MINING
-              </Button>
-            </BarButton>
+            <HudButton variant="secondary" onClick={onMiningStart}>
+              START MINING
+            </HudButton>
           </Box>
         )}
       </Box>
