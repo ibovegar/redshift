@@ -12,6 +12,13 @@
 - Ship selection: ring indicator only shows when ship is selected; click to select, click outside or Escape to deselect
 - Simplified asteroid movement condition with shipDocked boolean
 - Scan zoom now matches asteroid details zoom (removed extra ship zoom during scan)
+- Added strobe light indicator for unselected ships (double-blink pattern with god ray glare shader)
+- Fixed planet drag rotation to only trigger on clicks directly on the planet
+- Ship tooltip hidden when ship is selected
+- Reordered ship menu buttons: Move, Scan, Mining, Dock, Details
+- Ring indicator hidden during scanning, mining, and travel actions
+- Ring indicator scales down when camera zooms in
+- Disabled ship deselection during active scan; added abort scan button
 
 ## 2026-05-07
 

@@ -253,7 +253,7 @@ export class Ship {
     this.hoverCurrent = 0
   }
 
-  update(elapsed: number, panX: number, panY: number, zoomT: number, panScale = 0.85) {
+  update(elapsed: number, panX: number, panY: number, zoomT: number, camera: THREE.Camera, panScale = 0.85) {
     this.camTarget.set(this.config.position[0], this.config.position[1] + 0.01, this.config.position[2] + 0.4)
     const shipX = this.config.position[0] + panX * panScale * (1 - zoomT)
     const shipY = this.config.position[1] + panY * panScale * (1 - zoomT)
@@ -268,6 +268,11 @@ export class Ship {
     this.ringGroup.position.x = shipX
     this.ringGroup.position.y = shipY
     this.ringGroup.position.z = this.config.position[2]
+    const dist = camera.position.distanceTo(this.ringGroup.position)
+    const refDist = 10
+    const distScale = Math.min(1, dist / refDist)
+    const ringScale = Math.max(0.3, distScale * (1 - zoomT * 0.7))
+    this.ringGroup.scale.setScalar(ringScale)
     this.hitGroup.position.x = shipX
     this.hitGroup.position.y = shipY
     this.hitGroup.position.z = this.config.position[2]

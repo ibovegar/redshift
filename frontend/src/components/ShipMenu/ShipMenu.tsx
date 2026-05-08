@@ -1,11 +1,11 @@
 import { HudButton } from 'components/HudButton/HudButton'
 
 const BUTTONS = [
-  { label: 'Details', id: 'details-btn' },
   { label: 'Move', id: 'travel-btn' },
-  { label: 'Dock', id: 'dock-btn' },
   { label: 'Scan', id: 'scan-btn' },
-  { label: 'Mining', id: 'mining-btn' }
+  { label: 'Mining', id: 'mining-btn' },
+  { label: 'Dock', id: 'dock-btn' },
+  { label: 'Details', id: 'details-btn' }
 ]
 
 export const ShipMenu = () => {

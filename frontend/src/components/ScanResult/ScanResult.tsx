@@ -12,10 +12,11 @@ export interface ScanResultProps {
   revealed: boolean
   progress: number
   onMiningStart?: () => void
+  onAbort?: () => void
 }
 
 export const ScanResult = forwardRef<HTMLDivElement, ScanResultProps>(
-  ({ visible, asteroid, revealed, progress, onMiningStart }, ref) => {
+  ({ visible, asteroid, revealed, progress, onMiningStart, onAbort }, ref) => {
     return (
       <Box ref={ref}>
         <HudCard visible={visible} interactive={visible && revealed} size="medium">
@@ -49,6 +50,13 @@ export const ScanResult = forwardRef<HTMLDivElement, ScanResultProps>(
           <Box sx={{ mt: 1.5 }}>
             <HudButton variant="secondary" onClick={onMiningStart}>
               START MINING
+            </HudButton>
+          </Box>
+        )}
+        {asteroid && !revealed && onAbort && (
+          <Box sx={{ mt: 1.5 }}>
+            <HudButton variant="secondary" onClick={onAbort}>
+              ABORT SCAN
             </HudButton>
           </Box>
         )}

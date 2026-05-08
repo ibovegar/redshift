@@ -234,6 +234,11 @@ export const TacticalBackground = () => {
     // Placeholder for mining start logic
   }, [])
 
+  const abortScanRef = useRef(false)
+  const handleAbortScan = useCallback(() => {
+    abortScanRef.current = true
+  }, [])
+
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -966,6 +971,7 @@ export const TacticalBackground = () => {
         }
         return
       }
+      if (scanning) return
       if (ship.isZoomed) {
         maxZoom = 1
         ship.zoomOut()
@@ -984,6 +990,7 @@ export const TacticalBackground = () => {
     }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (scanning) return
         if (travelMode) {
           travelMode = false
           travelLine.visible = false
@@ -1199,7 +1206,7 @@ export const TacticalBackground = () => {
 
       // Ship update
       const shipPanScale = dockedMesh ? 0 : 0.85
-      ship.update(elapsed, panX, panY, t, shipPanScale)
+      ship.update(elapsed, panX, panY, t, camera, shipPanScale)
 
       // Face cursor in travel mode (before picking a target)
       if (travelMode && !shipTravelTarget && ship.model) {
@@ -1258,7 +1265,7 @@ export const TacticalBackground = () => {
 
       // Position tooltip above ship
       if (tooltipRef.current) {
-        const showTooltip = ship.hoverCurrent > 0.1 && !ship.isZoomed && !travelMode
+        const showTooltip = ship.hoverCurrent > 0.1 && !ship.isSelected && !ship.isZoomed && !travelMode
         tooltipRef.current.style.opacity = showTooltip ? '1' : '0'
         if (showTooltip) {
           const screenPos = ship.getScreenPosition(camera)
@@ -1363,21 +1370,32 @@ export const TacticalBackground = () => {
 
       // Scan progress
       if (scanning) {
-        const now = performance.now()
-        scanProgress = Math.min(1, (now - scanStartTime) / scanDuration)
-
-        // Throttled state update for line-by-line reveal (~10fps)
-        if (now - lastProgressUpdate > 100) {
-          lastProgressUpdate = now
-          setScanResult((prev) => ({ ...prev, progress: scanProgress }))
-        }
-
-        if (scanProgress >= 1) {
+        // Check for abort
+        if (abortScanRef.current) {
+          abortScanRef.current = false
           scanning = false
+          scanProgress = 0
           scanZoom.zoomOut()
-          if (dockedAsteroid) {
-            dockedAsteroid.scanned = true
-            renderScanResult(dockedAsteroid, true, true)
+          ship.ringGroup.visible = ship.isSelected
+          setScanResult((prev) => ({ ...prev, visible: false }))
+        } else {
+          const now = performance.now()
+          scanProgress = Math.min(1, (now - scanStartTime) / scanDuration)
+
+          // Throttled state update for line-by-line reveal (~10fps)
+          if (now - lastProgressUpdate > 100) {
+            lastProgressUpdate = now
+            setScanResult((prev) => ({ ...prev, progress: scanProgress }))
+          }
+
+          if (scanProgress >= 1) {
+            scanning = false
+            scanZoom.zoomOut()
+            ship.ringGroup.visible = ship.isSelected
+            if (dockedAsteroid) {
+              dockedAsteroid.scanned = true
+              renderScanResult(dockedAsteroid, true, true)
+            }
           }
         }
       }
@@ -1530,6 +1548,7 @@ export const TacticalBackground = () => {
       dockedMesh = null
       dockedInstanceId = -1
       dockedAsteroid = null
+      ship.ringGroup.visible = false
       ship.zoomOut()
       setDetailsMode(false)
       if (menuRef.current) {
@@ -1577,6 +1596,7 @@ export const TacticalBackground = () => {
       scanStartTime = performance.now()
       scanProgress = 0
       scanning = true
+      ship.ringGroup.visible = false
       // Zoom toward docked asteroid
       if (dockedMesh && dockedInstanceId >= 0) {
         dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
@@ -1591,6 +1611,7 @@ export const TacticalBackground = () => {
     // Mining button handler — shows scan results for scanned asteroid
     const handleMiningClick = () => {
       if (!dockedAsteroid?.scanned) return
+      ship.ringGroup.visible = false
       if (menuRef.current) {
         menuRef.current.style.opacity = '0'
         menuRef.current.style.pointerEvents = 'none'
@@ -1815,6 +1836,7 @@ export const TacticalBackground = () => {
             revealed={scanResult.revealed}
             progress={scanResult.progress}
             onMiningStart={handleMiningStartClick}
+            onAbort={handleAbortScan}
           />
         )}
       </HudPanel>
