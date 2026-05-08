@@ -8,6 +8,10 @@
 - Extracted reusable HudPanel component for tactical overlay layout; removed ShipMenuContainer in favor of composition
 - Moved spacecraft stat/type labels to data/labels.ts
 - Wired ShipStats to real spacecraft API data; added Tellus RX 5 to user spacecrafts
+- Added HudCard size prop (small/medium/large) with padding and min-width presets
+- Ship selection: ring indicator only shows when ship is selected; click to select, click outside or Escape to deselect
+- Simplified asteroid movement condition with shipDocked boolean
+- Scan zoom now matches asteroid details zoom (removed extra ship zoom during scan)
 
 ## 2026-05-07
 

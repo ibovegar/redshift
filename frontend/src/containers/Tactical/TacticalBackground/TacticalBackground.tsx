@@ -929,7 +929,7 @@ export const TacticalBackground = () => {
           dockedInstanceId = highlightedAsteroidIdx
           dockedAsteroid = findAsteroid(highlightedMesh, highlightedAsteroidIdx)
           travelMode = false
-          ship.ringGroup.visible = false
+          ship.deselect()
           highlightedAsteroidIdx = -1
           highlightedMesh = null
         }
@@ -945,6 +945,12 @@ export const TacticalBackground = () => {
             menuRef.current.style.opacity = '0'
             menuRef.current.style.pointerEvents = 'none'
           }
+        } else if (!ship.isSelected) {
+          ship.select()
+          if (menuRef.current) {
+            menuRef.current.style.opacity = '1'
+            menuRef.current.style.pointerEvents = 'auto'
+          }
         } else if (menuRef.current) {
           menuRef.current.style.opacity = '1'
           menuRef.current.style.pointerEvents = 'auto'
@@ -959,9 +965,12 @@ export const TacticalBackground = () => {
           menuRef.current.style.opacity = '0'
           menuRef.current.style.pointerEvents = 'none'
         }
-      } else if (menuRef.current) {
-        menuRef.current.style.opacity = '0'
-        menuRef.current.style.pointerEvents = 'none'
+      } else {
+        ship.deselect()
+        if (menuRef.current) {
+          menuRef.current.style.opacity = '0'
+          menuRef.current.style.pointerEvents = 'none'
+        }
       }
     }
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -980,9 +989,12 @@ export const TacticalBackground = () => {
             menuRef.current.style.opacity = '0'
             menuRef.current.style.pointerEvents = 'none'
           }
-        } else if (dockedMesh && menuRef.current) {
-          menuRef.current.style.opacity = '0'
-          menuRef.current.style.pointerEvents = 'none'
+        } else if (ship.isSelected) {
+          ship.deselect()
+          if (menuRef.current) {
+            menuRef.current.style.opacity = '0'
+            menuRef.current.style.pointerEvents = 'none'
+          }
         }
       }
     }
@@ -1222,7 +1234,7 @@ export const TacticalBackground = () => {
           ship.model.rotation.set(...ship.config.rotation)
           shipTravelTarget = null
           shipTravelStart = null
-          ship.ringGroup.visible = true
+          ship.select()
           if (travelLineRef.current) travelLineRef.current.style.display = 'none'
           if (dockedMesh && menuRef.current) {
             menuRef.current.style.opacity = '1'
@@ -1535,7 +1547,7 @@ export const TacticalBackground = () => {
       shipTravelTarget = new THREE.Vector3(1.2, 0.25, -3.5)
       shipTravelStart = new THREE.Vector3(...ship.config.position)
       shipTravelProgress = 0
-      ship.ringGroup.visible = false
+      ship.deselect()
       ship.zoomOut()
       setDetailsMode(false)
       if (menuRef.current) {

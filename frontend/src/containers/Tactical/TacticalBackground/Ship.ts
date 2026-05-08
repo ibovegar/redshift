@@ -15,6 +15,7 @@ export class Ship {
   config: ShipConfig
   model: THREE.Group | null = null
   ringGroup: THREE.Group
+  hitGroup: THREE.Group
   blockRingGroup: THREE.Group
   hitDisc: THREE.Mesh
   reticleMat: THREE.ShaderMaterial
@@ -24,6 +25,7 @@ export class Ship {
   hoverTarget = 0
   hoverCurrent = 0
   isZoomed = false
+  isSelected = false
   zoomProgress = 0
 
   private camTarget: THREE.Vector3
@@ -40,6 +42,11 @@ export class Ship {
     this.ringGroup = new THREE.Group()
     this.ringGroup.position.set(...config.position)
     this.ringGroup.rotation.set(...config.ringTilt)
+
+    // Hit group (always visible for raycasting)
+    this.hitGroup = new THREE.Group()
+    this.hitGroup.position.set(...config.position)
+    this.hitGroup.rotation.set(...config.ringTilt)
 
     // Shader reticle
     const reticleGeo = new THREE.PlaneGeometry(1.0, 1.0)
@@ -80,13 +87,13 @@ export class Ship {
     reticle.position.y = 0
     this.ringGroup.add(reticle)
 
-    // Hit disc
+    // Hit disc (separate group so it remains raycastable when ring is hidden)
     const hitDiscGeo = new THREE.CircleGeometry(0.4, 32)
     const hitDiscMat = new THREE.MeshBasicMaterial({ visible: false })
     this.hitDisc = new THREE.Mesh(hitDiscGeo, hitDiscMat)
     this.hitDisc.rotation.x = -Math.PI / 2
     this.hitDisc.position.y = 0
-    this.ringGroup.add(this.hitDisc)
+    this.hitGroup.add(this.hitDisc)
 
     // Block ring
     const blockCount = 32
@@ -138,10 +145,12 @@ export class Ship {
     solidRing.rotation.x = Math.PI / 2
     this.blockRingGroup.add(solidRing)
     this.ringGroup.add(this.blockRingGroup)
+    this.ringGroup.visible = false
   }
 
   addToScene(scene: THREE.Scene) {
     scene.add(this.ringGroup)
+    scene.add(this.hitGroup)
   }
 
   load(loader: GLTFLoader) {
@@ -178,6 +187,18 @@ export class Ship {
     this.hoverCurrent = 0
   }
 
+  select() {
+    this.isSelected = true
+    this.ringGroup.visible = true
+  }
+
+  deselect() {
+    this.isSelected = false
+    this.ringGroup.visible = false
+    this.hoverTarget = 0
+    this.hoverCurrent = 0
+  }
+
   update(elapsed: number, panX: number, panY: number, zoomT: number, panScale = 0.85) {
     this.camTarget.set(this.config.position[0], this.config.position[1] + 0.01, this.config.position[2] + 0.4)
     const shipX = this.config.position[0] + panX * panScale * (1 - zoomT)
@@ -193,6 +214,9 @@ export class Ship {
     this.ringGroup.position.x = shipX
     this.ringGroup.position.y = shipY
     this.ringGroup.position.z = this.config.position[2]
+    this.hitGroup.position.x = shipX
+    this.hitGroup.position.y = shipY
+    this.hitGroup.position.z = this.config.position[2]
     this.blockRingGroup.rotation.y = elapsed * 0.2
     const blockScale = Math.max(0.3, 1 - zoomT * 0.7)
     this.blockRingGroup.scale.set(1, blockScale, 1)
@@ -229,6 +253,8 @@ export class Ship {
         else child.material.dispose()
       }
     })
+    this.hitDisc.geometry.dispose()
+    ;(this.hitDisc.material as THREE.Material).dispose()
     if (this.model) {
       this.model.traverse((child) => {
         if (child instanceof THREE.Mesh) {
