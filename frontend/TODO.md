@@ -1,5 +1,6 @@
 Feat:
 fiux issue where I can rotate the planet anywhere I clicks
+Update the topography system.
 make selected asteroid when ship has arrived transparent when zoomed in
 make a game engine using state machine or something.
 refactor static assets and move to a game_data folder. Get suggestions regarding structuring.

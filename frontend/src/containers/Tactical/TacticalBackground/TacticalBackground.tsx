@@ -1,5 +1,6 @@
 import { HudButton } from 'components/HudButton/HudButton'
 import { HudPanel } from 'components/HudPanel/HudPanel'
+import { RadiationWarning } from 'components/RadiationWarning/RadiationWarning'
 import { ScanResult } from 'components/ScanResult/ScanResult'
 import { ShipMenu } from 'components/ShipMenu/ShipMenu'
 import { ShipStats } from 'components/ShipStats/ShipStats'
@@ -12,6 +13,7 @@ import { generateAsteroidEntities } from 'utils/asteroid-generator'
 import { AsteroidHighlight } from './AsteroidHighlight'
 import { ScannedIndicators } from './ScannedIndicators'
 import { Ship } from './Ship'
+import { SolarEvent, type SolarEventPhase } from './SolarEvent'
 
 const ASTEROID_COUNT_FAR = 600
 const ASTEROID_COUNT_NEAR = 150
@@ -219,6 +221,10 @@ export const TacticalBackground = () => {
   const standaloneScanRef = useRef<HTMLDivElement>(null)
   const shipStatsRef = useRef<HTMLDivElement>(null)
   const [detailsMode, setDetailsMode] = useState(false)
+  const [solarPhase, setSolarPhase] = useState<SolarEventPhase>('idle')
+  const [solarCountdown, setSolarCountdown] = useState(0)
+  const [_shipCondition, setShipCondition] = useState(100)
+  const shipConditionRef = useRef(100)
   const [scanResult, setScanResult] = useState<ScanResultState>({
     visible: false,
     asteroid: null,
@@ -276,7 +282,8 @@ export const TacticalBackground = () => {
         uSunDir: { value: sunDirection },
         uTexture: { value: planetTexture },
         uTime: { value: 0.0 },
-        uHover: { value: 0.0 }
+        uHover: { value: 0.0 },
+        uFlare: { value: 0.0 }
       },
       vertexShader: `
         varying vec3 vNormal;
@@ -291,6 +298,7 @@ export const TacticalBackground = () => {
         uniform vec3 uSunDir;
         uniform sampler2D uTexture;
         uniform float uHover;
+        uniform float uFlare;
         varying vec3 vNormal;
         varying vec2 vUv;
 
@@ -299,7 +307,8 @@ export const TacticalBackground = () => {
           color = color * vec3(0.4, 0.5, 1.5);
           float light = dot(vNormal, uSunDir);
           light = smoothstep(-0.15, 0.45, light) * 2.5;
-          vec3 lit = color * light;
+          float flareBoost = 1.0 + uFlare * 0.6 * smoothstep(-0.3, 0.2, dot(vNormal, uSunDir));
+          vec3 lit = color * light * flareBoost;
           vec3 blue = vec3(0.15, 0.25, 0.6);
           lit = mix(lit, lit + blue, uHover);
           gl_FragColor = vec4(lit, 1.0);
@@ -419,11 +428,12 @@ export const TacticalBackground = () => {
 
     // Sun — enhanced multi-layered glow with animated corona
     const sunPos = new THREE.Vector3(11.5, 5, -20)
-    const sunGlowGeo = new THREE.PlaneGeometry(6.5, 6.5)
+    const sunGlowGeo = new THREE.PlaneGeometry(14, 14)
     const sunGlowMat = new THREE.ShaderMaterial({
       uniforms: {
         uColor: { value: new THREE.Color(0xffeedd) },
-        uTime: { value: 0.0 }
+        uTime: { value: 0.0 },
+        uFlare: { value: 0.0 }
       },
       vertexShader: `
         varying vec2 vUv;
@@ -435,20 +445,26 @@ export const TacticalBackground = () => {
       fragmentShader: `
         uniform vec3 uColor;
         uniform float uTime;
+        uniform float uFlare;
         varying vec2 vUv;
         void main() {
           vec2 center = vUv - 0.5;
-          float d = length(center) * 2.0;
+          float d = length(center) * (14.0 / 6.5) * 2.0;
           float angle = atan(center.y, center.x);
 
-          float core = exp(-d * 90.0) * 2.0;
-          core *= 1.0;
+          float pulse1 = sin(uTime * 0.7) * 0.15;
+          float pulse2 = sin(uTime * 1.3 + 2.0) * 0.1;
+          float pulse3 = sin(uTime * 0.4 + 5.0) * 0.2;
+          float breath = 1.0 + pulse1 + pulse2 + pulse3;
+
+          float core = exp(-d * 90.0) * 2.0 * breath;
 
           float spikes = 0.0;
           for (int j = 0; j < 16; j++) {
             float sa = float(j) * 6.28318 / 16.0;
+            float shimmer = 1.0 + sin(uTime * 0.5 + float(j) * 0.9) * 0.3;
             float spike = pow(max(cos(angle - sa), 0.0), 100.0);
-            spike *= exp(-d * 12.0);
+            spike *= exp(-d * 12.0) * shimmer;
             spikes += spike;
           }
 
@@ -467,17 +483,21 @@ export const TacticalBackground = () => {
           rayWidths[4] = 280.0;
           for (int j = 0; j < 5; j++) {
             float ra = rayAngles[j];
+            float rayPulse = 1.0 + sin(uTime * (0.3 + float(j) * 0.15) + float(j) * 1.5) * 0.4;
             float ray = pow(max(cos(angle - ra), 0.0), rayWidths[j]);
-            ray *= exp(-d * rayLengths[j]) * 0.8;
+            ray *= exp(-d * rayLengths[j]) * 0.8 * rayPulse;
             longRays += ray;
           }
 
-          float glow = exp(-d * 14.0) * 0.9;
-          glow += exp(-d * 6.0) * 0.5;
+          float glow = exp(-d * 14.0) * 0.9 * breath;
+          glow += exp(-d * 6.0) * 0.5 * breath;
           glow += exp(-d * 2.5) * 0.2;
           glow += exp(-d * 1.0) * 0.1;
 
-          float intensity = core + spikes * 0.35 + longRays + glow;
+          float flareGlow = uFlare * exp(-d * 1.5) * 0.6;
+          float flareCore = uFlare * exp(-d * 8.0) * 1.2;
+
+          float intensity = core + spikes * 0.35 + longRays + glow + flareGlow + flareCore;
           vec3 color = uColor * intensity;
           color += vec3(0.2, 0.2, 0.4) * core * 0.2;
 
@@ -657,7 +677,8 @@ export const TacticalBackground = () => {
         uWeight: { value: 0.12 },
         uDecay: { value: 0.94 },
         uExposure: { value: 0.6 },
-        uColor: { value: new THREE.Color(0xffeedd) }
+        uColor: { value: new THREE.Color(0xffeedd) },
+        uTime: { value: 0.0 }
       },
       vertexShader: `
         varying vec2 vUv;
@@ -674,6 +695,7 @@ export const TacticalBackground = () => {
         uniform float uDecay;
         uniform float uExposure;
         uniform vec3 uColor;
+        uniform float uTime;
         varying vec2 vUv;
         const int NUM_SAMPLES = 50;
         float hash(vec2 p) {
@@ -692,7 +714,8 @@ export const TacticalBackground = () => {
             color += s;
             illuminationDecay *= uDecay;
           }
-          color *= uExposure * uColor;
+          float godBreath = 1.0 + sin(uTime * 0.6 + 1.0) * 0.2 + sin(uTime * 1.1) * 0.15;
+          color *= uExposure * uColor * godBreath;
           float a = max(max(color.r, color.g), color.b);
           gl_FragColor = vec4(color, a);
         }
@@ -770,6 +793,88 @@ export const TacticalBackground = () => {
     const lensFlareOverlay = new THREE.Scene()
     lensFlareOverlay.add(lensFlareQuad)
 
+    // --- Solar wave overlay ---
+    const solarWaveGeo = new THREE.PlaneGeometry(2, 2)
+    const solarWaveMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uSunPos: { value: new THREE.Vector2() },
+        uAspect: { value: width / height },
+        uProgress1: { value: 0.0 },
+        uProgress2: { value: 0.0 },
+        uProgress3: { value: 0.0 },
+        uIntensity1: { value: 0.0 },
+        uIntensity2: { value: 0.0 },
+        uIntensity3: { value: 0.0 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = vec4(position.xy, 0.0, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec2 uSunPos;
+        uniform float uAspect;
+        uniform float uProgress1;
+        uniform float uProgress2;
+        uniform float uProgress3;
+        uniform float uIntensity1;
+        uniform float uIntensity2;
+        uniform float uIntensity3;
+        varying vec2 vUv;
+        float hash(vec2 p) {
+          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        }
+        float noise(vec2 p) {
+          vec2 i = floor(p);
+          vec2 f = fract(p);
+          f = f * f * (3.0 - 2.0 * f);
+          float a = hash(i);
+          float b = hash(i + vec2(1.0, 0.0));
+          float c = hash(i + vec2(0.0, 1.0));
+          float d = hash(i + vec2(1.0, 1.0));
+          return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+        }
+        float waveRing(float dist, float angle, float progress, float seed) {
+          float radius = progress * 2.5;
+          if (radius < 0.01) return 0.0;
+          float n = noise(vec2(angle * 3.0 + seed, progress * 4.0 + seed)) * 0.15;
+          float n2 = noise(vec2(angle * 7.0 + seed * 2.0, progress * 2.0)) * 0.08;
+          float distort = dist + n + n2;
+          float ring = exp(-pow((distort - radius) * 4.0, 2.0));
+          float trail = exp(-pow((distort - radius * 0.7) * 2.0, 2.0)) * 0.4;
+          float outer = exp(-pow((distort - radius * 1.1) * 5.0, 2.0)) * 0.25;
+          return ring + trail + outer;
+        }
+        void main() {
+          vec2 aspect = vec2(uAspect, 1.0);
+          vec2 delta = (vUv - uSunPos) * aspect;
+          float dist = length(delta);
+          float angle = atan(delta.y, delta.x);
+          float w1 = waveRing(dist, angle, uProgress1, 0.0) * uIntensity1;
+          float w2 = waveRing(dist, angle, uProgress2, 3.7) * uIntensity2;
+          float w3 = waveRing(dist, angle, uProgress3, 7.2) * uIntensity3;
+          float wave = w1 + w2 + w3;
+          float avgProgress = (uProgress1 + uProgress2 + uProgress3) / 3.0;
+          vec3 color = mix(vec3(1.0, 0.85, 0.5), vec3(1.0, 0.6, 0.3), avgProgress);
+          gl_FragColor = vec4(color * wave, wave);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      blending: THREE.AdditiveBlending
+    })
+    const solarWaveQuad = new THREE.Mesh(solarWaveGeo, solarWaveMat)
+    solarWaveQuad.frustumCulled = false
+    const solarWaveOverlay = new THREE.Scene()
+    solarWaveOverlay.add(solarWaveQuad)
+    let solarWaveActive = false
+    let solarWaveProgress = [0, 0, 0]
+    let solarWaveDelays = [0, 0, 0]
+    let solarWaveTriggered = false
+
     const sunScreenHelper = new THREE.Vector3()
 
     // Hover raycasting
@@ -835,6 +940,15 @@ export const TacticalBackground = () => {
     let hoveredScannedAsteroid: Asteroid | null = null
     let hoveredMesh: THREE.InstancedMesh | null = null
     let hoveredInstanceId = -1
+
+    // Solar event system
+    const solarEvent = new SolarEvent()
+    let lastSolarPhase: SolarEventPhase = 'idle'
+    let lastSolarCountdown = 0
+    solarEvent.onConditionChange = (delta) => {
+      shipConditionRef.current = Math.max(0, shipConditionRef.current + delta)
+      setShipCondition(shipConditionRef.current)
+    }
 
     function renderScanResult(asteroid: Asteroid, revealed: boolean, showMining = false, isRemote = false) {
       setScanResult({ visible: true, asteroid, revealed, progress: 0, showMining, isRemote })
@@ -1173,6 +1287,7 @@ export const TacticalBackground = () => {
       clouds.rotation.x = 0.3 + planetRotX
       clouds.rotation.y = planetRotY * 1.15 + elapsed * 0.003
       sunGlowMat.uniforms.uTime.value = elapsed
+      godRayMat.uniforms.uTime.value = elapsed
 
       const shipDocked = !shipTravelTarget && !dockedMesh && !travelMode
       updateAsteroids(farData, farMeshes, farAssignments, farCounters, shipDocked ? FAR_SPEED : 0, SPREAD_X, dummy, -1)
@@ -1509,6 +1624,69 @@ export const TacticalBackground = () => {
       godRayMat.uniforms.uSunPos.value.set(sunUV_x, sunUV_y)
       lensFlareMat.uniforms.uSunPos.value.set(sunUV_x, sunUV_y)
 
+      // Solar event update
+      solarEvent.update(elapsed, dt, ship.config.position)
+      sunGlowMat.uniforms.uFlare.value = solarEvent.currentFlareIntensity
+      const flare = solarEvent.currentFlareIntensity
+      const isActive = solarEvent.phase === 'active'
+      godRayMat.uniforms.uExposure.value = 0.6 + flare * (isActive ? 1.2 : 0.3)
+      lensFlareMat.uniforms.uIntensity.value = 0.4 + flare * (isActive ? 0.8 : 0.2)
+      asteroidLight.intensity = 4 + flare * 4
+      planetMat.uniforms.uFlare.value = flare * 0.35
+      // Sharp flashing strobe on asteroids during active/cooldown
+      if (isActive || solarEvent.phase === 'cooldown') {
+        const strobe1 = Math.pow(Math.max(0, Math.sin(elapsed * 12)), 40) * 30
+        const strobe2 = Math.pow(Math.max(0, Math.sin(elapsed * 8 + 1.5)), 50) * 20
+        const strobe3 = Math.pow(Math.max(0, Math.sin(elapsed * 18 + 3.0)), 60) * 15
+        const strobeFade =
+          solarEvent.phase === 'cooldown'
+            ? Math.pow(Math.max(0, 1 - (elapsed - solarEvent['phaseStartTime']) / solarEvent['cooldownDuration']), 2)
+            : 1
+        asteroidLight.intensity += (strobe1 + strobe2 + strobe3) * strobeFade
+      }
+      if (solarEvent.phase !== lastSolarPhase) {
+        lastSolarPhase = solarEvent.phase
+        setSolarPhase(solarEvent.phase)
+      }
+      if (solarEvent.phase === 'warning' && solarEvent.countdown !== lastSolarCountdown) {
+        lastSolarCountdown = solarEvent.countdown
+        setSolarCountdown(solarEvent.countdown)
+      }
+
+      // Solar wave — trigger 3 rings in succession when active phase starts
+      if (isActive && !solarWaveTriggered) {
+        solarWaveTriggered = true
+        solarWaveActive = true
+        solarWaveProgress = [0, 0, 0]
+        solarWaveDelays = [0, 0.4 + Math.random() * 0.6, 1.0 + Math.random() * 1.0]
+      }
+      if (!isActive && solarEvent.phase !== 'cooldown') {
+        solarWaveTriggered = false
+      }
+      if (solarWaveActive) {
+        solarWaveMat.uniforms.uSunPos.value.set(sunUV_x, sunUV_y)
+        let anyActive = false
+        for (let i = 0; i < 3; i++) {
+          solarWaveDelays[i] -= dt
+          if (solarWaveDelays[i] <= 0) {
+            const speed = 0.08 + i * 0.02 + solarWaveProgress[i] * 0.4
+            solarWaveProgress[i] += dt * speed
+          }
+          const p = solarWaveProgress[i]
+          const fade = p < 0.3 ? p / 0.3 : Math.max(0, 1 - (p - 0.3) / 0.7)
+          const key = `uProgress${i + 1}` as 'uProgress1' | 'uProgress2' | 'uProgress3'
+          const iKey = `uIntensity${i + 1}` as 'uIntensity1' | 'uIntensity2' | 'uIntensity3'
+          solarWaveMat.uniforms[key].value = p
+          solarWaveMat.uniforms[iKey].value = fade * (0.6 + i * 0.15)
+          if (p < 1) anyActive = true
+        }
+        if (!anyActive) solarWaveActive = false
+      } else {
+        solarWaveMat.uniforms.uIntensity1.value = 0
+        solarWaveMat.uniforms.uIntensity2.value = 0
+        solarWaveMat.uniforms.uIntensity3.value = 0
+      }
+
       // Render occlusion pass (sun bright, planet black)
       renderer.setRenderTarget(occlusionRT)
       renderer.render(occlusionScene, camera)
@@ -1517,10 +1695,11 @@ export const TacticalBackground = () => {
       renderer.setRenderTarget(null)
       renderer.render(scene, camera)
 
-      // Composite god rays + lens flare (additive)
+      // Composite god rays + lens flare + solar wave (additive)
       renderer.autoClear = false
       renderer.render(godRayOverlay, overlayCamera)
       renderer.render(lensFlareOverlay, overlayCamera)
+      if (solarWaveActive) renderer.render(solarWaveOverlay, overlayCamera)
       renderer.autoClear = true
 
       frameId = requestAnimationFrame(animate)
@@ -1538,6 +1717,7 @@ export const TacticalBackground = () => {
       rtHeight = Math.floor(h / 2)
       occlusionRT.setSize(rtWidth, rtHeight)
       lensFlareMat.uniforms.uAspect.value = w / h
+      solarWaveMat.uniforms.uAspect.value = w / h
     }
     window.addEventListener('resize', handleResize)
 
@@ -1753,6 +1933,7 @@ export const TacticalBackground = () => {
           animation: contentFadeIn 0.15s ease-in 0.2s forwards;
         }
       `}</style>
+      <RadiationWarning phase={solarPhase} countdown={solarCountdown} />
       <div
         ref={containerRef}
         style={{

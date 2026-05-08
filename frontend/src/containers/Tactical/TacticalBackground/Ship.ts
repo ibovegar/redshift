@@ -179,8 +179,8 @@ export class Ship {
           float rays = 0.0;
           float ra0 = 0.4; float ra1 = 1.3; float ra2 = 2.6;
           float ra3 = 3.5; float ra4 = 4.9; float ra5 = 5.7;
-          float rl0 = 2.0; float rl1 = 4.5; float rl2 = 1.8;
-          float rl3 = 5.0; float rl4 = 2.5; float rl5 = 3.5;
+          float rl0 = 1.2; float rl1 = 2.5; float rl2 = 1.0;
+          float rl3 = 3.0; float rl4 = 1.5; float rl5 = 2.0;
           rays += pow(max(cos(angle - ra0), 0.0), 120.0) * exp(-d * rl0) * 1.2;
           rays += pow(max(cos(angle - ra1), 0.0), 120.0) * exp(-d * rl1) * 1.2;
           rays += pow(max(cos(angle - ra2), 0.0), 120.0) * exp(-d * rl2) * 1.2;

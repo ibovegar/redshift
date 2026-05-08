@@ -8,6 +8,7 @@
 - Extracted reusable HudPanel component for tactical overlay layout; removed ShipMenuContainer in favor of composition
 - Moved spacecraft stat/type labels to data/labels.ts
 - Wired ShipStats to real spacecraft API data; added Tellus RX 5 to user spacecrafts
+- Added solar event system with radiation warnings, expanding wave overlay, and sun/asteroid/planet visual effects
 - Added HudCard size prop (small/medium/large) with padding and min-width presets
 - Ship selection: ring indicator only shows when ship is selected; click to select, click outside or Escape to deselect
 - Simplified asteroid movement condition with shipDocked boolean
@@ -18,6 +19,9 @@
 - Reordered ship menu buttons: Move, Scan, Mining, Dock, Details
 - Ring indicator hidden during scanning, mining, and travel actions
 - Ring indicator scales down when camera zooms in
+- Disabled ship deselection during active scan; added abort scan button
+- Ring indicator scales based on camera-to-ship distance
+- Added solar event system with random cosmetic flares, radiation warning countdown, and hull damage
 - Disabled ship deselection during active scan; added abort scan button
 
 ## 2026-05-07
