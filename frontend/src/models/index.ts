@@ -1,3 +1,4 @@
+export * from './asteroid'
 export * from './base-stats'
 export * from './entity-state'
 export * from './mission'

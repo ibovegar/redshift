@@ -1,7 +1,29 @@
 # Changelog
 
+## 2026-05-08
+
+- Ship menu flips to the opposite side of the ship when it would overflow the viewport edge
+
+## 2026-05-07
+
+- Replaced platinum with antimatter (exotic rarity)
+- Darker background on unknown resource cells; transitions to white after reveal animation
+
 ## 2026-05-06
 
+- Redesigned scan result panel: solid blue background, white text, 3D tilt effect, larger size
+- Moved scan progress bar inside the result panel with SCANNING label
+- START MINING button now uses BarButton with matching hover animation
+- Click outside scan results panel to dismiss it
+- Hide spacecraft menu when pressing Scan; show scan results immediately with "Unknown" during scan
+- Added Mining button in ship menu to re-open scan results for scanned asteroids
+- Green highlight indicator on all previously scanned asteroids
+- Display asteroid stats panel after completing a scan (name, class, mass, density, deposits with abundance)
+- Scan button disabled for already-scanned asteroids
+- Each asteroid is now a unique entity with ID, name, class, and procedurally generated mining stats
+- Asteroid materials include metals, minerals, precious metals, water, CO2, fuel elements, and more
+- Extracted reusable `ScanProgressBar` component and `AsteroidHighlight` utility class
+- Procedural stat generator with seeded PRNG for deterministic asteroid properties
 - Asteroid scanning effect with progress bar on Scan button click (random duration based on size, max 10s)
 - Docked asteroid shows blue additive highlight overlay (same as travel hover)
 - Dock button disabled when at home dock, Scan button disabled when not at asteroid

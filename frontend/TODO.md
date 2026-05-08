@@ -1,6 +1,9 @@
 Feat:
+fiux issue where I can rotate the planet anywhere I clicks
 make selected asteroid when ship has arrived transparent when zoomed in
 make a game engine using state machine or something.
+refactor static assets and move to a game_data folder. Get suggestions regarding structuring.
+refactor to MUI with sx instead of div with styles
 Remove the second asteroid belt, or make in more pronounced but non selectable and in the background
 Performace fix (use pre created 3d models for ateroids etc.)
 Loading, login and splash screens screen

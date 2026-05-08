@@ -46,6 +46,7 @@ function generateActiveColors(count: number, color: string): string[] {
 interface BarButtonProps {
   children: ReactNode
   active?: boolean
+  color?: 'primary' | 'secondary'
 }
 
 const barRise = keyframes`
@@ -126,7 +127,7 @@ const StaticBar = styled('span')<{ color: string }>(({ color }) => ({
 }))
 
 export const BarButton = (props: BarButtonProps) => {
-  const { children, active } = props
+  const { children, active, color = 'primary' } = props
   const theme = useTheme()
 
   const rootRef = useRef<HTMLSpanElement>(null)
@@ -140,20 +141,36 @@ export const BarButton = (props: BarButtonProps) => {
     if (!el) return
     const width = el.offsetWidth
     const barCount = Math.max(1, Math.round(width / BAR_WIDTH))
-    const primaryHue = hexToHue(theme.palette.primary.main)
-    const colors = generateColors(barCount, primaryHue)
-    const shuffled = colors.sort(() => Math.random() - 0.5)
-    const randomBars = shuffled.map((color, i) => ({
-      key: `${i}-${color}`,
-      color,
-      delay: Math.round(Math.random() * 100),
-      easing: randomEasing()
-    }))
-    setBars(randomBars)
 
-    const activeColors = generateActiveColors(barCount, theme.palette.primary.main)
-    setActiveBars(activeColors.map((color, i) => ({ key: `a${i}-${color}`, color })))
-  }, [theme.palette.primary.main])
+    if (color === 'secondary') {
+      const primaryHue = hexToHue(theme.palette.primary.main)
+      const colors = generateColors(barCount, primaryHue)
+      const shuffled = colors.sort(() => Math.random() - 0.5)
+      setBars(
+        shuffled.map((c, i) => ({
+          key: `${i}-${c}`,
+          color: c,
+          delay: Math.round(Math.random() * 100),
+          easing: randomEasing()
+        }))
+      )
+      setActiveBars(Array.from({ length: barCount }, (_, i) => ({ key: `a${i}`, color: '#fff' })))
+    } else {
+      const primaryHue = hexToHue(theme.palette.primary.main)
+      const colors = generateColors(barCount, primaryHue)
+      const shuffled = colors.sort(() => Math.random() - 0.5)
+      setBars(
+        shuffled.map((c, i) => ({
+          key: `${i}-${c}`,
+          color: c,
+          delay: Math.round(Math.random() * 100),
+          easing: randomEasing()
+        }))
+      )
+      const activeColors = generateActiveColors(barCount, theme.palette.primary.main)
+      setActiveBars(activeColors.map((c, i) => ({ key: `a${i}-${c}`, color: c })))
+    }
+  }, [theme.palette.primary.main, color])
 
   const handleMouseEnter = useCallback(() => {
     setAnimate(false)

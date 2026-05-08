@@ -1,8 +1,12 @@
-import { Button } from '@mui/material'
-import { BarButton } from 'components/BarButton/BarButton'
-import { useEffect, useRef } from 'react'
+import { ScanResult } from 'components/ScanResult/ScanResult'
+import { ShipMenuContainer } from 'components/ShipMenuContainer/ShipMenuContainer'
+import type { Asteroid } from 'models/asteroid'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { generateAsteroidEntities } from 'utils/asteroid-generator'
+import { AsteroidHighlight } from './AsteroidHighlight'
+import { ScannedIndicators } from './ScannedIndicators'
 import { Ship } from './Ship'
 
 const ASTEROID_COUNT_FAR = 600
@@ -141,13 +145,87 @@ function updateAsteroids(
   }
 }
 
+class CameraZoom {
+  progress = 0
+  target: THREE.Vector3 | null = null
+  private lastTarget: THREE.Vector3 | null = null
+  private speed: number
+  private amount: number
+  private easeInPower: number
+  private easeOutPower: number
+
+  constructor(speed: number, amount: number, easeInPower = 4, easeOutPower = 4) {
+    this.speed = speed
+    this.amount = amount
+    this.easeInPower = easeInPower
+    this.easeOutPower = easeOutPower
+  }
+
+  zoomTo(target: THREE.Vector3) {
+    this.target = target
+    this.progress = 0
+  }
+
+  zoomOut() {
+    this.target = null
+  }
+
+  apply(camera: THREE.Camera) {
+    if (this.target) {
+      this.lastTarget = this.target.clone()
+      this.progress = Math.min(1, this.progress + this.speed)
+      const at = 1 - (1 - this.progress) ** this.easeInPower
+      const a = at * this.amount
+      camera.position.x += (this.target.x - camera.position.x) * a
+      camera.position.y += (this.target.y - camera.position.y) * a
+      camera.position.z += (this.target.z - camera.position.z) * a
+    } else if (this.progress > 0 && this.lastTarget) {
+      this.progress = Math.max(0, this.progress - this.speed)
+      const at = this.progress ** this.easeOutPower
+      const a = at * this.amount
+      camera.position.x += (this.lastTarget.x - camera.position.x) * a
+      camera.position.y += (this.lastTarget.y - camera.position.y) * a
+      camera.position.z += (this.lastTarget.z - camera.position.z) * a
+      if (this.progress === 0) this.lastTarget = null
+    }
+  }
+
+  get active() {
+    return this.target !== null || this.progress > 0
+  }
+}
+
+interface ScanResultState {
+  visible: boolean
+  asteroid: Asteroid | null
+  revealed: boolean
+  progress: number
+  showMining: boolean
+  isRemote: boolean
+}
+
 export const TacticalBackground = () => {
   const containerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const menuLineRef = useRef<SVGLineElement>(null)
+  const scanLineRef = useRef<SVGLineElement>(null)
   const travelLineRef = useRef<HTMLCanvasElement>(null)
-  const scanBarRef = useRef<HTMLDivElement>(null)
+  const standaloneScanRef = useRef<HTMLDivElement>(null)
+  const [scanResult, setScanResult] = useState<ScanResultState>({
+    visible: false,
+    asteroid: null,
+    revealed: false,
+    progress: 0,
+    showMining: false,
+    isRemote: false
+  })
+  const scanResultStateRef = useRef(scanResult)
+  scanResultStateRef.current = scanResult
+
+  const handleMiningStartClick = useCallback(() => {
+    // Placeholder for mining start logic
+  }, [])
 
   useEffect(() => {
     const container = containerRef.current
@@ -490,6 +568,20 @@ export const TacticalBackground = () => {
     updateAsteroids(farData, farMeshes, farAssignments, farCounters, 0, SPREAD_X, dummy, -1)
     updateAsteroids(nearData, nearMeshes, nearAssignments, nearCounters, 0, SPREAD_X, dummy, -1)
 
+    // Generate asteroid entities with procedural stats
+    const farAsteroids = generateAsteroidEntities('far', ASTEROID_COUNT_FAR, farData.scales, farAssignments, 42)
+    const nearAsteroids = generateAsteroidEntities('near', ASTEROID_COUNT_NEAR, nearData.scales, nearAssignments, 137)
+
+    // Lookup: find asteroid by mesh and instanceId
+    function findAsteroid(mesh: THREE.InstancedMesh, instanceId: number): Asteroid | null {
+      const nearIdx = (nearMeshes as THREE.InstancedMesh[]).indexOf(mesh)
+      const farIdx = (farMeshes as THREE.InstancedMesh[]).indexOf(mesh)
+      const isNear = nearIdx >= 0
+      const chunkIndex = isNear ? nearIdx : farIdx
+      const list = isNear ? nearAsteroids : farIdx >= 0 ? farAsteroids : []
+      return list.find((a) => a.chunkIndex === chunkIndex && a.instanceId === instanceId) ?? null
+    }
+
     // --- Ships ---
     const gltfLoader = new GLTFLoader()
     const ship = new Ship({
@@ -519,17 +611,8 @@ export const TacticalBackground = () => {
     scene.add(travelLine)
 
     // --- Asteroid hover highlight ---
-    const highlightMat = new THREE.MeshBasicMaterial({
-      color: 0x66ccff,
-      transparent: true,
-      opacity: 0.5,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    })
-    const highlightMesh = new THREE.Mesh(new THREE.BufferGeometry(), highlightMat)
-    highlightMesh.visible = false
-    highlightMesh.matrixAutoUpdate = false
-    scene.add(highlightMesh)
+    const highlight = new AsteroidHighlight(scene)
+    const scannedIndicators = new ScannedIndicators(scene)
 
     // --- God Rays setup ---
     const occlusionScene = new THREE.Scene()
@@ -704,8 +787,14 @@ export const TacticalBackground = () => {
     // Ship zoom state
     let zoomProgress = 0
     let t = 0
+    let maxZoom = 1
     const ZOOM_SPEED = 0.01
     const defaultCamZ = 5
+
+    // Asteroid zoom state (for remote scanned asteroid inspection)
+    const asteroidZoom = new CameraZoom(0.015, 0.3)
+    // Scan zoom state (nudge toward docked asteroid during scan)
+    const scanZoom = new CameraZoom(0.015, 0.3)
 
     // Travel mode state
     let travelMode = false
@@ -721,10 +810,28 @@ export const TacticalBackground = () => {
     let dockedMesh: THREE.InstancedMesh | null = null
     let dockedInstanceId = -1
     let dockOffset = new THREE.Vector3()
+    let dockedAsteroid: Asteroid | null = null
+    let dockedInstanceHidden = false
+    const savedDockedMatrix = new THREE.Matrix4()
     let scanning = false
     let scanProgress = 0
     let scanDuration = 0
     let scanStartTime = 0
+    let scanResultVisible = false
+    let lastProgressUpdate = 0
+    let hoveredScannedAsteroid: Asteroid | null = null
+    let hoveredMesh: THREE.InstancedMesh | null = null
+    let hoveredInstanceId = -1
+
+    function renderScanResult(asteroid: Asteroid, revealed: boolean, showMining = false, isRemote = false) {
+      setScanResult({ visible: true, asteroid, revealed, progress: 0, showMining, isRemote })
+      scanResultVisible = true
+    }
+
+    function hideScanResult() {
+      setScanResult((prev) => ({ ...prev, visible: false, isRemote: false }))
+      scanResultVisible = false
+    }
 
     const handleMouseDown = (e: MouseEvent) => {
       isDragging = true
@@ -739,6 +846,60 @@ export const TacticalBackground = () => {
     const handleClick = (e: MouseEvent) => {
       // Check if click is on menu
       if (menuRef.current?.contains(e.target as Node)) return
+      // Check if click is on scan result panel
+      if (standaloneScanRef.current?.contains(e.target as Node)) return
+
+      // Click scanned asteroid to show/hide result
+      if (!travelMode && !scanning) {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
+        raycaster.setFromCamera(mouse, camera)
+        const allMeshes = [...nearMeshes, ...farMeshes]
+        let clickedScanned: Asteroid | null = null
+        let clickedMesh: THREE.InstancedMesh | null = null
+        let clickedInstanceId = -1
+        for (const mesh of allMeshes) {
+          const hits = raycaster.intersectObject(mesh)
+          if (hits.length > 0) {
+            const iid = hits[0].instanceId ?? -1
+            const asteroid = findAsteroid(mesh, iid)
+            if (asteroid?.scanned && asteroid !== dockedAsteroid) {
+              clickedScanned = asteroid
+              clickedMesh = mesh
+              clickedInstanceId = iid
+            }
+            break
+          }
+        }
+        if (clickedScanned) {
+          if (clickedScanned === hoveredScannedAsteroid) {
+            hoveredScannedAsteroid = null
+            hoveredMesh = null
+            hoveredInstanceId = -1
+            asteroidZoom.zoomOut()
+            hideScanResult()
+          } else {
+            hoveredScannedAsteroid = clickedScanned
+            hoveredMesh = clickedMesh
+            hoveredInstanceId = clickedInstanceId
+            // Compute 3D position of the asteroid for zoom target
+            if (clickedMesh && clickedInstanceId >= 0) {
+              clickedMesh.getMatrixAt(clickedInstanceId, instanceMatrix)
+              instanceMatrix.premultiply(clickedMesh.matrixWorld)
+              asteroidZoom.zoomTo(new THREE.Vector3().setFromMatrixPosition(instanceMatrix))
+            }
+            renderScanResult(clickedScanned, true, false, true)
+          }
+          return
+        } else if (scanResultVisible) {
+          hoveredScannedAsteroid = null
+          hoveredMesh = null
+          hoveredInstanceId = -1
+          asteroidZoom.zoomOut()
+          hideScanResult()
+          return
+        }
+      }
 
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
@@ -759,6 +920,7 @@ export const TacticalBackground = () => {
           shipTravelProgress = 0
           dockedMesh = highlightedMesh
           dockedInstanceId = highlightedAsteroidIdx
+          dockedAsteroid = findAsteroid(highlightedMesh, highlightedAsteroidIdx)
           travelMode = false
           ship.ringGroup.visible = false
           highlightedAsteroidIdx = -1
@@ -768,6 +930,7 @@ export const TacticalBackground = () => {
       }
 
       if (ship.raycast(raycaster)) {
+        maxZoom = 1
         ship.toggleZoom()
         if (!ship.isZoomed && menuRef.current) {
           menuRef.current.style.opacity = '0'
@@ -776,6 +939,7 @@ export const TacticalBackground = () => {
         return
       }
       if (ship.isZoomed) {
+        maxZoom = 1
         ship.zoomOut()
         if (menuRef.current) {
           menuRef.current.style.opacity = '0'
@@ -795,6 +959,7 @@ export const TacticalBackground = () => {
           highlightedAsteroidIdx = -1
           highlightedMesh = null
         } else if (ship.isZoomed) {
+          maxZoom = 1
           ship.zoomOut()
           if (menuRef.current) {
             menuRef.current.style.opacity = '0'
@@ -860,6 +1025,20 @@ export const TacticalBackground = () => {
           const hits = raycaster.intersectObject(planet)
           if (hits.length > 0) cursor = 'pointer'
         }
+        if (cursor === 'default' && !scanning) {
+          const allMeshes = [...nearMeshes, ...farMeshes]
+          for (const mesh of allMeshes) {
+            const hits = raycaster.intersectObject(mesh)
+            if (hits.length > 0) {
+              const iid = hits[0].instanceId ?? -1
+              const asteroid = findAsteroid(mesh, iid)
+              if (asteroid?.scanned && asteroid !== dockedAsteroid) {
+                cursor = 'pointer'
+              }
+              break
+            }
+          }
+        }
       }
 
       if (container) container.style.cursor = cursor
@@ -890,11 +1069,26 @@ export const TacticalBackground = () => {
       // Zoom in: fast ease-out. Zoom out: ease start and end
       if (ship.isZoomed) {
         zoomProgress = Math.min(1, zoomProgress + ZOOM_SPEED)
-        t = 1 - (1 - zoomProgress) ** 9
+        t = Math.min(maxZoom, 1 - (1 - zoomProgress) ** 9)
       } else {
         zoomProgress = Math.max(0, zoomProgress - ZOOM_SPEED * 2.5 * Math.max(0.3, zoomProgress))
         const p = 1 - zoomProgress
         t = 1 - (6 * p ** 5 - 15 * p ** 4 + 10 * p ** 3)
+      }
+
+      // Hide docked asteroid when zoomed in to avoid it clipping in front of ship
+      if (dockedMesh && dockedInstanceId >= 0) {
+        if (ship.isZoomed && !dockedInstanceHidden) {
+          dockedMesh.getMatrixAt(dockedInstanceId, savedDockedMatrix)
+          const zeroMatrix = new THREE.Matrix4().makeScale(0, 0, 0)
+          dockedMesh.setMatrixAt(dockedInstanceId, zeroMatrix)
+          dockedMesh.instanceMatrix.needsUpdate = true
+          dockedInstanceHidden = true
+        } else if (!ship.isZoomed && dockedInstanceHidden) {
+          dockedMesh.setMatrixAt(dockedInstanceId, savedDockedMatrix)
+          dockedMesh.instanceMatrix.needsUpdate = true
+          dockedInstanceHidden = false
+        }
       }
 
       panX += (panTargetX - panX) * 0.03
@@ -906,6 +1100,10 @@ export const TacticalBackground = () => {
       camera.position.x = baseX + (camTarget.x - baseX) * t
       camera.position.y = baseY + (camTarget.y - baseY) * t
       camera.position.z = baseZ + (camTarget.z - baseZ) * t
+
+      // Asteroid zoom: nudge camera toward the inspected asteroid
+      asteroidZoom.apply(camera)
+      scanZoom.apply(camera)
 
       // Reduce apparent pan on asteroids and sun by partially following the camera
       farGroup.position.x = panX * 0.6
@@ -942,7 +1140,7 @@ export const TacticalBackground = () => {
         farMeshes,
         farAssignments,
         farCounters,
-        !shipTravelTarget && !dockedMesh ? FAR_SPEED : 0,
+        !shipTravelTarget && !dockedMesh && !travelMode ? FAR_SPEED : 0,
         SPREAD_X,
         dummy,
         -1
@@ -952,7 +1150,7 @@ export const TacticalBackground = () => {
         nearMeshes,
         nearAssignments,
         nearCounters,
-        !shipTravelTarget && !dockedMesh ? NEAR_SPEED : 0,
+        !shipTravelTarget && !dockedMesh && !travelMode ? NEAR_SPEED : 0,
         SPREAD_X,
         dummy,
         -1
@@ -960,26 +1158,20 @@ export const TacticalBackground = () => {
 
       // Asteroid hover highlight
       if (travelMode && highlightedAsteroidIdx >= 0 && highlightedMesh) {
-        highlightMesh.geometry = highlightedMesh.geometry
-        highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
-        instanceMatrix.scale(new THREE.Vector3(1.1, 1.1, 1.1))
-        instanceMatrix.premultiply(highlightedMesh.matrixWorld)
-        highlightMesh.matrix.copy(instanceMatrix)
-        highlightMesh.visible = true
+        highlight.show(highlightedMesh, highlightedAsteroidIdx, instanceMatrix)
       } else if (dockedMesh && dockedInstanceId >= 0) {
-        highlightMesh.geometry = dockedMesh.geometry
-        dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
-        instanceMatrix.scale(new THREE.Vector3(1.1, 1.1, 1.1))
-        instanceMatrix.premultiply(dockedMesh.matrixWorld)
-        highlightMesh.matrix.copy(instanceMatrix)
         if (scanning) {
-          highlightMesh.visible = Math.sin(elapsed * 20) > 0
+          highlight.showWithBlink(dockedMesh, dockedInstanceId, instanceMatrix, elapsed)
         } else {
-          highlightMesh.visible = true
+          highlight.show(dockedMesh, dockedInstanceId, instanceMatrix)
         }
       } else {
-        highlightMesh.visible = false
+        highlight.hide()
       }
+
+      // Scanned asteroid indicators
+      const scannedList = [...farAsteroids, ...nearAsteroids].filter((a) => a.scanned)
+      scannedIndicators.update(scannedList, farMeshes, nearMeshes, instanceMatrix)
 
       // Ship update
       const shipPanScale = dockedMesh ? 0 : 0.85
@@ -1057,23 +1249,32 @@ export const TacticalBackground = () => {
       if (menuRef.current && (ship.isZoomed || dockedMesh)) {
         const screenPos = ship.getScreenPosition(camera)
         if (screenPos) {
-          const offset = ship.isZoomed ? 420 : 140
-          const menuX = screenPos.x + offset
+          const offset = 140
+          const menuWidth = menuRef.current.offsetWidth
+          const rightX = screenPos.x + offset
+          const flipped = rightX + menuWidth > window.innerWidth - 8
+          const menuX = flipped ? screenPos.x - 60 - menuWidth : rightX
           const menuY = screenPos.y - 100
           menuRef.current.style.left = `${menuX}px`
           menuRef.current.style.top = `${menuY}px`
-          const rx = mouse.y * 10
-          const ry = -12 + mouse.x * 8
-          menuRef.current.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) skewY(2deg) translateY(-50%)`
+          menuRef.current.style.flexDirection = flipped ? 'row-reverse' : 'row'
+          menuRef.current.style.transformOrigin = flipped ? 'right center' : 'left center'
+          const rx = mouse.y * 2
+          const ry = flipped ? 3 - mouse.x * 2 : -3 + mouse.x * 2
+          const skew = flipped ? -0.5 : 0.5
+          menuRef.current.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) skewY(${skew}deg) translateY(-50%)`
           if (ship.isZoomed) {
-            const menuOpacity = Math.min(1, Math.max(0, (t - 0.6) / 0.4))
+            const fadeStart = maxZoom * 0.6
+            const fadeRange = maxZoom * 0.4
+            const menuOpacity = Math.min(1, Math.max(0, (t - fadeStart) / fadeRange))
             menuRef.current.style.opacity = String(menuOpacity)
             menuRef.current.style.pointerEvents = menuOpacity > 0.5 ? 'auto' : 'none'
           }
           if (menuLineRef.current) {
+            const lineX = flipped ? menuX + menuWidth : menuX
             menuLineRef.current.setAttribute('x1', String(screenPos.x))
             menuLineRef.current.setAttribute('y1', String(screenPos.y))
-            menuLineRef.current.setAttribute('x2', String(menuX))
+            menuLineRef.current.setAttribute('x2', String(lineX))
             menuLineRef.current.setAttribute('y2', String(menuY))
             menuLineRef.current.setAttribute('opacity', menuRef.current.style.opacity)
           }
@@ -1085,6 +1286,7 @@ export const TacticalBackground = () => {
       // Update button disabled states
       const dockBtnEl = document.getElementById('dock-btn') as HTMLButtonElement | null
       const scanBtnEl = document.getElementById('scan-btn') as HTMLButtonElement | null
+      const miningBtnEl = document.getElementById('mining-btn') as HTMLButtonElement | null
       if (dockBtnEl) {
         const shouldDisable = !dockedMesh
         dockBtnEl.disabled = shouldDisable
@@ -1093,40 +1295,78 @@ export const TacticalBackground = () => {
         if (wrapper) wrapper.style.pointerEvents = shouldDisable ? 'none' : ''
       }
       if (scanBtnEl) {
-        const shouldDisable = !dockedMesh || scanning
+        const shouldDisable = !dockedMesh || scanning || !!dockedAsteroid?.scanned
         scanBtnEl.disabled = shouldDisable
         scanBtnEl.classList.toggle('Mui-disabled', shouldDisable)
         const wrapper = scanBtnEl.closest('[data-bar-button]') as HTMLElement | null
         if (wrapper) wrapper.style.pointerEvents = shouldDisable ? 'none' : ''
       }
+      if (miningBtnEl) {
+        const shouldDisable = !dockedMesh || !dockedAsteroid?.scanned
+        miningBtnEl.disabled = shouldDisable
+        miningBtnEl.classList.toggle('Mui-disabled', shouldDisable)
+        const wrapper = miningBtnEl.closest('[data-bar-button]') as HTMLElement | null
+        if (wrapper) wrapper.style.pointerEvents = shouldDisable ? 'none' : ''
+      }
 
       // Scan progress
-      if (scanning && scanBarRef.current) {
+      if (scanning) {
         const now = performance.now()
         scanProgress = Math.min(1, (now - scanStartTime) / scanDuration)
-        scanBarRef.current.style.opacity = '1'
 
-        // Position over docked asteroid
-        if (dockedMesh && dockedInstanceId >= 0) {
-          dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
-          instanceMatrix.premultiply(dockedMesh.matrixWorld)
-          const asteroidPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
-          asteroidPos.project(camera)
-          const sx = (asteroidPos.x * 0.5 + 0.5) * window.innerWidth
-          const sy = (-asteroidPos.y * 0.5 + 0.5) * window.innerHeight
-          scanBarRef.current.style.left = `${sx}px`
-          scanBarRef.current.style.top = `${sy - 70}px`
+        // Throttled state update for line-by-line reveal (~10fps)
+        if (now - lastProgressUpdate > 100) {
+          lastProgressUpdate = now
+          setScanResult((prev) => ({ ...prev, progress: scanProgress }))
         }
-
-        const fill = scanBarRef.current.firstElementChild as HTMLElement | null
-        if (fill) fill.style.width = `${scanProgress * 100}%`
 
         if (scanProgress >= 1) {
           scanning = false
-          scanBarRef.current.style.opacity = '0'
+          scanZoom.zoomOut()
+          if (dockedAsteroid) {
+            dockedAsteroid.scanned = true
+            renderScanResult(dockedAsteroid, true, true)
+          }
         }
-      } else if (scanBarRef.current) {
-        scanBarRef.current.style.opacity = '0'
+      }
+
+      // Position standalone scan result for remote scanned asteroids
+      if (standaloneScanRef.current && scanResultVisible && hoveredMesh && hoveredInstanceId >= 0) {
+        hoveredMesh.getMatrixAt(hoveredInstanceId, instanceMatrix)
+        instanceMatrix.premultiply(hoveredMesh.matrixWorld)
+        const asteroidPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
+        asteroidPos.project(camera)
+        const ax = (asteroidPos.x * 0.5 + 0.5) * window.innerWidth
+        const ay = (-asteroidPos.y * 0.5 + 0.5) * window.innerHeight
+        const panelHeight = standaloneScanRef.current.offsetHeight
+        const panelWidth = standaloneScanRef.current.offsetWidth
+        const rightPanelX = ax + 120
+        const panelFlipped = rightPanelX + panelWidth > window.innerWidth - 8
+        const panelX = panelFlipped ? ax - 120 - panelWidth : rightPanelX
+        const panelY = Math.max(20, ay - panelHeight / 2)
+        standaloneScanRef.current.style.left = `${panelX}px`
+        standaloneScanRef.current.style.top = `${panelY}px`
+        standaloneScanRef.current.style.transformOrigin = panelFlipped ? 'right center' : 'left center'
+        const srx = mouse.y * 2
+        const sry = panelFlipped ? 3 - mouse.x * 2 : -3 + mouse.x * 2
+        const sskew = panelFlipped ? -0.5 : 0.5
+        standaloneScanRef.current.style.transform = `perspective(800px) rotateX(${srx}deg) rotateY(${sry}deg) skewY(${sskew}deg)`
+
+        // Draw dashed connector line from asteroid to scan result panel
+        if (scanLineRef.current) {
+          const lineEndX = panelFlipped ? panelX + panelWidth : panelX
+          const lineEndY = panelY + panelHeight / 2
+          const scanOpacity = standaloneScanRef.current.querySelector('[class]')
+            ? Math.min(1, asteroidZoom.progress * 3)
+            : 0
+          scanLineRef.current.setAttribute('x1', String(ax))
+          scanLineRef.current.setAttribute('y1', String(ay))
+          scanLineRef.current.setAttribute('x2', String(lineEndX))
+          scanLineRef.current.setAttribute('y2', String(lineEndY))
+          scanLineRef.current.setAttribute('opacity', String(scanOpacity))
+        }
+      } else if (scanLineRef.current) {
+        scanLineRef.current.setAttribute('opacity', '0')
       }
 
       // Draw animated travel line
@@ -1235,11 +1475,13 @@ export const TacticalBackground = () => {
       travelCursorScreen = { x: lastMouseScreen.x, y: lastMouseScreen.y }
       dockedMesh = null
       dockedInstanceId = -1
+      dockedAsteroid = null
       ship.zoomOut()
       if (menuRef.current) {
         menuRef.current.style.opacity = '0'
         menuRef.current.style.pointerEvents = 'none'
       }
+      hideScanResult()
       if (travelLineRef.current) {
         travelLineRef.current.style.display = 'block'
       }
@@ -1251,6 +1493,7 @@ export const TacticalBackground = () => {
     const handleDockClick = () => {
       dockedMesh = null
       dockedInstanceId = -1
+      dockedAsteroid = null
       shipTravelTarget = new THREE.Vector3(1.2, 0.25, -3.5)
       shipTravelStart = new THREE.Vector3(...ship.config.position)
       shipTravelProgress = 0
@@ -1260,6 +1503,7 @@ export const TacticalBackground = () => {
         menuRef.current.style.opacity = '0'
         menuRef.current.style.pointerEvents = 'none'
       }
+      hideScanResult()
       if (travelLineRef.current) {
         travelLineRef.current.style.display = 'block'
       }
@@ -1269,24 +1513,47 @@ export const TacticalBackground = () => {
 
     // Scan button handler
     const handleScanClick = () => {
-      if (!dockedMesh || dockedInstanceId < 0 || scanning) return
-      dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
-      const scale = new THREE.Vector3()
-      scale.setFromMatrixScale(instanceMatrix)
-      const avgScale = (scale.x + scale.y + scale.z) / 3
-      scanDuration = 2000 + avgScale * 8000 * Math.random()
+      if (!dockedMesh || dockedInstanceId < 0 || scanning || !dockedAsteroid) return
+      if (dockedAsteroid.scanned) return
+      const asteroidScale = dockedAsteroid.scale
+      scanDuration = 2000 + asteroidScale * 3000 + Math.random() * 3000
       if (scanDuration > 10000) scanDuration = 10000
       scanStartTime = performance.now()
       scanProgress = 0
       scanning = true
+      // Zoom toward docked asteroid
+      if (dockedMesh && dockedInstanceId >= 0) {
+        dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
+        instanceMatrix.premultiply(dockedMesh.matrixWorld)
+        scanZoom.zoomTo(new THREE.Vector3().setFromMatrixPosition(instanceMatrix))
+      }
+      // Zoom in on ship and keep menu visible
+      if (!ship.isZoomed) {
+        maxZoom = 0.5
+        ship.isZoomed = true
+      }
+      renderScanResult(dockedAsteroid, false, true)
     }
     const scanBtn = document.getElementById('scan-btn')
     if (scanBtn) scanBtn.addEventListener('click', handleScanClick)
+
+    // Mining button handler — shows scan results for scanned asteroid
+    const handleMiningClick = () => {
+      if (!dockedAsteroid?.scanned) return
+      if (menuRef.current) {
+        menuRef.current.style.opacity = '0'
+        menuRef.current.style.pointerEvents = 'none'
+      }
+      renderScanResult(dockedAsteroid, true, true)
+    }
+    const miningBtn = document.getElementById('mining-btn')
+    if (miningBtn) miningBtn.addEventListener('click', handleMiningClick)
 
     return () => {
       if (travelBtn) travelBtn.removeEventListener('click', handleTravelClick)
       if (dockBtn) dockBtn.removeEventListener('click', handleDockClick)
       if (scanBtn) scanBtn.removeEventListener('click', handleScanClick)
+      if (miningBtn) miningBtn.removeEventListener('click', handleMiningClick)
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mousedown', handleMouseDown)
@@ -1335,13 +1602,60 @@ export const TacticalBackground = () => {
       lensFlareMat.dispose()
       travelLineGeo.dispose()
       travelLineMat.dispose()
-      highlightMat.dispose()
+      highlight.dispose()
+      scannedIndicators.dispose()
       ship.dispose()
     }
   }, [])
 
   return (
     <>
+      <style>{`
+        @keyframes revealSlide {
+          from { transform: translateX(0); }
+          to { transform: translateX(100%); }
+        }
+        @keyframes contentFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .scan-overlay::before {
+          content: '';
+          position: absolute;
+          inset: -1px;
+          background: #e0e0e0;
+          border-radius: 2px;
+          z-index: 2;
+        }
+        .scan-overlay::after {
+          content: 'UNKNOWN';
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          letter-spacing: 0.5px;
+          color: rgba(0,0,0,0.35);
+          z-index: 3;
+        }
+        .scan-overlay > * {
+          opacity: 0;
+        }
+        .scan-reveal::before {
+          content: '';
+          position: absolute;
+          inset: -1px;
+          background: #e0e0e0;
+          border-radius: 2px;
+          animation: revealSlide 0.2s ease-out forwards;
+          z-index: 2;
+        }
+        .scan-reveal > * {
+          opacity: 0;
+          animation: contentFadeIn 0.15s ease-in 0.2s forwards;
+        }
+      `}</style>
       <div
         ref={containerRef}
         style={{
@@ -1391,30 +1705,21 @@ export const TacticalBackground = () => {
         />
       </div>
       <div
-        ref={scanBarRef}
+        ref={standaloneScanRef}
         style={{
           position: 'fixed',
-          opacity: 0,
-          pointerEvents: 'none',
-          transform: 'translateX(-50%)',
-          transition: 'opacity 0.3s',
           zIndex: 10,
-          width: '80px',
-          height: '6px',
-          background: 'rgba(0, 0, 0, 0.6)',
-          border: '1px solid rgba(102, 204, 255, 0.6)',
-          overflow: 'hidden'
+          pointerEvents: 'none'
         }}
       >
-        <div
-          style={{
-            height: '100%',
-            width: '0%',
-            background: 'linear-gradient(90deg, #66ccff, #44aaff)',
-            boxShadow: '0 0 6px rgba(102, 204, 255, 0.8)',
-            transition: 'width 0.1s linear'
-          }}
-        />
+        {scanResult.visible && scanResult.isRemote && (
+          <ScanResult
+            visible
+            asteroid={scanResult.asteroid}
+            revealed={scanResult.revealed}
+            progress={scanResult.progress}
+          />
+        )}
       </div>
       <svg
         role="img"
@@ -1430,67 +1735,13 @@ export const TacticalBackground = () => {
         }}
       >
         <line ref={menuLineRef} stroke="#ffffff" strokeWidth="1" opacity="0" strokeDasharray="6 4" />
+        <line ref={scanLineRef} stroke="#ffffff" strokeWidth="1" opacity="0" strokeDasharray="6 4" />
       </svg>
-      <div
+      <ShipMenuContainer
         ref={menuRef}
-        style={{
-          position: 'fixed',
-          opacity: 0,
-          pointerEvents: 'none',
-          transition: 'opacity 0.2s',
-          zIndex: 10,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-          border: '1px dashed #ffffff',
-          padding: '20px',
-          transform: 'perspective(600px) rotateY(-12deg) skewY(2deg)',
-          transformOrigin: 'left center'
-        }}
-      >
-        {['Travel', 'Dock', 'Scan'].map((label) => (
-          <BarButton key={label}>
-            <Button
-              id={
-                label === 'Travel'
-                  ? 'travel-btn'
-                  : label === 'Dock'
-                    ? 'dock-btn'
-                    : label === 'Scan'
-                      ? 'scan-btn'
-                      : undefined
-              }
-              sx={{
-                px: 4,
-                backgroundColor: '#fff',
-                color: '#000',
-                position: 'relative',
-                zIndex: 2,
-                boxShadow: 'none',
-                border: 'none',
-                clipPath: 'none',
-                lineHeight: 1,
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                  color: '#fff',
-                  boxShadow: 'none'
-                },
-                '&.Mui-disabled': {
-                  backgroundColor: '#555',
-                  color: '#999',
-                  opacity: 0.5
-                }
-              }}
-              color="primary"
-              variant="contained"
-              size="small"
-              disableRipple
-            >
-              {label}
-            </Button>
-          </BarButton>
-        ))}
-      </div>
+        scanResult={scanResult.isRemote ? undefined : scanResult}
+        onMiningStart={handleMiningStartClick}
+      />
       <canvas
         ref={travelLineRef}
         style={{
