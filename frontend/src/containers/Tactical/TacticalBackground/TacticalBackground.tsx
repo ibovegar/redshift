@@ -1001,7 +1001,7 @@ export const TacticalBackground = () => {
 
     // Mining button handler — shows scan results for scanned asteroid
     const handleMiningClick = () => {
-      if (!dockedAsteroid || !dockedAsteroid.scanned) return
+      if (!dockedAsteroid?.scanned) return
       hideMenu()
       highlight.hide()
       if (dockedMesh && dockedInstanceId >= 0) {
