@@ -1,6 +1,5 @@
 import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
 import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
-import { MiningSummary } from 'components/DrillOverlay/MiningSummary'
 import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
 import { HudPanel } from 'components/HudPanel/HudPanel'
 import { RadiationWarning } from 'components/RadiationWarning/RadiationWarning'
@@ -47,8 +46,7 @@ interface ScanResultState {
 
 export const TacticalBackground = () => {
   const { data: spacecraft } = useSpacecraft('3')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { data: _user } = useUser()
+  const { data: user } = useUser()
   const patchUser = usePatchUser()
   const updateCargo = useUpdateCargo()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -75,35 +73,8 @@ export const TacticalBackground = () => {
   const scanResultStateRef = useRef(scanResult)
   scanResultStateRef.current = scanResult
 
-  // TEMPORARY: show drill overlay immediately for development
-  const devAsteroid: Asteroid = {
-    id: 'dev',
-    name: 'DEV-001',
-    belt: 'belt',
-    index: 0,
-    chunkIndex: 0,
-    instanceId: 0,
-    scale: 1.5,
-    stats: {
-      mass: 50,
-      density: 3200,
-      class: 'M',
-      deposits: [
-        { material: 'iron', abundance: 0.6, purity: 0.8, rarity: 'common' },
-        { material: 'titanium', abundance: 0.3, purity: 0.6, rarity: 'uncommon' },
-        { material: 'gold', abundance: 0.1, purity: 0.9, rarity: 'rare' },
-        { material: 'uranium', abundance: 0.05, purity: 0.7, rarity: 'precious' },
-        { material: 'antimatter', abundance: 0.02, purity: 0.5, rarity: 'exotic' }
-      ],
-      surfaceTemp: 180,
-      rotationPeriod: 4.2,
-      magneticField: 0.3
-    },
-    scanned: true,
-    depleted: false
-  }
-  const [isMining, setIsMining] = useState(true)
-  const [miningAsteroid, setMiningAsteroid] = useState<Asteroid | null>(devAsteroid)
+  const [isMining, setIsMining] = useState(false)
+  const [miningAsteroid, setMiningAsteroid] = useState<Asteroid | null>(null)
   const [_shipFuel, setShipFuel] = useState(64)
   const [_shipShield, setShipShield] = useState(55)
   const shipFuelRef = useRef(64)
@@ -112,6 +83,8 @@ export const TacticalBackground = () => {
   const miningMeshRef = useRef<THREE.InstancedMesh | null>(null)
   const miningInstanceIdRef = useRef(-1)
   const miningScreenCenterRef = useRef<{ x: number; y: number } | null>(null)
+  const dockedMeshRef = useRef<THREE.InstancedMesh | null>(null)
+  const dockedInstanceIdRef = useRef(-1)
 
   const startMiningDirectRef = useRef<
     ((asteroid: Asteroid, mesh: THREE.InstancedMesh, instanceId: number) => void) | undefined
@@ -119,7 +92,6 @@ export const TacticalBackground = () => {
   startMiningDirectRef.current = (asteroid: Asteroid, mesh: THREE.InstancedMesh, instanceId: number) => {
     asteroid.scanned = true
     setMiningAsteroid(asteroid)
-    setIsMining(true)
     miningZoomRef.current = true
     miningMeshRef.current = mesh
     miningInstanceIdRef.current = instanceId
@@ -129,9 +101,14 @@ export const TacticalBackground = () => {
   const handleMiningStartClick = useCallback(() => {
     const state = scanResultStateRef.current
     if (!state.asteroid) return
+    const mesh = dockedMeshRef.current
+    const instanceId = dockedInstanceIdRef.current
     setMiningAsteroid(state.asteroid)
-    setIsMining(true)
     miningZoomRef.current = true
+    if (mesh && instanceId >= 0) {
+      miningMeshRef.current = mesh
+      miningInstanceIdRef.current = instanceId
+    }
     setScanResult((prev) => ({ ...prev, visible: false }))
   }, [])
 
@@ -309,6 +286,7 @@ export const TacticalBackground = () => {
     let hoveredScannedAsteroid: Asteroid | null = null
     let hoveredMesh: THREE.InstancedMesh | null = null
     let hoveredInstanceId = -1
+    let miningStarted = false
 
     // Solar event system
     const solarEvent = new SolarEvent()
@@ -369,8 +347,6 @@ export const TacticalBackground = () => {
 
       // Click scanned asteroid to show/hide result
       if (!travelMode && !scanning) {
-        // Block mining during active solar radiation event
-        const solarBlocked = solarEvent.phase === 'active' || solarEvent.phase === 'cooldown'
         mouse.x = (e.clientX / window.innerWidth) * 2 - 1
         mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
         raycaster.setFromCamera(mouse, camera)
@@ -383,14 +359,7 @@ export const TacticalBackground = () => {
           if (hits.length > 0) {
             const iid = hits[0].instanceId ?? -1
             const asteroid = belts.findAsteroid(mesh, iid)
-            // TEMPORARY: click any asteroid to start mining directly
-            if (!solarBlocked && asteroid && !asteroid.depleted && asteroid !== dockedAsteroid) {
-              hideMenu()
-              highlight.hide()
-              startMiningDirectRef.current?.(asteroid, mesh, iid)
-              return
-            }
-            if (asteroid?.scanned && asteroid !== dockedAsteroid) {
+            if (asteroid?.scanned && !asteroid.depleted && asteroid !== dockedAsteroid) {
               clickedScanned = asteroid
               clickedMesh = mesh
               clickedInstanceId = iid
@@ -447,6 +416,8 @@ export const TacticalBackground = () => {
           shipTravelProgress = 0
           dockedMesh = highlightedMesh
           dockedInstanceId = highlightedAsteroidIdx
+          dockedMeshRef.current = highlightedMesh
+          dockedInstanceIdRef.current = highlightedAsteroidIdx
           dockedAsteroid = belts.findAsteroid(highlightedMesh, highlightedAsteroidIdx)
           travelMode = false
           ship.deselect()
@@ -692,6 +663,12 @@ export const TacticalBackground = () => {
         const sx = (projected.x * 0.5 + 0.5) * window.innerWidth
         const sy = (-projected.y * 0.5 + 0.5) * window.innerHeight
         miningScreenCenterRef.current = { x: sx, y: sy }
+
+        // Show drill overlay once zoom is mostly complete
+        if (miningZoom.progress > 0.8 && !miningStarted) {
+          miningStarted = true
+          setIsMining(true)
+        }
       } else if (miningZoomRef.current && dockedMesh && dockedInstanceId >= 0) {
         dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
         instanceMatrix.premultiply(dockedMesh.matrixWorld)
@@ -702,6 +679,7 @@ export const TacticalBackground = () => {
       }
       if (!miningZoomRef.current && miningZoom.target) {
         miningZoom.zoomOut()
+        miningStarted = false
       }
 
       // Asteroid hover highlight
@@ -958,6 +936,8 @@ export const TacticalBackground = () => {
       travelCursorScreen = { x: lastMouseScreen.x, y: lastMouseScreen.y }
       dockedMesh = null
       dockedInstanceId = -1
+      dockedMeshRef.current = null
+      dockedInstanceIdRef.current = -1
       dockedAsteroid = null
       ship.ringGroup.visible = false
       ship.zoomOut()
@@ -975,6 +955,8 @@ export const TacticalBackground = () => {
     const handleDockClick = () => {
       dockedMesh = null
       dockedInstanceId = -1
+      dockedMeshRef.current = null
+      dockedInstanceIdRef.current = -1
       dockedAsteroid = null
       shipTravelTarget = new THREE.Vector3(1.2, 0.25, -3.5)
       shipTravelStart = new THREE.Vector3(...ship.config.position)
@@ -1019,8 +1001,7 @@ export const TacticalBackground = () => {
 
     // Mining button handler — shows scan results for scanned asteroid
     const handleMiningClick = () => {
-      if (!dockedAsteroid) return
-      if (!dockedAsteroid.scanned) dockedAsteroid.scanned = true
+      if (!dockedAsteroid || !dockedAsteroid.scanned) return
       hideMenu()
       highlight.hide()
       if (dockedMesh && dockedInstanceId >= 0) {
@@ -1087,21 +1068,10 @@ export const TacticalBackground = () => {
     <>
       <RadiationWarning phase={solarPhase} countdown={solarCountdown} />
       <FullscreenLayer ref={containerRef} sx={{ zIndex: 0, pointerEvents: 'auto' }} />
-      {/* DEV: preview MiningSummary for styling */}
-      <MiningSummary
-        collected={[
-          { material: 'titanium', amount: 0.8 },
-          { material: 'gold', amount: 0.45 },
-          { material: 'iron', amount: 1 },
-          { material: 'silicates', amount: 0.6 }
-        ]}
-        reason="timeout"
-        onContinue={() => {}}
-      />
       {isMining && miningAsteroid && (
         <DrillOverlay
           asteroid={miningAsteroid}
-          tutorialSeen={false}
+          tutorialSeen={user.drillTutorialSeen}
           screenCenterRef={miningScreenCenterRef}
           onTutorialDismiss={() => patchUser.mutate({ drillTutorialSeen: true })}
           onComplete={handleMiningComplete}

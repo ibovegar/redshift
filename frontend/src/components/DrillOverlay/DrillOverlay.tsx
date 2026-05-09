@@ -1180,18 +1180,21 @@ export const DrillOverlay = (props: DrillOverlayProps) => {
     onTutorialDismiss()
   }, [onTutorialDismiss])
 
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      const state = stateRef.current
-      if (!state || state.done) return
-      state.done = true
-      const collected = state.deposits.map((dep) => ({
-        material: dep.deposit.material,
-        amount: 1 - dep.remaining
-      }))
-      setCompletionData({ collected, reason: 'aborted' })
-    }
-  }, [])
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const state = stateRef.current
+        if (!state || state.done) return
+        state.done = true
+        const collected = state.deposits.map((dep) => ({
+          material: dep.deposit.material,
+          amount: 1 - dep.remaining
+        }))
+        onComplete(collected)
+      }
+    },
+    [onComplete]
+  )
 
   useEffect(() => {
     window.addEventListener('keydown', handleEscape)

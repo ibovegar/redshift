@@ -8,6 +8,13 @@
 - Added ship storage system: cargo capacity, cargo items, storage cost per material (scaled by rarity)
 - Added cargo hold section to ShipStats with usage bar, material list with symbols and rarity colors
 - Mining completion now fills ship cargo (respects capacity limits)
+- Moved Continue button to the left in mining summary
+- Mining summary now only shown on timeout or drill destruction (not on abort or completion)
+- Drill intro/tutorial only shown on first mining attempt (persisted via user data)
+- Removed dev MiningSummary preview from tactical scene
+- Mining now requires scanning — mining button disabled until asteroid is scanned
+- Removed dev auto-start mining and direct-click-to-mine shortcut
+- Camera zooms into asteroid before drill overlay appears (zoom-in animation plays first)
 - Added PATCH endpoint for spacecraft cargo via MSW mock API
 - Extracted DrillIntro into separate component with MUI (Backdrop, Typography, Stack, List, HudButton)
 - Merged far and near asteroid belts into a single unified belt (750 asteroids)

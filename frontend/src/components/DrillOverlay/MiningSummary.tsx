@@ -107,7 +107,7 @@ export function MiningSummary({ collected, reason, onContinue }: MiningSummaryPr
             </Box>
           </Stack>
         </HudCard>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignSelf: 'stretch' }}>
           <HudButton variant="secondary" onClick={onContinue}>
             Continue
           </HudButton>
