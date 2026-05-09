@@ -161,6 +161,22 @@ export class AsteroidBelts {
     return list.find((a) => a.chunkIndex === chunkIndex && a.instanceId === instanceId) ?? null
   }
 
+  private get farDepletedSet(): Set<number> {
+    const set = new Set<number>()
+    for (const a of this.farAsteroids) {
+      if (a.depleted) set.add(a.index)
+    }
+    return set
+  }
+
+  private get nearDepletedSet(): Set<number> {
+    const set = new Set<number>()
+    for (const a of this.nearAsteroids) {
+      if (a.depleted) set.add(a.index)
+    }
+    return set
+  }
+
   update(farSpeed: number, nearSpeed: number) {
     updateAsteroids(
       this.farData,
@@ -170,7 +186,8 @@ export class AsteroidBelts {
       farSpeed,
       SPREAD_X,
       this.dummy,
-      -1
+      -1,
+      this.farDepletedSet
     )
     updateAsteroids(
       this.nearData,
@@ -180,7 +197,8 @@ export class AsteroidBelts {
       nearSpeed,
       SPREAD_X,
       this.dummy,
-      -1
+      -1,
+      this.nearDepletedSet
     )
   }
 

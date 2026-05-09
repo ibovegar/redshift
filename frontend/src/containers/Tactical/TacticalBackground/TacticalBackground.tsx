@@ -1,6 +1,7 @@
 import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
 import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
 import { HudPanel } from 'components/HudPanel/HudPanel'
+import { type CollectedResource, MiningOverlay } from 'components/MiningOverlay/MiningOverlay'
 import { RadiationWarning } from 'components/RadiationWarning/RadiationWarning'
 import { ScanResult } from 'components/ScanResult/ScanResult'
 import { ShipMenu } from 'components/ShipMenu/ShipMenu'
@@ -68,8 +69,30 @@ export const TacticalBackground = () => {
   const scanResultStateRef = useRef(scanResult)
   scanResultStateRef.current = scanResult
 
+  const [isMining, setIsMining] = useState(false)
+  const [miningAsteroid, setMiningAsteroid] = useState<Asteroid | null>(null)
+  const [_shipFuel, setShipFuel] = useState(64)
+  const [_shipShield, setShipShield] = useState(55)
+  const shipFuelRef = useRef(64)
+  const shipShieldRef = useRef(55)
+  const miningZoomRef = useRef(false)
+
   const handleMiningStartClick = useCallback(() => {
-    // Placeholder for mining start logic
+    const state = scanResultStateRef.current
+    if (!state.asteroid) return
+    setMiningAsteroid(state.asteroid)
+    setIsMining(true)
+    miningZoomRef.current = true
+    setScanResult((prev) => ({ ...prev, visible: false }))
+  }, [])
+
+  const handleMiningComplete = useCallback((_collected: CollectedResource[]) => {
+    setMiningAsteroid((prev) => {
+      if (prev) prev.depleted = true
+      return null
+    })
+    setIsMining(false)
+    miningZoomRef.current = false
   }, [])
 
   const abortScanRef = useRef(false)
@@ -544,6 +567,38 @@ export const TacticalBackground = () => {
       const shipDocked = !shipTravelTarget && !dockedMesh && !travelMode
       belts.update(shipDocked ? FAR_SPEED : 0, shipDocked ? NEAR_SPEED : 0)
 
+      // Scan flash update
+      highlight.updateFlash(dt)
+
+      // Fuel and hull consumption during travel
+      if (shipTravelTarget && shipTravelStart) {
+        const fuelDrain = 0.8 * dt
+        shipFuelRef.current = Math.max(0, shipFuelRef.current - fuelDrain)
+        setShipFuel(Math.round(shipFuelRef.current))
+
+        if (shipFuelRef.current <= 0) {
+          // No fuel — damage shield first, then hull
+          const hullDrain = 0.3 * dt
+          if (shipShieldRef.current > 0) {
+            shipShieldRef.current = Math.max(0, shipShieldRef.current - hullDrain)
+            setShipShield(Math.round(shipShieldRef.current))
+          } else {
+            shipConditionRef.current = Math.max(0, shipConditionRef.current - hullDrain)
+            setShipCondition(shipConditionRef.current)
+          }
+        }
+      }
+
+      // Mining zoom — keep camera focused on asteroid
+      if (miningZoomRef.current && dockedMesh && dockedInstanceId >= 0) {
+        dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
+        instanceMatrix.premultiply(dockedMesh.matrixWorld)
+        scanZoom.zoomTo(new THREE.Vector3().setFromMatrixPosition(instanceMatrix))
+      } else if (!scanning && scanZoom.target) {
+        // Only zoom out if not scanning and not mining
+        if (!miningZoomRef.current) scanZoom.zoomOut()
+      }
+
       // Asteroid hover highlight
       if (travelMode && highlightedAsteroidIdx >= 0 && highlightedMesh) {
         highlight.show(highlightedMesh, highlightedAsteroidIdx, instanceMatrix)
@@ -812,6 +867,8 @@ export const TacticalBackground = () => {
       scanProgress = 0
       scanning = true
       ship.ringGroup.visible = false
+      // Flash the asteroid highlight
+      highlight.flash()
       // Zoom toward docked asteroid
       if (dockedMesh && dockedInstanceId >= 0) {
         dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
@@ -887,6 +944,7 @@ export const TacticalBackground = () => {
     <>
       <RadiationWarning phase={solarPhase} countdown={solarCountdown} />
       <FullscreenLayer ref={containerRef} sx={{ zIndex: 0, pointerEvents: 'auto' }} />
+      {isMining && miningAsteroid && <MiningOverlay asteroid={miningAsteroid} onComplete={handleMiningComplete} />}
       <ShipTooltip ref={tooltipRef} name="TELLUS RX 5" />
       <HudPanel ref={standaloneScanRef}>
         {scanResult.visible && scanResult.isRemote && (

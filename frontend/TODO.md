@@ -20,3 +20,31 @@ This a space survival game where expansion is restricted by the amount of fuel a
 Start by showing the entire planet and asteroid belt. Show a little dot with a fancy UI element that show you ship as selected and a name. WHen press, zoom in an open option, e.g. move. When pressing move, zoom out, and make it possible to select an asteroid. When close, show scanner. Scan eiter comes clean or show resources. If resouces, start mining. Then retur home to collect.
 2. Gather enough resources (metal and ???) to build a engineering facility. Use the facility to create a mining ship to speed up roucourse gathering and also gatherig special resource, needed to create a research facilty. Mining sips can be automated.
 3. When you have a research facility con can create a scout ship with longer distance. This is when you can start expanding the reach, and introducing more of the solar system, giving more hot spots (shipwreck with special resources and blueprints, big asteroid, alien artifact etc.) to gather resources, and finding new elements needed for advanced research and engineering.
+
+
+Mining minigame:
+- Several concentric circles on the asteroid, each representing a different resource layer
+- Start with the outermost circle and mine inward toward harder/rarer resources
+- Each inner circle is smaller and harder to mine
+- Cursor gets pushed randomly away — player must keep it inside the active circle
+- While inside the circle, resource depletes from 100% to 0%
+- When 0% remaining, advance to the next inner circle
+- When the timer runs out the asteroid disappears and you cannot collect more
+- Zoom in on the ship and asteroid when mining starts
+- When scanning an asteroid, make it flash
+
+Ship travel & maintenance:
+- While traveling, fuel, hull, and shield are slowly reduced
+- Shield comes later in the game after research
+- Shield is reduced before hull, making maintenance less time-consuming once unlocked
+- Requires ongoing maintenance to keep ship operational
+
+Progression & expansion:
+- Research and manufacture ships with greater travel distance
+- When a new ship tier is built, the map zooms out revealing more of the system
+- Planet gets smaller and smaller — feel the scale of expansion
+- More points of interest appear: shipwrecks, big asteroids, alien artifacts, etc.
+
+Base building:
+- Expand the ship with modular sections (like altars), or build space stations
+- Stations serve as checkpoints with depots and manufacturing

@@ -2,6 +2,11 @@
 
 ## 2026-05-08
 
+- Added MiningOverlay minigame: concentric ring targets, cursor push mechanic, per-deposit depletion, countdown timer
+- Added asteroid `depleted` flag; depleted asteroids disappear from belt rendering
+- Added scan flash effect on asteroid highlight when scanning starts
+- Added fuel/hull/shield consumption during ship travel (shield absorbs before hull)
+- Wired START MINING button to mining overlay with camera zoom toward asteroid
 - Refactored TacticalBackground.tsx into smaller modules: asteroid-belt, CameraZoom, create-planet, create-sun, create-god-rays, create-lens-flare, create-solar-wave
 - Renamed TacticalBackground helper files to kebab-case: asteroid-highlight, camera-zoom, scanned-indicators, ship, solar-event
 - Converted factory functions to classes: Planet, Sun, GodRays, LensFlare, SolarWave (with dispose methods)

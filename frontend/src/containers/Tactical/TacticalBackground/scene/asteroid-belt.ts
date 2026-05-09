@@ -99,7 +99,8 @@ export function updateAsteroids(
   speed: number,
   spreadX: number,
   dummy: THREE.Object3D,
-  arcSign: number = 1
+  arcSign: number = 1,
+  depletedSet?: Set<number>
 ) {
   const count = data.scales.length
   for (let c = 0; c < counters.length; c++) counters[c] = 0
@@ -123,7 +124,10 @@ export function updateAsteroids(
 
     dummy.position.set(data.positions[i3], yBase + arc, data.positions[i3 + 2])
     dummy.rotation.set(data.rotations[i3], data.rotations[i3 + 1], data.rotations[i3 + 2])
-    const s = data.scales[i]
+
+    // Depleted asteroids shrink to zero
+    const isDepleted = depletedSet?.has(i) ?? false
+    const s = isDepleted ? 0 : data.scales[i]
     dummy.scale.set(s, s, s)
     dummy.updateMatrix()
     const chunkIdx = assignments[i]

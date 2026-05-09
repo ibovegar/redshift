@@ -4,6 +4,8 @@ export class AsteroidHighlight {
   mesh: THREE.Mesh
   material: THREE.MeshBasicMaterial
   private scanning = false
+  private flashTime = 0
+  private flashDuration = 0.4
 
   constructor(scene: THREE.Scene) {
     this.material = new THREE.MeshBasicMaterial({
@@ -26,6 +28,7 @@ export class AsteroidHighlight {
     instanceMatrix.premultiply(targetMesh.matrixWorld)
     this.mesh.matrix.copy(instanceMatrix)
     this.mesh.visible = true
+    this.updateFlashColor()
   }
 
   showWithBlink(
@@ -41,6 +44,30 @@ export class AsteroidHighlight {
     instanceMatrix.premultiply(targetMesh.matrixWorld)
     this.mesh.matrix.copy(instanceMatrix)
     this.mesh.visible = Math.sin(elapsed * 20) > 0
+    this.updateFlashColor()
+  }
+
+  flash() {
+    this.flashTime = this.flashDuration
+  }
+
+  updateFlash(dt: number) {
+    if (this.flashTime > 0) {
+      this.flashTime = Math.max(0, this.flashTime - dt)
+    }
+  }
+
+  private updateFlashColor() {
+    if (this.flashTime > 0) {
+      const t = this.flashTime / this.flashDuration
+      const white = Math.round(t * 255)
+      const blue = Math.round((1 - t) * 255)
+      this.material.color.setRGB(white / 255, white / 255, (blue * 0.8 + white * 0.2) / 255)
+      this.material.opacity = 0.5 + t * 0.8
+    } else {
+      this.material.color.setHex(0x66ccff)
+      this.material.opacity = 0.5
+    }
   }
 
   hide() {

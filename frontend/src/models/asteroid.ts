@@ -41,4 +41,5 @@ export interface Asteroid {
   scale: number
   stats: AsteroidStats
   scanned: boolean
+  depleted: boolean
 }

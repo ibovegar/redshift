@@ -164,7 +164,8 @@ export function generateAsteroidEntities(
       instanceId,
       scale,
       stats,
-      scanned: false
+      scanned: false,
+      depleted: false
     })
   }
 
