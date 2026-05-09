@@ -53,7 +53,7 @@ const CLASS_MATERIALS: Record<AsteroidClass, { materials: AsteroidMaterial[]; we
 const GREEK = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta', 'Iota', 'Kappa']
 const PREFIXES = ['KR', 'VX', 'TN', 'QR', 'ZP', 'MX', 'DV', 'NR', 'FL', 'HX', 'WR', 'BN', 'CX', 'JP', 'SL']
 
-const MATERIAL_RARITY: Record<AsteroidMaterial, ResourceRarity> = {
+export const MATERIAL_RARITY: Record<AsteroidMaterial, ResourceRarity> = {
   iron: 'common',
   silicates: 'common',
   carbon: 'common',
@@ -130,7 +130,7 @@ function generateStats(asteroidClass: AsteroidClass, scale: number, rand: () => 
 }
 
 export function generateAsteroidEntities(
-  belt: 'far' | 'near',
+  belt: Asteroid['belt'],
   count: number,
   scales: Float32Array,
   assignments: number[],

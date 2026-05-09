@@ -3,8 +3,11 @@ import { HudButton } from 'components/HudButton/HudButton'
 import { HudCard } from 'components/HudCard/HudCard'
 import { ProgressBar } from 'components/ProgressBar/ProgressBar'
 import { STAT_LABELS, TYPE_LABELS } from 'data'
+import { MATERIAL_NAMES, MATERIAL_STORAGE_COST, MATERIAL_SYMBOLS } from 'data/materials'
+import { RARITY_COLORS } from 'data/rarity'
 import type { Spacecraft } from 'models'
 import { forwardRef } from 'react'
+import { MATERIAL_RARITY } from 'utils/asteroid-generator'
 
 interface ShipStatsProps {
   visible: boolean
@@ -79,6 +82,9 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, spacecraft }, ref) => {
   if (!spacecraft) return null
 
+  const cargoUsed = spacecraft.cargo.reduce((sum, item) => sum + item.amount * MATERIAL_STORAGE_COST[item.material], 0)
+  const cargoPercent = Math.round((cargoUsed / spacecraft.cargoCapacity) * 100)
+
   return (
     <HudCard ref={ref} visible={visible} size="large">
       <Stack spacing={2.5}>
@@ -119,6 +125,61 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, 
                 </Typography>
               </Stack>
             ))}
+          </Stack>
+        </Box>
+        <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', pt: 2 }}>
+          <Stack spacing={1}>
+            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography
+                variant="overline"
+                sx={{ fontSize: 11, letterSpacing: 1, lineHeight: 1, color: 'rgba(0,0,0,0.5)' }}
+              >
+                CARGO HOLD
+              </Typography>
+              <Typography sx={{ fontSize: 12, fontFamily: 'monospace' }}>
+                {cargoUsed} / {spacecraft.cargoCapacity}
+              </Typography>
+            </Stack>
+            <ProgressBar
+              value={cargoPercent}
+              color={cargoPercent > 90 ? 'error' : cargoPercent > 70 ? 'warning' : 'primary'}
+            />
+            {spacecraft.cargo.length > 0 && (
+              <Stack spacing={0.5} sx={{ pt: 0.5 }}>
+                {spacecraft.cargo.map((item) => {
+                  const rarity = MATERIAL_RARITY[item.material]
+                  const color = RARITY_COLORS[rarity]
+                  const storageCost = item.amount * MATERIAL_STORAGE_COST[item.material]
+                  return (
+                    <Stack key={item.material} direction="row" sx={{ alignItems: 'center', gap: 1 }}>
+                      <Typography sx={{ fontSize: 11, fontFamily: 'monospace', color, width: 28, flexShrink: 0 }}>
+                        {MATERIAL_SYMBOLS[item.material]}
+                      </Typography>
+                      <Typography sx={{ fontSize: 12, flex: 1 }}>{MATERIAL_NAMES[item.material]}</Typography>
+                      <Typography sx={{ fontSize: 11, fontFamily: 'monospace', color: 'rgba(0,0,0,0.4)' }}>
+                        ×{item.amount}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                          color: 'rgba(0,0,0,0.35)',
+                          width: 32,
+                          textAlign: 'right'
+                        }}
+                      >
+                        {storageCost}u
+                      </Typography>
+                    </Stack>
+                  )
+                })}
+              </Stack>
+            )}
+            {spacecraft.cargo.length === 0 && (
+              <Typography sx={{ fontSize: 12, color: 'rgba(0,0,0,0.35)', fontStyle: 'italic', pt: 0.5 }}>
+                Empty
+              </Typography>
+            )}
           </Stack>
         </Box>
         <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', pt: 2 }}>

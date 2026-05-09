@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-05-09
+
+- Added mining summary screen (HudCard) shown after drill ends — displays extracted resources with rarity colors, amounts, and storage cost
+- Drill health reaching 0 now ends the game (previously only timer/completion/escape)
+- Summary shows different status labels: extraction complete, time expired, drill destroyed, or aborted
+- Added ship storage system: cargo capacity, cargo items, storage cost per material (scaled by rarity)
+- Added cargo hold section to ShipStats with usage bar, material list with symbols and rarity colors
+- Mining completion now fills ship cargo (respects capacity limits)
+- Added PATCH endpoint for spacecraft cargo via MSW mock API
+- Extracted DrillIntro into separate component with MUI (Backdrop, Typography, Stack, List, HudButton)
+- Merged far and near asteroid belts into a single unified belt (750 asteroids)
+- Replaced mining minigame with Thermal Resonance: laser heat gauge with moving optimal zone, overheat fracture penalty, glowing cracks visual
+- Added Vector Drill minigame: tunnel visualization, moving target tracking, drill health, screen shake, sparks
+- Enhanced Vector Drill with pressure strikes (click QTE), fracture hazards (dodge zones), and orbit bonus (circular mouse movement)
+- Persist drill tutorial seen flag via mock API so intro only shows on first mining attempt
+
 ## 2026-05-08
 
 - Added MiningOverlay minigame: concentric ring targets, cursor push mechanic, per-deposit depletion, countdown timer

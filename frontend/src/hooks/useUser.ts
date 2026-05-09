@@ -17,3 +17,13 @@ export const useAddCredits = () => {
     }
   })
 }
+
+export const usePatchUser = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: userApi.patchUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.user })
+    }
+  })
+}

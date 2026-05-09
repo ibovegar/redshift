@@ -1,4 +1,10 @@
 import type { BaseStats } from 'models'
+import type { AsteroidMaterial } from './asteroid'
+
+export interface CargoItem {
+  material: AsteroidMaterial
+  amount: number
+}
 
 export interface Spacecraft {
   id: string
@@ -15,4 +21,6 @@ export interface Spacecraft {
   condition: number
   fuel: number
   attachedUpgrades: string[]
+  cargoCapacity: number
+  cargo: CargoItem[]
 }

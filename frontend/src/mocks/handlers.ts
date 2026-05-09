@@ -1,4 +1,5 @@
 import type { Mission, Spacecraft, Upgrade, UserStats } from 'models'
+import type { CargoItem } from 'models/spacecraft'
 import { HttpResponse, http } from 'msw'
 import { isSpacecraft, isUpgrade } from 'utils/guards'
 import { missions, spacecrafts, store, upgrades, user } from './data'
@@ -18,6 +19,12 @@ let nextId = 100
 export const handlers = [
   // User
   http.get(`${url}/user`, () => {
+    return HttpResponse.json(db.user)
+  }),
+
+  http.patch(`${url}/user`, async ({ request }) => {
+    const body = (await request.json()) as Partial<UserStats>
+    Object.assign(db.user, body)
     return HttpResponse.json(db.user)
   }),
 
@@ -42,6 +49,14 @@ export const handlers = [
   http.get(`${url}/spacecrafts/:id`, ({ params }) => {
     const spacecraft = db.spacecrafts.find((s) => s.id === params.id)
     if (!spacecraft) return new HttpResponse(null, { status: 404 })
+    return HttpResponse.json(spacecraft)
+  }),
+
+  http.patch(`${url}/spacecrafts/:id/cargo`, async ({ params, request }) => {
+    const spacecraft = db.spacecrafts.find((s) => s.id === params.id)
+    if (!spacecraft) return new HttpResponse(null, { status: 404 })
+    const cargo = (await request.json()) as CargoItem[]
+    spacecraft.cargo = cargo
     return HttpResponse.json(spacecraft)
   }),
 

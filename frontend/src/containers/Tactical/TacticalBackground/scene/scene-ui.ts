@@ -129,7 +129,7 @@ export function updateShipStats(
 export function updateButtonStates(dockedMesh: unknown, scanning: boolean, dockedAsteroidScanned: boolean) {
   updateButton('dock-btn', !dockedMesh)
   updateButton('scan-btn', !dockedMesh || scanning || dockedAsteroidScanned)
-  updateButton('mining-btn', !dockedMesh || !dockedAsteroidScanned)
+  updateButton('mining-btn', !dockedMesh)
 }
 
 function updateButton(id: string, shouldDisable: boolean) {

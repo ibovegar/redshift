@@ -2,7 +2,7 @@ export { queryKeys } from './queryKeys'
 export { useCardExpandAnimation } from './useCardExpandAnimation'
 export { CartProvider, useCart } from './useCart'
 export { useCompleteMission, useMissions } from './useMissions'
-export { useSpacecraft, useSpacecrafts } from './useSpacecrafts'
+export { useSpacecraft, useSpacecrafts, useUpdateCargo } from './useSpacecrafts'
 export { usePurchase, useStoreProducts } from './useStore'
 export {
   getAttachedUpgrades,
@@ -11,4 +11,4 @@ export {
   useDetachUpgrade,
   useUpgrades
 } from './useUpgrades'
-export { useAddCredits, useUser } from './useUser'
+export { useAddCredits, usePatchUser, useUser } from './useUser'

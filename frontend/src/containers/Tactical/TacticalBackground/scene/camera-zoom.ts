@@ -21,6 +21,10 @@ export class CameraZoom {
     this.progress = 0
   }
 
+  updateTarget(target: THREE.Vector3) {
+    this.target = target
+  }
+
   zoomOut() {
     this.target = null
   }

@@ -1,18 +1,20 @@
 import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
+import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
+import { MiningSummary } from 'components/DrillOverlay/MiningSummary'
 import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
 import { HudPanel } from 'components/HudPanel/HudPanel'
-import { type CollectedResource, MiningOverlay } from 'components/MiningOverlay/MiningOverlay'
 import { RadiationWarning } from 'components/RadiationWarning/RadiationWarning'
 import { ScanResult } from 'components/ScanResult/ScanResult'
 import { ShipMenu } from 'components/ShipMenu/ShipMenu'
 import { ShipStats } from 'components/ShipStats/ShipStats'
 import { ShipTooltip } from 'components/ShipTooltip/ShipTooltip'
-import { useSpacecraft } from 'hooks'
+import { MATERIAL_STORAGE_COST } from 'data/materials'
+import { usePatchUser, useSpacecraft, useUpdateCargo, useUser } from 'hooks'
 import type { Asteroid } from 'models/asteroid'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import { AsteroidBelts, FAR_SPEED, NEAR_SPEED } from './scene/asteroid-belts'
+import { AsteroidBelts, BELT_SPEED } from './scene/asteroid-belts'
 import { AsteroidHighlight } from './scene/asteroid-highlight'
 import { CameraZoom } from './scene/camera-zoom'
 import { GodRays } from './scene/god-rays'
@@ -45,6 +47,10 @@ interface ScanResultState {
 
 export const TacticalBackground = () => {
   const { data: spacecraft } = useSpacecraft('3')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { data: _user } = useUser()
+  const patchUser = usePatchUser()
+  const updateCargo = useUpdateCargo()
   const containerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -69,13 +75,56 @@ export const TacticalBackground = () => {
   const scanResultStateRef = useRef(scanResult)
   scanResultStateRef.current = scanResult
 
-  const [isMining, setIsMining] = useState(false)
-  const [miningAsteroid, setMiningAsteroid] = useState<Asteroid | null>(null)
+  // TEMPORARY: show drill overlay immediately for development
+  const devAsteroid: Asteroid = {
+    id: 'dev',
+    name: 'DEV-001',
+    belt: 'belt',
+    index: 0,
+    chunkIndex: 0,
+    instanceId: 0,
+    scale: 1.5,
+    stats: {
+      mass: 50,
+      density: 3200,
+      class: 'M',
+      deposits: [
+        { material: 'iron', abundance: 0.6, purity: 0.8, rarity: 'common' },
+        { material: 'titanium', abundance: 0.3, purity: 0.6, rarity: 'uncommon' },
+        { material: 'gold', abundance: 0.1, purity: 0.9, rarity: 'rare' },
+        { material: 'uranium', abundance: 0.05, purity: 0.7, rarity: 'precious' },
+        { material: 'antimatter', abundance: 0.02, purity: 0.5, rarity: 'exotic' }
+      ],
+      surfaceTemp: 180,
+      rotationPeriod: 4.2,
+      magneticField: 0.3
+    },
+    scanned: true,
+    depleted: false
+  }
+  const [isMining, setIsMining] = useState(true)
+  const [miningAsteroid, setMiningAsteroid] = useState<Asteroid | null>(devAsteroid)
   const [_shipFuel, setShipFuel] = useState(64)
   const [_shipShield, setShipShield] = useState(55)
   const shipFuelRef = useRef(64)
   const shipShieldRef = useRef(55)
   const miningZoomRef = useRef(false)
+  const miningMeshRef = useRef<THREE.InstancedMesh | null>(null)
+  const miningInstanceIdRef = useRef(-1)
+  const miningScreenCenterRef = useRef<{ x: number; y: number } | null>(null)
+
+  const startMiningDirectRef = useRef<
+    ((asteroid: Asteroid, mesh: THREE.InstancedMesh, instanceId: number) => void) | undefined
+  >(undefined)
+  startMiningDirectRef.current = (asteroid: Asteroid, mesh: THREE.InstancedMesh, instanceId: number) => {
+    asteroid.scanned = true
+    setMiningAsteroid(asteroid)
+    setIsMining(true)
+    miningZoomRef.current = true
+    miningMeshRef.current = mesh
+    miningInstanceIdRef.current = instanceId
+    setScanResult((prev) => ({ ...prev, visible: false }))
+  }
 
   const handleMiningStartClick = useCallback(() => {
     const state = scanResultStateRef.current
@@ -86,14 +135,41 @@ export const TacticalBackground = () => {
     setScanResult((prev) => ({ ...prev, visible: false }))
   }, [])
 
-  const handleMiningComplete = useCallback((_collected: CollectedResource[]) => {
-    setMiningAsteroid((prev) => {
-      if (prev) prev.depleted = true
-      return null
-    })
-    setIsMining(false)
-    miningZoomRef.current = false
-  }, [])
+  const handleMiningComplete = useCallback(
+    (collected: CollectedResource[]) => {
+      // Merge collected resources into existing cargo
+      const existingCargo = [...spacecraft.cargo]
+      for (const item of collected) {
+        if (item.amount <= 0) continue
+        const currentUsed = existingCargo.reduce((sum, c) => sum + c.amount * MATERIAL_STORAGE_COST[c.material], 0)
+        const remaining = spacecraft.cargoCapacity - currentUsed
+        if (remaining <= 0) break
+        const actualAmount = Math.min(
+          Math.round(item.amount * 10),
+          Math.floor(remaining / MATERIAL_STORAGE_COST[item.material])
+        )
+        if (actualAmount <= 0) continue
+        const existing = existingCargo.find((c) => c.material === item.material)
+        if (existing) {
+          existing.amount += actualAmount
+        } else {
+          existingCargo.push({ material: item.material, amount: actualAmount })
+        }
+      }
+      updateCargo.mutate({ spacecraftId: spacecraft.id, cargo: existingCargo })
+
+      setMiningAsteroid((prev) => {
+        if (prev) prev.depleted = true
+        return null
+      })
+      setIsMining(false)
+      miningZoomRef.current = false
+      miningMeshRef.current = null
+      miningInstanceIdRef.current = -1
+      miningScreenCenterRef.current = null
+    },
+    [spacecraft, updateCargo]
+  )
 
   const abortScanRef = useRef(false)
   const handleAbortScan = useCallback(() => {
@@ -204,6 +280,8 @@ export const TacticalBackground = () => {
     const asteroidZoom = new CameraZoom(0.015, 0.3)
     // Scan zoom state (nudge toward docked asteroid during scan)
     const scanZoom = new CameraZoom(0.015, 0.3)
+    // Mining zoom state (aggressive zoom toward mined asteroid)
+    const miningZoom = new CameraZoom(0.03, 0.92, 2, 4)
 
     // Travel mode state
     let travelMode = false
@@ -264,6 +342,7 @@ export const TacticalBackground = () => {
     }
 
     const handleMouseDown = (e: MouseEvent) => {
+      if (miningZoomRef.current) return
       isDragging = true
       prevDragX = e.clientX
       prevDragY = e.clientY
@@ -282,6 +361,7 @@ export const TacticalBackground = () => {
       isDraggingPlanet = false
     }
     const handleClick = (e: MouseEvent) => {
+      if (miningZoomRef.current) return
       // Check if click is on menu
       if (menuRef.current?.contains(e.target as Node)) return
       // Check if click is on scan result panel
@@ -289,10 +369,12 @@ export const TacticalBackground = () => {
 
       // Click scanned asteroid to show/hide result
       if (!travelMode && !scanning) {
+        // Block mining during active solar radiation event
+        const solarBlocked = solarEvent.phase === 'active' || solarEvent.phase === 'cooldown'
         mouse.x = (e.clientX / window.innerWidth) * 2 - 1
         mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
         raycaster.setFromCamera(mouse, camera)
-        const allMeshes = [...belts.nearMeshes, ...belts.farMeshes]
+        const allMeshes = belts.meshes
         let clickedScanned: Asteroid | null = null
         let clickedMesh: THREE.InstancedMesh | null = null
         let clickedInstanceId = -1
@@ -301,6 +383,13 @@ export const TacticalBackground = () => {
           if (hits.length > 0) {
             const iid = hits[0].instanceId ?? -1
             const asteroid = belts.findAsteroid(mesh, iid)
+            // TEMPORARY: click any asteroid to start mining directly
+            if (!solarBlocked && asteroid && !asteroid.depleted && asteroid !== dockedAsteroid) {
+              hideMenu()
+              highlight.hide()
+              startMiningDirectRef.current?.(asteroid, mesh, iid)
+              return
+            }
             if (asteroid?.scanned && asteroid !== dockedAsteroid) {
               clickedScanned = asteroid
               clickedMesh = mesh
@@ -416,7 +505,7 @@ export const TacticalBackground = () => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
       lastMouseScreen = { x: e.clientX, y: e.clientY }
-      if (!ship.isZoomed) {
+      if (!ship.isZoomed && !miningZoomRef.current) {
         panTargetX = mouse.x * PAN_AMOUNT
         panTargetY = mouse.y * PAN_AMOUNT
       }
@@ -432,24 +521,13 @@ export const TacticalBackground = () => {
         // Check asteroid hover
         highlightedAsteroidIdx = -1
         highlightedMesh = null
-        for (const mesh of belts.nearMeshes) {
+        for (const mesh of belts.meshes) {
           const hits = raycaster.intersectObject(mesh)
           if (hits.length > 0) {
             highlightedAsteroidIdx = hits[0].instanceId ?? -1
             highlightedMesh = mesh
             cursor = 'pointer'
             break
-          }
-        }
-        if (highlightedAsteroidIdx < 0) {
-          for (const mesh of belts.farMeshes) {
-            const hits = raycaster.intersectObject(mesh)
-            if (hits.length > 0) {
-              highlightedAsteroidIdx = hits[0].instanceId ?? -1
-              highlightedMesh = mesh
-              cursor = 'pointer'
-              break
-            }
           }
         }
 
@@ -463,7 +541,7 @@ export const TacticalBackground = () => {
           ship.hoverTarget = 0
         }
         if (cursor === 'default' && !scanning) {
-          const allMeshes = [...belts.nearMeshes, ...belts.farMeshes]
+          const allMeshes = belts.meshes
           for (const mesh of allMeshes) {
             const hits = raycaster.intersectObject(mesh)
             if (hits.length > 0) {
@@ -541,6 +619,7 @@ export const TacticalBackground = () => {
       // Asteroid zoom: nudge camera toward the inspected asteroid
       asteroidZoom.apply(camera)
       scanZoom.apply(camera)
+      miningZoom.apply(camera)
 
       // Reduce apparent pan on asteroids and sun by partially following the camera
       belts.applyParallax(panX, panY)
@@ -565,7 +644,7 @@ export const TacticalBackground = () => {
       godRays.mat.uniforms.uTime.value = elapsed
 
       const shipDocked = !shipTravelTarget && !dockedMesh && !travelMode
-      belts.update(shipDocked ? FAR_SPEED : 0, shipDocked ? NEAR_SPEED : 0)
+      belts.update(shipDocked && !miningZoomRef.current ? BELT_SPEED : 0)
 
       // Scan flash update
       highlight.updateFlash(dt)
@@ -590,7 +669,30 @@ export const TacticalBackground = () => {
       }
 
       // Mining zoom — keep camera focused on asteroid
-      if (miningZoomRef.current && dockedMesh && dockedInstanceId >= 0) {
+      const mMesh = miningMeshRef.current
+      const mId = miningInstanceIdRef.current
+      if (miningZoomRef.current && mMesh && mId >= 0) {
+        mMesh.getMatrixAt(mId, instanceMatrix)
+        instanceMatrix.premultiply(mMesh.matrixWorld)
+        const worldPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
+        if (miningZoom.target) {
+          miningZoom.updateTarget(worldPos)
+        } else {
+          miningZoom.zoomTo(worldPos)
+        }
+
+        // Center camera XY on asteroid so it appears in the middle of the screen
+        const zoomT = Math.min(1, miningZoom.progress / 1) // 0..1
+        const eased = 1 - (1 - zoomT) ** 2
+        camera.position.x += (worldPos.x - camera.position.x) * eased
+        camera.position.y += (worldPos.y - camera.position.y) * eased
+
+        // Project to screen
+        const projected = worldPos.clone().project(camera)
+        const sx = (projected.x * 0.5 + 0.5) * window.innerWidth
+        const sy = (-projected.y * 0.5 + 0.5) * window.innerHeight
+        miningScreenCenterRef.current = { x: sx, y: sy }
+      } else if (miningZoomRef.current && dockedMesh && dockedInstanceId >= 0) {
         dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
         instanceMatrix.premultiply(dockedMesh.matrixWorld)
         scanZoom.zoomTo(new THREE.Vector3().setFromMatrixPosition(instanceMatrix))
@@ -598,22 +700,45 @@ export const TacticalBackground = () => {
         // Only zoom out if not scanning and not mining
         if (!miningZoomRef.current) scanZoom.zoomOut()
       }
+      if (!miningZoomRef.current && miningZoom.target) {
+        miningZoom.zoomOut()
+      }
 
       // Asteroid hover highlight
-      if (travelMode && highlightedAsteroidIdx >= 0 && highlightedMesh) {
-        highlight.show(highlightedMesh, highlightedAsteroidIdx, instanceMatrix)
-      } else if (dockedMesh && dockedInstanceId >= 0) {
-        if (scanning) {
-          highlight.showWithBlink(dockedMesh, dockedInstanceId, instanceMatrix, elapsed)
-        } else {
-          highlight.show(dockedMesh, dockedInstanceId, instanceMatrix)
-        }
-      } else {
+      if (miningZoomRef.current) {
         highlight.hide()
+        // Hide all asteroid chunks except the one containing the mining target
+        const mMesh = miningMeshRef.current
+        for (const mesh of belts.meshes) {
+          mesh.visible = mesh === mMesh
+        }
+        if (ship.model) ship.model.visible = false
+        ship.ringGroup.visible = false
+        ship.hitGroup.visible = false
+      } else {
+        for (const mesh of belts.meshes) {
+          mesh.visible = true
+        }
+        if (ship.model) ship.model.visible = true
+        if (travelMode && highlightedAsteroidIdx >= 0 && highlightedMesh) {
+          highlight.show(highlightedMesh, highlightedAsteroidIdx, instanceMatrix)
+        } else if (dockedMesh && dockedInstanceId >= 0) {
+          if (scanning) {
+            highlight.showWithBlink(dockedMesh, dockedInstanceId, instanceMatrix, elapsed)
+          } else {
+            highlight.show(dockedMesh, dockedInstanceId, instanceMatrix)
+          }
+        } else {
+          highlight.hide()
+        }
       }
 
       // Scanned asteroid indicators
-      scannedIndicators.update(belts.allScanned, belts.farMeshes, belts.nearMeshes, instanceMatrix)
+      if (!miningZoomRef.current) {
+        scannedIndicators.update(belts.allScanned, belts.meshes, instanceMatrix)
+      } else {
+        scannedIndicators.hide()
+      }
 
       // Ship update
       const shipPanScale = dockedMesh ? 0 : 0.85
@@ -673,13 +798,23 @@ export const TacticalBackground = () => {
 
       // Position tooltip above ship
       const screenPos = ship.getScreenPosition(camera)
-      updateTooltip(tooltipRef.current, ship, screenPos, travelMode)
+      if (!miningZoomRef.current) {
+        updateTooltip(tooltipRef.current, ship, screenPos, travelMode)
 
-      // Position menu when visible
-      updateMenu(menuRef.current, menuLineRef.current, ship, screenPos, mouse.x, mouse.y, t, maxZoom, dockedMesh)
+        // Position menu when visible
+        updateMenu(menuRef.current, menuLineRef.current, ship, screenPos, mouse.x, mouse.y, t, maxZoom, dockedMesh)
 
-      // Position ship stats panel on opposite side of menu when in details mode
-      updateShipStats(shipStatsRef.current, menuRef.current, ship, screenPos, mouse.x, mouse.y, t, maxZoom)
+        // Position ship stats panel on opposite side of menu when in details mode
+        updateShipStats(shipStatsRef.current, menuRef.current, ship, screenPos, mouse.x, mouse.y, t, maxZoom)
+      } else {
+        // Force-hide menu and tooltip during mining
+        if (menuRef.current) {
+          menuRef.current.style.opacity = '0'
+          menuRef.current.style.pointerEvents = 'none'
+        }
+        if (tooltipRef.current) tooltipRef.current.style.opacity = '0'
+        if (menuLineRef.current) menuLineRef.current.setAttribute('opacity', '0')
+      }
 
       // Update button disabled states
       updateButtonStates(dockedMesh, scanning, !!dockedAsteroid?.scanned)
@@ -860,6 +995,8 @@ export const TacticalBackground = () => {
     const handleScanClick = () => {
       if (!dockedMesh || dockedInstanceId < 0 || scanning || !dockedAsteroid) return
       if (dockedAsteroid.scanned) return
+      // Block scanning during active solar radiation event
+      if (solarEvent.phase === 'active' || solarEvent.phase === 'cooldown') return
       const asteroidScale = dockedAsteroid.scale
       scanDuration = 2000 + asteroidScale * 3000 + Math.random() * 3000
       if (scanDuration > 10000) scanDuration = 10000
@@ -882,10 +1019,16 @@ export const TacticalBackground = () => {
 
     // Mining button handler — shows scan results for scanned asteroid
     const handleMiningClick = () => {
-      if (!dockedAsteroid?.scanned) return
-      ship.ringGroup.visible = false
+      if (!dockedAsteroid) return
+      if (!dockedAsteroid.scanned) dockedAsteroid.scanned = true
       hideMenu()
-      renderScanResult(dockedAsteroid, true, true)
+      highlight.hide()
+      if (dockedMesh && dockedInstanceId >= 0) {
+        startMiningDirectRef.current?.(dockedAsteroid, dockedMesh, dockedInstanceId)
+      } else {
+        ship.ringGroup.visible = false
+        renderScanResult(dockedAsteroid, true, true)
+      }
     }
     const miningBtn = document.getElementById('mining-btn')
     if (miningBtn) miningBtn.addEventListener('click', handleMiningClick)
@@ -944,7 +1087,26 @@ export const TacticalBackground = () => {
     <>
       <RadiationWarning phase={solarPhase} countdown={solarCountdown} />
       <FullscreenLayer ref={containerRef} sx={{ zIndex: 0, pointerEvents: 'auto' }} />
-      {isMining && miningAsteroid && <MiningOverlay asteroid={miningAsteroid} onComplete={handleMiningComplete} />}
+      {/* DEV: preview MiningSummary for styling */}
+      <MiningSummary
+        collected={[
+          { material: 'titanium', amount: 0.8 },
+          { material: 'gold', amount: 0.45 },
+          { material: 'iron', amount: 1 },
+          { material: 'silicates', amount: 0.6 }
+        ]}
+        reason="timeout"
+        onContinue={() => {}}
+      />
+      {isMining && miningAsteroid && (
+        <DrillOverlay
+          asteroid={miningAsteroid}
+          tutorialSeen={false}
+          screenCenterRef={miningScreenCenterRef}
+          onTutorialDismiss={() => patchUser.mutate({ drillTutorialSeen: true })}
+          onComplete={handleMiningComplete}
+        />
+      )}
       <ShipTooltip ref={tooltipRef} name="TELLUS RX 5" />
       <HudPanel ref={standaloneScanRef}>
         {scanResult.visible && scanResult.isRemote && (

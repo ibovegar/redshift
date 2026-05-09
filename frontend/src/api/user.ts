@@ -15,3 +15,12 @@ export const updateCredits = async (amount: number): Promise<UserStats> => {
   })
   return response.json()
 }
+
+export const patchUser = async (data: Partial<UserStats>): Promise<UserStats> => {
+  const response = await fetch(`${url}/user`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  return response.json()
+}

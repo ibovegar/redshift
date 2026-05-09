@@ -34,7 +34,7 @@ export interface AsteroidStats {
 export interface Asteroid {
   id: string
   name: string
-  belt: 'far' | 'near'
+  belt: 'far' | 'near' | 'belt'
   index: number
   chunkIndex: number
   instanceId: number

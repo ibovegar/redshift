@@ -26,18 +26,12 @@ export class ScannedIndicators {
     }
   }
 
-  update(
-    scannedAsteroids: Asteroid[],
-    farMeshes: THREE.InstancedMesh[],
-    nearMeshes: THREE.InstancedMesh[],
-    instanceMatrix: THREE.Matrix4
-  ) {
+  update(scannedAsteroids: Asteroid[], meshes: THREE.InstancedMesh[], instanceMatrix: THREE.Matrix4) {
     this.activeCount = 0
 
     for (const asteroid of scannedAsteroids) {
       if (this.activeCount >= MAX_INDICATORS) break
 
-      const meshes = asteroid.belt === 'near' ? nearMeshes : farMeshes
       const targetMesh = meshes[asteroid.chunkIndex]
       if (!targetMesh) continue
 
@@ -61,6 +55,12 @@ export class ScannedIndicators {
     this.material.dispose()
     for (const mesh of this.pool) {
       this.scene.remove(mesh)
+    }
+  }
+
+  hide() {
+    for (let i = 0; i < MAX_INDICATORS; i++) {
+      this.pool[i].visible = false
     }
   }
 }

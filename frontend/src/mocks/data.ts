@@ -1,7 +1,8 @@
 import type { Mission, Spacecraft, Upgrade, UserStats } from 'models'
 
 export const user: UserStats = {
-  credits: 998999999
+  credits: 998999999,
+  drillTutorialSeen: false
 }
 
 export const spacecrafts: Spacecraft[] = [
@@ -25,7 +26,12 @@ export const spacecrafts: Spacecraft[] = [
     condition: 95,
     fuel: 88,
     id: '1',
-    attachedUpgrades: []
+    attachedUpgrades: [],
+    cargoCapacity: 100,
+    cargo: [
+      { material: 'iron', amount: 12 },
+      { material: 'copper', amount: 5 }
+    ]
   },
   {
     name: 'Draxon SA-22',
@@ -47,7 +53,9 @@ export const spacecrafts: Spacecraft[] = [
     condition: 71,
     fuel: 42,
     id: '2',
-    attachedUpgrades: []
+    attachedUpgrades: [],
+    cargoCapacity: 80,
+    cargo: []
   },
   {
     name: 'Tellus RX 5',
@@ -69,7 +77,13 @@ export const spacecrafts: Spacecraft[] = [
     condition: 82,
     fuel: 64,
     id: '3',
-    attachedUpgrades: []
+    attachedUpgrades: [],
+    cargoCapacity: 150,
+    cargo: [
+      { material: 'titanium', amount: 8 },
+      { material: 'gold', amount: 3 },
+      { material: 'silicates', amount: 20 }
+    ]
   }
 ]
 
@@ -264,7 +278,9 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: 'xlx_JF5wn2s',
     condition: 100,
     fuel: 100,
-    attachedUpgrades: []
+    attachedUpgrades: [],
+    cargoCapacity: 80,
+    cargo: []
   },
   {
     name: 'Cygnia F35',
@@ -286,7 +302,9 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: 'ZlxiBZwJNzQ',
     condition: 100,
     fuel: 100,
-    attachedUpgrades: []
+    attachedUpgrades: [],
+    cargoCapacity: 100,
+    cargo: []
   },
   {
     name: 'Hammerhead 2',
@@ -308,7 +326,9 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: '7HPjuzsjfqA',
     condition: 100,
     fuel: 100,
-    attachedUpgrades: []
+    attachedUpgrades: [],
+    cargoCapacity: 60,
+    cargo: []
   },
   {
     name: 'Vanguard SAR',
@@ -330,7 +350,9 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: '2xicbh7qnyM',
     condition: 100,
     fuel: 100,
-    attachedUpgrades: []
+    attachedUpgrades: [],
+    cargoCapacity: 200,
+    cargo: []
   },
   {
     name: 'Tellus R X5',
@@ -352,7 +374,9 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: '91jnAAKoBKg',
     condition: 100,
     fuel: 100,
-    attachedUpgrades: []
+    attachedUpgrades: [],
+    cargoCapacity: 150,
+    cargo: []
   },
   {
     name: 'Gentec FF Fieler',

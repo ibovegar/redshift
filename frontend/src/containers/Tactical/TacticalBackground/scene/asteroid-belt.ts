@@ -1,9 +1,7 @@
 import * as THREE from 'three'
 
-export const ASTEROID_COUNT_FAR = 600
-export const ASTEROID_COUNT_NEAR = 150
-export const FAR_SPEED = 0.00025
-export const NEAR_SPEED = 0.00045
+export const ASTEROID_COUNT = 750
+export const BELT_SPEED = 0.00025
 export const SPREAD_X = 4.8
 export const SPREAD_Y = 2.4
 export const SPREAD_Z = 1.8

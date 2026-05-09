@@ -3,7 +3,7 @@ import { keyframes } from '@mui/material/styles'
 import { HudButton } from 'components/HudButton/HudButton'
 import { HudCard } from 'components/HudCard/HudCard'
 import { ProgressBar } from 'components/ProgressBar/ProgressBar'
-import { MATERIAL_ICONS, MATERIAL_NAMES, RARITY_COLORS, RARITY_LABELS } from 'data'
+import { ResourceRow } from 'components/ResourceRow/ResourceRow'
 import type { Asteroid, AsteroidMaterial, ResourceRarity } from 'models/asteroid'
 import { forwardRef } from 'react'
 
@@ -95,7 +95,6 @@ function renderDeposits(asteroid: Asteroid, revealed: boolean, progress: number)
   return deposits.map((d, i) => {
     const revealThreshold = mappedThresholds[i]
     const isRevealed = revealed || progress >= revealThreshold
-    const rarityColor = RARITY_COLORS[d.rarity as ResourceRarity] ?? '#aaa'
     const animating = isRevealed && !revealed
     const overlaySx = animating
       ? {
@@ -139,36 +138,17 @@ function renderDeposits(asteroid: Asteroid, revealed: boolean, progress: number)
           }
         : {}
     return (
-      <Stack
+      <ResourceRow
         key={d.material}
-        direction="row"
+        material={d.material as AsteroidMaterial}
+        rarity={d.rarity as ResourceRarity}
+        detail={`${(d.abundance * 100).toFixed(1)}%`}
         sx={{
-          alignItems: 'center',
-          bgcolor: '#fff',
-          p: '8px 10px 8px 4px',
           position: 'relative',
           overflow: 'hidden',
-          borderRadius: '2px',
-          gap: '20px',
           ...overlaySx
         }}
-      >
-        <Box
-          component="img"
-          src={MATERIAL_ICONS[d.material as AsteroidMaterial]}
-          alt={d.material}
-          sx={{ width: 52, height: 'auto', flexShrink: 0 }}
-        />
-        <Stack spacing={0} sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: 8, color: rarityColor, fontWeight: 'bold', letterSpacing: 0.5 }}>
-            {RARITY_LABELS[d.rarity as ResourceRarity]}
-          </Typography>
-          <Typography sx={{ fontSize: 11, color: '#000', fontWeight: 'bold' }}>
-            {MATERIAL_NAMES[d.material] ?? d.material}
-          </Typography>
-          <Typography sx={{ fontSize: 11, color: 'rgba(0,0,0,0.7)' }}>{(d.abundance * 100).toFixed(1)}%</Typography>
-        </Stack>
-      </Stack>
+      />
     )
   })
 }
