@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import * as spacecraftApi from 'api/spacecraft'
-import type { CargoItem } from 'models/spacecraft'
+import type { CargoItem, Spacecraft } from 'models/spacecraft'
 import { queryKeys } from './queryKeys'
 
 export const useSpacecrafts = () =>
@@ -20,6 +20,18 @@ export const useUpdateCargo = () => {
   return useMutation({
     mutationFn: ({ spacecraftId, cargo }: { spacecraftId: string; cargo: CargoItem[] }) =>
       spacecraftApi.updateCargo(spacecraftId, cargo),
+    onSuccess: (_data, { spacecraftId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.spacecraft(spacecraftId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.spacecrafts })
+    }
+  })
+}
+
+export const useUpdateSpacecraftStatus = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ spacecraftId, status }: { spacecraftId: string; status: Spacecraft['status'] }) =>
+      spacecraftApi.updateStatus(spacecraftId, status),
     onSuccess: (_data, { spacecraftId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.spacecraft(spacecraftId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.spacecrafts })

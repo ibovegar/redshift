@@ -1,15 +1,15 @@
 import { ErrorBoundary } from 'components'
 import { Layout } from 'components/Layout/Layout'
 import { Engineering, Inventory, Marketplace, Tactical } from 'containers'
-import { useUser } from 'hooks'
+import { useStation } from 'hooks'
 import { Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router'
 
 export const App = () => {
-  const { data: user } = useUser()
+  const { data: station } = useStation()
 
   return (
-    <Layout authenticated credits={user.credits}>
+    <Layout authenticated storage={station.storage}>
       <ErrorBoundary>
         <Suspense fallback={<div>Loading...</div>}>
           <Routes>

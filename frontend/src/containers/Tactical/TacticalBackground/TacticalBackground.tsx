@@ -1,6 +1,7 @@
 import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
 import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
 import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
+import { HudButton } from 'components/HudButton/HudButton'
 import { HudMenu } from 'components/HudMenu/HudMenu'
 import { HudPanel } from 'components/HudPanel/HudPanel'
 import { HudTooltip } from 'components/HudTooltip/HudTooltip'
@@ -9,7 +10,15 @@ import { RadiationWarning } from 'components/RadiationWarning/RadiationWarning'
 import { ScanResult } from 'components/ScanResult/ScanResult'
 import { ShipStats } from 'components/ShipStats/ShipStats'
 import { MATERIAL_STORAGE_COST } from 'data/materials'
-import { usePatchUser, useSpacecraft, useUpdateCargo, useUser } from 'hooks'
+import {
+  usePatchUser,
+  useSpacecraft,
+  useSpacecrafts,
+  useTransferCargo,
+  useUpdateCargo,
+  useUpdateSpacecraftStatus,
+  useUser
+} from 'hooks'
 import type { Asteroid } from 'models/asteroid'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
@@ -43,9 +52,14 @@ interface ScanResultState {
 
 export const TacticalBackground = () => {
   const { data: spacecraft } = useSpacecraft('3')
+  const { data: spacecrafts } = useSpacecrafts()
   const { data: user } = useUser()
   const patchUser = usePatchUser()
   const updateCargo = useUpdateCargo()
+  const transferCargo = useTransferCargo()
+  const updateStatus = useUpdateSpacecraftStatus()
+  const spacecraftsRef = useRef(spacecrafts)
+  spacecraftsRef.current = spacecrafts
   const containerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -56,6 +70,8 @@ export const TacticalBackground = () => {
   const shipStatsRef = useRef<HTMLDivElement>(null)
   const stationMenuRef = useRef<HTMLDivElement>(null)
   const stationLineRef = useRef<SVGLineElement>(null)
+  const dockedListRef = useRef<HTMLDivElement>(null)
+  const dockedLineRef = useRef<SVGLineElement>(null)
   const [detailsMode, setDetailsMode] = useState(false)
   const [solarPhase, setSolarPhase] = useState<SolarEventPhase>('idle')
   const [solarCountdown, setSolarCountdown] = useState(0)
@@ -86,6 +102,22 @@ export const TacticalBackground = () => {
   const dockedInstanceIdRef = useRef(-1)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [loaded, setLoaded] = useState(false)
+
+  const onDockRef = useRef<(() => void) | undefined>(undefined)
+  onDockRef.current = () => {
+    if (spacecraft.cargo.length > 0) {
+      transferCargo.mutate(spacecraft.cargo)
+      updateCargo.mutate({ spacecraftId: spacecraft.id, cargo: [] })
+    }
+    updateStatus.mutate({ spacecraftId: spacecraft.id, status: 'docked' })
+  }
+
+  const onUndockRef = useRef<(() => void) | undefined>(undefined)
+  onUndockRef.current = () => {
+    updateStatus.mutate({ spacecraftId: spacecraft.id, status: 'deployed' })
+  }
+
+  const deployShipRef = useRef<(() => void) | undefined>(undefined)
 
   const startMiningDirectRef = useRef<
     ((asteroid: Asteroid, mesh: THREE.InstancedMesh, instanceId: number) => void) | undefined
@@ -352,6 +384,11 @@ export const TacticalBackground = () => {
       hideMenu()
       stationMenuRef.current.style.opacity = '1'
       stationMenuRef.current.style.pointerEvents = 'auto'
+      const hasDocked = spacecraftsRef.current.some((s) => s.status === 'docked')
+      if (dockedListRef.current && hasDocked) {
+        dockedListRef.current.style.opacity = '1'
+        dockedListRef.current.style.pointerEvents = 'auto'
+      }
     }
 
     function hideStationMenu() {
@@ -359,6 +396,11 @@ export const TacticalBackground = () => {
       stationMenuRef.current.style.opacity = '0'
       stationMenuRef.current.style.pointerEvents = 'none'
       if (stationLineRef.current) stationLineRef.current.setAttribute('opacity', '0')
+      if (dockedLineRef.current) dockedLineRef.current.setAttribute('opacity', '0')
+      if (dockedListRef.current) {
+        dockedListRef.current.style.opacity = '0'
+        dockedListRef.current.style.pointerEvents = 'none'
+      }
     }
 
     function selectShip() {
@@ -369,6 +411,19 @@ export const TacticalBackground = () => {
     function selectStation() {
       ship.deselect()
       station.select()
+    }
+
+    deployShipRef.current = () => {
+      shipHidden = false
+      if (ship.model) ship.model.visible = true
+      ship.hitGroup.visible = true
+      ship.strobeLight.visible = true
+      ship.strobeGlare.visible = true
+      selectShip()
+      showMenu()
+      hideStationMenu()
+      station.deselect()
+      onUndockRef.current?.()
     }
 
     const handleMouseDown = (e: MouseEvent) => {
@@ -395,6 +450,7 @@ export const TacticalBackground = () => {
       // Check if click is on menu
       if (menuRef.current?.contains(e.target as Node)) return
       if (stationMenuRef.current?.contains(e.target as Node)) return
+      if (dockedListRef.current?.contains(e.target as Node)) return
       // Check if click is on scan result panel
       if (standaloneScanRef.current?.contains(e.target as Node)) return
 
@@ -911,8 +967,34 @@ export const TacticalBackground = () => {
             stationLineRef.current.setAttribute('y2', String(menuY))
             stationLineRef.current.setAttribute('opacity', el.style.opacity)
           }
+
+          // Position docked list on opposite side
+          const hasDocked = spacecraftsRef.current.some((s) => s.status === 'docked')
+          if (dockedListRef.current && hasDocked) {
+            const dl = dockedListRef.current
+            const dlWidth = dl.offsetWidth
+            const dlX = flipped ? sx + 240 : sx - 180 - dlWidth
+            const dlY = menuY
+            dl.style.left = `${dlX}px`
+            dl.style.top = `${dlY}px`
+            dl.style.transformOrigin = flipped ? 'left center' : 'right center'
+            const dlRy = flipped ? -3 + mouse.x * 2 : 3 - mouse.x * 2
+            const dlSkew = flipped ? 0.5 : -0.5
+            dl.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${dlRy}deg) skewY(${dlSkew}deg) translateY(-50%)`
+
+            // Docked list connector line
+            if (dockedLineRef.current) {
+              const dlLineX = flipped ? dlX : dlX + dlWidth
+              dockedLineRef.current.setAttribute('x1', String(sx))
+              dockedLineRef.current.setAttribute('y1', String(sy))
+              dockedLineRef.current.setAttribute('x2', String(dlLineX))
+              dockedLineRef.current.setAttribute('y2', String(dlY))
+              dockedLineRef.current.setAttribute('opacity', el.style.opacity)
+            }
+          }
         } else {
           if (stationLineRef.current) stationLineRef.current.setAttribute('opacity', '0')
+          if (dockedLineRef.current) dockedLineRef.current.setAttribute('opacity', '0')
         }
       } else {
         // Force-hide menu and tooltip during mining
@@ -923,9 +1005,14 @@ export const TacticalBackground = () => {
         if (tooltipRef.current) tooltipRef.current.style.opacity = '0'
         if (menuLineRef.current) menuLineRef.current.setAttribute('opacity', '0')
         if (stationLineRef.current) stationLineRef.current.setAttribute('opacity', '0')
+        if (dockedLineRef.current) dockedLineRef.current.setAttribute('opacity', '0')
         if (stationMenuRef.current) {
           stationMenuRef.current.style.opacity = '0'
           stationMenuRef.current.style.pointerEvents = 'none'
+        }
+        if (dockedListRef.current) {
+          dockedListRef.current.style.opacity = '0'
+          dockedListRef.current.style.pointerEvents = 'none'
         }
       }
 
@@ -1068,6 +1155,7 @@ export const TacticalBackground = () => {
 
     // Travel button handler
     const handleTravelClick = () => {
+      const wasDocked = shipHidden
       travelMode = true
       travelCursorScreen = { x: lastMouseScreen.x, y: lastMouseScreen.y }
       dockedMesh = null
@@ -1081,10 +1169,13 @@ export const TacticalBackground = () => {
       if (ship.model) ship.model.visible = true
       ship.hitGroup.visible = true
       ship.ringGroup.visible = false
+      ship.strobeLight.visible = true
+      ship.strobeGlare.visible = true
       ship.zoomOut()
       setDetailsMode(false)
       hideMenu()
       hideScanResult()
+      if (wasDocked) onUndockRef.current?.()
       if (travelLineRef.current) {
         travelLineRef.current.style.display = 'block'
       }
@@ -1099,10 +1190,13 @@ export const TacticalBackground = () => {
       if (ship.model) ship.model.visible = false
       ship.ringGroup.visible = false
       ship.hitGroup.visible = false
+      ship.strobeLight.visible = false
+      ship.strobeGlare.visible = false
       ship.deselect()
       ship.zoomOut()
       setDetailsMode(false)
       hideMenu()
+      onDockRef.current?.()
     }
     const dockBtn = document.getElementById('dock-btn')
     if (dockBtn) dockBtn.addEventListener('click', handleDockClick)
@@ -1235,7 +1329,12 @@ export const TacticalBackground = () => {
           />
         )}
       </HudPanel>
-      <ConnectorLines menuLineRef={menuLineRef} scanLineRef={scanLineRef} stationLineRef={stationLineRef} />
+      <ConnectorLines
+        menuLineRef={menuLineRef}
+        scanLineRef={scanLineRef}
+        stationLineRef={stationLineRef}
+        dockedLineRef={dockedLineRef}
+      />
       <HudPanel ref={menuRef}>
         <HudMenu />
         {scanResult.visible && !scanResult.isRemote && scanResult.asteroid && (
@@ -1260,6 +1359,29 @@ export const TacticalBackground = () => {
             { label: 'Comms', id: 'station-comms-btn' }
           ]}
         />
+      </HudPanel>
+      <HudPanel ref={dockedListRef}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            border: '1px dashed #ffffff',
+            padding: '20px',
+            minWidth: 160
+          }}
+        >
+          <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+            Docked
+          </div>
+          {spacecrafts
+            .filter((s) => s.status === 'docked')
+            .map((s) => (
+              <HudButton key={s.id} onClick={() => deployShipRef.current?.()}>
+                {s.name}
+              </HudButton>
+            ))}
+        </div>
       </HudPanel>
       <canvas
         ref={travelLineRef}

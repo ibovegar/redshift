@@ -1,5 +1,6 @@
 Feat:
 fiux issue where I can rotate the planet anywhere I clicks
+remove travel line panning when travelling.
 Update the topography system.
 make selected asteroid when ship has arrived transparent when zoomed in
 make a game engine using state machine or something.

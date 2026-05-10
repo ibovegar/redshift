@@ -1,9 +1,6 @@
 import { Box, Stack } from '@mui/material'
-// import { styled } from '@mui/material/styles'
-// import backgroundImage from 'assets/images/15.jpg'
-// import React, { type ReactNode } from 'react'
+import type { CargoItem } from 'models/spacecraft'
 import type { ReactNode } from 'react'
-// import { useLocation } from 'react-router'
 import { Toolbar } from './Toolbar/Toolbar'
 
 // const Background = styled('img')({
@@ -30,12 +27,12 @@ import { Toolbar } from './Toolbar/Toolbar'
 
 interface Props {
   authenticated: boolean
-  credits: number
+  storage?: CargoItem[]
   children: ReactNode
 }
 
 export const Layout = (props: Props) => {
-  const { children, credits } = props
+  const { children, storage = [] } = props
   // const location = useLocation()
   // const isTactical = location.pathname === '/tactical'
 
@@ -46,7 +43,7 @@ export const Layout = (props: Props) => {
       {/* <Wrapper>
         <Background id="app-background" alt=" " />
       </Wrapper> */}
-      <Toolbar credits={credits} />
+      <Toolbar storage={storage} />
       <Box sx={{ flex: 1, mt: 6, minHeight: 0, pointerEvents: 'auto' }}>{children}</Box>
     </Stack>
   )

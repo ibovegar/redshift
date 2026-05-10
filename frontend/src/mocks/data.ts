@@ -1,4 +1,4 @@
-import type { Mission, Spacecraft, Upgrade, UserStats } from 'models'
+import type { Mission, Spacecraft, Station, Upgrade, UserStats } from 'models'
 
 export const user: UserStats = {
   credits: 998999999,
@@ -7,63 +7,13 @@ export const user: UserStats = {
 
 export const spacecrafts: Spacecraft[] = [
   {
-    name: 'Cygnia F35',
-    spacecraftRegistry: 'cygf35',
-    manufacturer: 'Cygnia Corporation',
-    manufactured: 2157,
-    storeType: 'spacecraft',
-    type: 'fighter',
-    height: 219,
-    length: 456,
-    price: 4550000,
-    baseStats: {
-      speed: 60,
-      hull: 50,
-      shield: 10,
-      damage: 0,
-      manuvrability: 10
-    },
-    condition: 95,
-    fuel: 88,
-    id: '1',
-    attachedUpgrades: [],
-    cargoCapacity: 100,
-    cargo: [
-      { material: 'iron', amount: 12 },
-      { material: 'copper', amount: 5 }
-    ]
-  },
-  {
-    name: 'Draxon SA-22',
-    spacecraftRegistry: 'drax22',
-    manufacturer: 'Epsilon Laboratories',
-    manufactured: 2191,
-    storeType: 'spacecraft',
-    type: 'interceptor',
-    height: 12,
-    length: 80,
-    price: 3055555,
-    baseStats: {
-      speed: 10,
-      hull: 30,
-      shield: 80,
-      damage: 60,
-      manuvrability: 80
-    },
-    condition: 71,
-    fuel: 42,
-    id: '2',
-    attachedUpgrades: [],
-    cargoCapacity: 80,
-    cargo: []
-  },
-  {
     name: 'Tellus RX 5',
     spacecraftRegistry: 'tellrx5',
     manufacturer: 'Cygnia Corporation',
     manufactured: 2157,
     storeType: 'spacecraft',
     type: 'support',
+    status: 'deployed',
     height: 219,
     length: 456,
     price: 5000000,
@@ -79,11 +29,7 @@ export const spacecrafts: Spacecraft[] = [
     id: '3',
     attachedUpgrades: [],
     cargoCapacity: 150,
-    cargo: [
-      { material: 'titanium', amount: 8 },
-      { material: 'gold', amount: 3 },
-      { material: 'silicates', amount: 20 }
-    ]
+    cargo: []
   }
 ]
 
@@ -265,6 +211,7 @@ export const store: (Spacecraft | Upgrade)[] = [
     manufactured: 2191,
     storeType: 'spacecraft',
     type: 'interceptor',
+    status: 'docked',
     height: 12,
     length: 80,
     price: 3055555,
@@ -289,6 +236,7 @@ export const store: (Spacecraft | Upgrade)[] = [
     manufactured: 2157,
     storeType: 'spacecraft',
     type: 'fighter',
+    status: 'docked',
     height: 219,
     length: 456,
     price: 4550000,
@@ -313,6 +261,7 @@ export const store: (Spacecraft | Upgrade)[] = [
     manufactured: 2157,
     storeType: 'spacecraft',
     type: 'scout',
+    status: 'docked',
     height: 219,
     length: 456,
     price: 2999999,
@@ -337,6 +286,7 @@ export const store: (Spacecraft | Upgrade)[] = [
     manufactured: 2157,
     storeType: 'spacecraft',
     type: 'bomber',
+    status: 'docked',
     height: 219,
     length: 456,
     price: 1900000,
@@ -361,6 +311,7 @@ export const store: (Spacecraft | Upgrade)[] = [
     manufactured: 2157,
     storeType: 'spacecraft',
     type: 'support',
+    status: 'docked',
     height: 219,
     length: 456,
     price: 5000000,
@@ -549,3 +500,9 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: 'A5Q93DaDFw0'
   }
 ]
+
+export const station: Station = {
+  id: 'station-1',
+  name: 'Gateway Station',
+  storage: []
+}

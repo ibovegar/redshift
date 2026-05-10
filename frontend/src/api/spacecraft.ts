@@ -20,3 +20,12 @@ export const updateCargo = async (spacecraftId: string, cargo: CargoItem[]): Pro
   })
   return response.json()
 }
+
+export const updateStatus = async (spacecraftId: string, status: Spacecraft['status']): Promise<Spacecraft> => {
+  const response = await fetch(`${url}/spacecrafts/${spacecraftId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  })
+  return response.json()
+}

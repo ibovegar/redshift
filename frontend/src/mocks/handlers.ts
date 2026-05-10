@@ -1,8 +1,8 @@
-import type { Mission, Spacecraft, Upgrade, UserStats } from 'models'
+import type { Mission, Spacecraft, Station, Upgrade, UserStats } from 'models'
 import type { CargoItem } from 'models/spacecraft'
 import { HttpResponse, http } from 'msw'
 import { isSpacecraft, isUpgrade } from 'utils/guards'
-import { missions, spacecrafts, store, upgrades, user } from './data'
+import { missions, spacecrafts, station, store, upgrades, user } from './data'
 
 const url = import.meta.env.VITE_API_URL
 
@@ -11,7 +11,8 @@ const db = {
   spacecrafts: [...spacecrafts] as Spacecraft[],
   upgrades: [...upgrades] as Upgrade[],
   missions: [...missions] as Mission[],
-  store: [...store] as (Spacecraft | Upgrade)[]
+  store: [...store] as (Spacecraft | Upgrade)[],
+  station: { ...station, storage: [...station.storage] } as Station
 }
 
 let nextId = 100
@@ -57,6 +58,14 @@ export const handlers = [
     if (!spacecraft) return new HttpResponse(null, { status: 404 })
     const cargo = (await request.json()) as CargoItem[]
     spacecraft.cargo = cargo
+    return HttpResponse.json(spacecraft)
+  }),
+
+  http.patch(`${url}/spacecrafts/:id/status`, async ({ params, request }) => {
+    const spacecraft = db.spacecrafts.find((s) => s.id === params.id)
+    if (!spacecraft) return new HttpResponse(null, { status: 404 })
+    const { status } = (await request.json()) as { status: Spacecraft['status'] }
+    spacecraft.status = status
     return HttpResponse.json(spacecraft)
   }),
 
@@ -118,5 +127,24 @@ export const handlers = [
     }
 
     return HttpResponse.json({ user: db.user, purchasedItems }, { status: 201 })
+  }),
+
+  // Station
+  http.get(`${url}/station`, () => {
+    return HttpResponse.json(db.station)
+  }),
+
+  http.post(`${url}/station/transfer`, async ({ request }) => {
+    const incoming = (await request.json()) as CargoItem[]
+    for (const item of incoming) {
+      if (item.amount <= 0) continue
+      const existing = db.station.storage.find((s) => s.material === item.material)
+      if (existing) {
+        existing.amount += item.amount
+      } else {
+        db.station.storage.push({ material: item.material, amount: item.amount })
+      }
+    }
+    return HttpResponse.json(db.station)
   })
 ]

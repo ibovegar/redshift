@@ -23,7 +23,20 @@
 - Renamed ShipTooltip to HudTooltip; made `updateTooltip` generic (accepts any `Selectable & { hoverCurrent }`)
 - Added reusable `ModelHighlight` class for additive glow overlay on any Object3D model
 - Space station now shows highlight overlay on hover in travel mode and blinks during travel
-
+- Added space station as mock backend entity with GET/POST API endpoints
+- Ship cargo transfers to station storage on dock (cargo cleared, station accumulates)
+- Station stored resources displayed in the top navigation bar with material symbols and tooltips
+- Fixed ship strobe beacon remaining visible after docking at station
+- Added material icons next to resources in top nav bar
+- Removed currency display from top nav bar
+- Show all resource counts in top nav bar (default to 0 when empty)
+- Station menu now lists all docked spacecrafts with icons and type
+- Restored station menu (Details/Engineering/Comms) alongside docked spacecraft list on opposite side\n- Added connector line to docked spacecraft list and moved it further from the station- Removed extra ships from mock data, Tellus RX 5 is the sole starter ship
+- Added status field to Spacecraft model (docked/deployed/in-transit); docked list only shows docked ships
+- Tellus RX 5 starts as deployed (not docked); docked list hidden when no ships are docked
+- Added spacecraft status update API (PATCH /spacecrafts/:id/status); docking sets status to 'docked', undocking to 'deployed'
+- Docked ship list now reactively updates when ships dock/undock
+- Clicking a ship in the docked list deploys it to its starting position, selects it with ring and menu, and closes station menus
 ## 2026-05-09
 
 - Added mining summary screen (HudCard) shown after drill ends — displays extracted resources with rarity colors, amounts, and storage cost

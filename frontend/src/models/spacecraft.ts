@@ -14,6 +14,7 @@ export interface Spacecraft {
   manufactured: number
   storeType: 'spacecraft'
   type: 'interceptor' | 'fighter' | 'bomber' | 'support' | 'scout'
+  status: 'docked' | 'deployed' | 'in-transit'
   height: number
   length: number
   price: number
