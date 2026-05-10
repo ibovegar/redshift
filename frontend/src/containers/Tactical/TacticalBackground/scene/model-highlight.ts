@@ -9,6 +9,7 @@ export class ModelHighlight {
   private material: THREE.MeshBasicMaterial
   private scene: THREE.Scene
   private blinkRate = 20
+  private sourceMap = new Map<THREE.Mesh, THREE.Mesh>()
 
   constructor(scene: THREE.Scene, color = 0x66ccff, opacity = 0.5) {
     this.scene = scene
@@ -32,9 +33,8 @@ export class ModelHighlight {
       if (child instanceof THREE.Mesh && child.geometry) {
         const clone = new THREE.Mesh(child.geometry, this.material)
         clone.matrixAutoUpdate = false
-        this.overlay!.add(clone)
-        // Store reference to source mesh for matrix syncing
-        ;(clone as any)._source = child
+        this.overlay?.add(clone)
+        this.sourceMap.set(clone, child)
       }
     })
 
@@ -45,7 +45,7 @@ export class ModelHighlight {
   private sync() {
     if (!this.overlay) return
     for (const child of this.overlay.children) {
-      const source = (child as any)._source as THREE.Mesh | undefined
+      const source = this.sourceMap.get(child as THREE.Mesh)
       if (source) {
         source.updateWorldMatrix(true, false)
         child.matrixWorld.copy(source.matrixWorld)
@@ -80,6 +80,7 @@ export class ModelHighlight {
       this.scene.remove(this.overlay)
       this.overlay = null
     }
+    this.sourceMap.clear()
     this.material.dispose()
   }
 }
