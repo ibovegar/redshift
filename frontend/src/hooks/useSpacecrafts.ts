@@ -38,3 +38,15 @@ export const useUpdateSpacecraftStatus = () => {
     }
   })
 }
+
+export const useUpdateFuel = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ spacecraftId, fuel }: { spacecraftId: string; fuel: number }) =>
+      spacecraftApi.updateFuel(spacecraftId, fuel),
+    onSuccess: (_data, { spacecraftId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.spacecraft(spacecraftId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.spacecrafts })
+    }
+  })
+}

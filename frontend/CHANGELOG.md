@@ -37,6 +37,11 @@
 - Added spacecraft status update API (PATCH /spacecrafts/:id/status); docking sets status to 'docked', undocking to 'deployed'
 - Docked ship list now reactively updates when ships dock/undock
 - Clicking a ship in the docked list deploys it to its starting position, selects it with ring and menu, and closes station menus
+- Added distance-based fuel system: travel deducts fuel proportional to 3D distance (3 fuel/unit)
+- Fuel bar appears over ship during travel mode and active travel, showing current fuel level
+- Hovering a travel target shows projected fuel cost as orange overlay on fuel bar (red if insufficient)
+- Ship refuels to 100% when docking at station
+- Fuel system now reads from and persists to spacecraft data (per-ship fuel via updateFuel API)
 ## 2026-05-09
 
 - Added mining summary screen (HudCard) shown after drill ends — displays extracted resources with rarity colors, amounts, and storage cost

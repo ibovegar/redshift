@@ -29,3 +29,12 @@ export const updateStatus = async (spacecraftId: string, status: Spacecraft['sta
   })
   return response.json()
 }
+
+export const updateFuel = async (spacecraftId: string, fuel: number): Promise<Spacecraft> => {
+  const response = await fetch(`${url}/spacecrafts/${spacecraftId}/fuel`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fuel })
+  })
+  return response.json()
+}

@@ -69,6 +69,14 @@ export const handlers = [
     return HttpResponse.json(spacecraft)
   }),
 
+  http.patch(`${url}/spacecrafts/:id/fuel`, async ({ params, request }) => {
+    const spacecraft = db.spacecrafts.find((s) => s.id === params.id)
+    if (!spacecraft) return new HttpResponse(null, { status: 404 })
+    const { fuel } = (await request.json()) as { fuel: number }
+    spacecraft.fuel = fuel
+    return HttpResponse.json(spacecraft)
+  }),
+
   // Upgrades
   http.get(`${url}/upgrades`, () => {
     return HttpResponse.json(db.upgrades)
