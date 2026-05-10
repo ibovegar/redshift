@@ -51,13 +51,12 @@ export const LoadingScreen = (props: LoadingScreenProps) => {
       <Box sx={{ width: 240 }}>
         <LinearProgress
           variant="determinate"
+          color="primary"
           value={progress * 100}
           sx={{
             height: 2,
             borderRadius: 0,
-            backgroundColor: 'rgba(100, 180, 255, 0.1)',
             '& .MuiLinearProgress-bar': {
-              backgroundColor: 'rgba(100, 200, 255, 0.6)',
               transition: 'transform 0.2s linear'
             }
           }}

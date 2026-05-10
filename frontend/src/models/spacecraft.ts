@@ -21,6 +21,8 @@ export interface Spacecraft {
   baseStats: BaseStats
   condition: number
   fuel: number
+  maxFuel: number
+  fuelConsumption: number
   attachedUpgrades: string[]
   cargoCapacity: number
   cargo: CargoItem[]

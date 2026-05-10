@@ -1,3 +1,4 @@
+import { LinearProgress } from '@mui/material'
 import { forwardRef } from 'react'
 
 export const FuelBar = forwardRef<HTMLDivElement>(function FuelBar(_props, ref) {
@@ -9,42 +10,16 @@ export const FuelBar = forwardRef<HTMLDivElement>(function FuelBar(_props, ref) 
         position: 'fixed',
         transform: 'translateX(-50%)',
         zIndex: 15,
-        pointerEvents: 'none'
+        pointerEvents: 'none',
+        width: 80
       }}
     >
-      <div
-        style={{
-          width: 80,
-          height: 6,
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          borderRadius: 3,
-          overflow: 'hidden',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          position: 'relative'
-        }}
-      >
-        <div
-          data-fuel-fill
-          style={{
-            height: '100%',
-            backgroundColor: '#66ddff',
-            transition: 'width 0.2s ease',
-            position: 'absolute',
-            left: 0,
-            top: 0
-          }}
-        />
-        <div
-          data-fuel-cost
-          style={{
-            height: '100%',
-            backgroundColor: '#ff8800',
-            position: 'absolute',
-            top: 0,
-            display: 'none'
-          }}
-        />
-      </div>
+      <LinearProgress
+        variant="determinate"
+        color="primary"
+        value={0}
+        sx={{ '& .MuiLinearProgress-bar': { transition: 'transform 0.2s ease' } }}
+      />
       <div
         data-fuel-text
         style={{

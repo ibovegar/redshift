@@ -95,9 +95,9 @@ export const TacticalBackground = () => {
 
   const [isMining, setIsMining] = useState(false)
   const [miningAsteroid, setMiningAsteroid] = useState<Asteroid | null>(null)
-  const [_shipShield, setShipShield] = useState(55)
-  const shipShieldRef = useRef(55)
   const initialFuelRef = useRef(spacecraft.fuel)
+  const maxFuelRef = useRef(spacecraft.maxFuel)
+  const fuelConsumptionRef = useRef(spacecraft.fuelConsumption)
   const fuelBarObjRef = useRef<FuelBarController | null>(null)
   const miningZoomRef = useRef(false)
   const miningMeshRef = useRef<THREE.InstancedMesh | null>(null)
@@ -263,7 +263,7 @@ export const TacticalBackground = () => {
     ship.addToScene(scene)
     ship.load(gltfLoader, onAssetLoaded)
 
-    const fuelBar = new FuelBarController(initialFuelRef.current)
+    const fuelBar = new FuelBarController(initialFuelRef.current, maxFuelRef.current, fuelConsumptionRef.current)
     fuelBar.bind(fuelBarRef.current)
     fuelBarObjRef.current = fuelBar
 
@@ -429,6 +429,18 @@ export const TacticalBackground = () => {
       station.select()
     }
 
+    function exitDetails() {
+      if (!detailZoom.isZoomed) return
+      const target = detailZoom.activeTarget
+      detailZoom.zoomOut()
+      ship.zoomOut()
+      setDetailsMode(false)
+      if (target?.isSelected) {
+        if (target === ship) showMenu()
+        else if (target === station) showStationMenu()
+      }
+    }
+
     deployShipRef.current = () => {
       shipHidden = false
       if (ship.model) ship.model.visible = true
@@ -528,9 +540,8 @@ export const TacticalBackground = () => {
 
       // Travel mode: click on asteroid or station to move ship there
       if (travelMode) {
-        const deductFuel = (target: THREE.Vector3) => {
-          const newFuel = fuelBar.deduct(ship.config.position, target)
-          persistFuelRef.current?.(newFuel)
+        const startFuelTrip = (target: THREE.Vector3) => {
+          fuelBar.startTrip(ship.config.position, target)
         }
         if (station.raycast(raycaster)) {
           const target = new THREE.Vector3(...shipHomePosition)
@@ -540,7 +551,7 @@ export const TacticalBackground = () => {
           dockedToStation = true
           travelMode = false
           ship.deselect()
-          deductFuel(target)
+          startFuelTrip(target)
         } else if (highlightedAsteroidIdx >= 0 && highlightedMesh) {
           highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
           instanceMatrix.premultiply(highlightedMesh.matrixWorld)
@@ -560,7 +571,7 @@ export const TacticalBackground = () => {
           dockedToStation = false
           travelMode = false
           ship.deselect()
-          deductFuel(shipTravelTarget)
+          startFuelTrip(shipTravelTarget)
           highlightedAsteroidIdx = -1
           highlightedMesh = null
         }
@@ -569,10 +580,7 @@ export const TacticalBackground = () => {
 
       if (ship.raycast(raycaster)) {
         if (detailZoom.isZoomed) {
-          detailZoom.zoomOut()
-          ship.zoomOut()
-          setDetailsMode(false)
-          hideMenu()
+          exitDetails()
         } else if (!ship.isSelected) {
           selectShip()
           showMenu()
@@ -590,10 +598,7 @@ export const TacticalBackground = () => {
       }
       if (scanning) return
       if (detailZoom.isZoomed) {
-        detailZoom.zoomOut()
-        ship.zoomOut()
-        setDetailsMode(false)
-        hideMenu()
+        exitDetails()
       } else {
         ship.deselect()
         hideMenu()
@@ -612,10 +617,7 @@ export const TacticalBackground = () => {
           highlightedMesh = null
           highlightedStation = false
         } else if (detailZoom.isZoomed) {
-          detailZoom.zoomOut()
-          ship.zoomOut()
-          setDetailsMode(false)
-          hideMenu()
+          exitDetails()
         } else if (ship.isSelected) {
           ship.deselect()
           hideMenu()
@@ -629,7 +631,7 @@ export const TacticalBackground = () => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
       lastMouseScreen = { x: e.clientX, y: e.clientY }
-      if (!detailZoom.isZoomed && !miningZoomRef.current) {
+      if (!detailZoom.isZoomed && !miningZoomRef.current && !shipTravelTarget) {
         panTargetX = mouse.x * PAN_AMOUNT
         panTargetY = mouse.y * PAN_AMOUNT
       }
@@ -772,17 +774,6 @@ export const TacticalBackground = () => {
 
       // Fuel consumption on travel start is handled at click time
       // Hull damage when fuel is empty during travel
-      if (shipTravelTarget && shipTravelStart && fuelBar.current <= 0) {
-        const hullDrain = 0.3 * dt
-        if (shipShieldRef.current > 0) {
-          shipShieldRef.current = Math.max(0, shipShieldRef.current - hullDrain)
-          setShipShield(Math.round(shipShieldRef.current))
-        } else {
-          shipConditionRef.current = Math.max(0, shipConditionRef.current - hullDrain)
-          setShipCondition(shipConditionRef.current)
-        }
-      }
-
       // Mining zoom — keep camera focused on asteroid
       const mMesh = miningMeshRef.current
       const mId = miningInstanceIdRef.current
@@ -903,7 +894,8 @@ export const TacticalBackground = () => {
           const asteroidPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
           shipTravelTarget.copy(asteroidPos).add(dockOffset)
         }
-        shipTravelProgress = Math.min(1, shipTravelProgress + 0.001)
+        shipTravelProgress = Math.min(1, shipTravelProgress + (fuelBar.current <= 0 ? 0.0003 : 0.001))
+        fuelBar.drainFuel(shipTravelProgress)
         const easeT = 1 - (1 - shipTravelProgress) ** 3
         ship.config.position[0] = shipTravelStart.x + (shipTravelTarget.x - shipTravelStart.x) * easeT
         ship.config.position[1] = shipTravelStart.y + (shipTravelTarget.y - shipTravelStart.y) * easeT
@@ -920,6 +912,7 @@ export const TacticalBackground = () => {
         if (shipTravelProgress >= 1) {
           ship.config.position = [shipTravelTarget.x, shipTravelTarget.y, shipTravelTarget.z]
           ship.model.rotation.set(...ship.config.rotation)
+          persistFuelRef.current?.(Math.round(fuelBar.current))
           shipTravelTarget = null
           shipTravelStart = null
           selectShip()
@@ -1091,6 +1084,16 @@ export const TacticalBackground = () => {
             const targetScreen = shipTravelTarget.clone().project(camera)
             endX = (targetScreen.x * 0.5 + 0.5) * window.innerWidth
             endY = (-targetScreen.y * 0.5 + 0.5) * window.innerHeight
+          } else if (highlightedStation) {
+            const homeScreen = new THREE.Vector3(...shipHomePosition).project(camera)
+            endX = (homeScreen.x * 0.5 + 0.5) * window.innerWidth
+            endY = (-homeScreen.y * 0.5 + 0.5) * window.innerHeight
+          } else if (highlightedMesh && highlightedAsteroidIdx >= 0) {
+            highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
+            instanceMatrix.premultiply(highlightedMesh.matrixWorld)
+            const astScreen = new THREE.Vector3().setFromMatrixPosition(instanceMatrix).project(camera)
+            endX = (astScreen.x * 0.5 + 0.5) * window.innerWidth
+            endY = (-astScreen.y * 0.5 + 0.5) * window.innerHeight
           }
           const invert = shipTravelTarget ? dockedToStation : highlightedStation
           travelLine.draw(travelLineRef.current, shipScreen, { x: endX, y: endY }, elapsed, invert)
@@ -1281,29 +1284,34 @@ export const TacticalBackground = () => {
 
     // Details button handler — zoom in on ship
     const handleDetailsClick = () => {
-      detailZoom.toggleZoomTo(ship)
-      ship.toggleZoom()
-      setDetailsMode(detailZoom.isZoomed)
-      hideMenu()
+      if (detailZoom.isZoomed) {
+        exitDetails()
+      } else {
+        detailZoom.zoomTo(ship)
+        ship.toggleZoom()
+        setDetailsMode(true)
+        hideMenu()
+      }
     }
     const detailsBtn = document.getElementById('details-btn')
     if (detailsBtn) detailsBtn.addEventListener('click', handleDetailsClick)
 
     // Station details button handler — zoom in on station
     const handleStationDetailsClick = () => {
-      detailZoom.toggleZoomTo(station)
-      setDetailsMode(detailZoom.isZoomed)
-      hideStationMenu()
+      if (detailZoom.isZoomed) {
+        exitDetails()
+      } else {
+        detailZoom.zoomTo(station)
+        setDetailsMode(true)
+        hideStationMenu()
+      }
     }
     const stationDetailsBtn = document.getElementById('station-details-btn')
     if (stationDetailsBtn) stationDetailsBtn.addEventListener('click', handleStationDetailsClick)
 
     // Exit details button handler — zoom out
     const handleExitDetailsClick = () => {
-      if (!detailZoom.isZoomed) return
-      detailZoom.zoomOut()
-      ship.zoomOut()
-      setDetailsMode(false)
+      exitDetails()
     }
     const exitDetailsBtn = document.getElementById('exit-details-btn')
     if (exitDetailsBtn) exitDetailsBtn.addEventListener('click', handleExitDetailsClick)

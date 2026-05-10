@@ -28,6 +28,8 @@
 - Station stored resources displayed in the top navigation bar with material symbols and tooltips
 - Fixed ship strobe beacon remaining visible after docking at station
 - Added material icons next to resources in top nav bar
+- Fixed menu not re-showing after zooming out of details view (ship or station)
+- Added reusable `exitDetails()` helper for all zoom-out code paths
 - Removed currency display from top nav bar
 - Show all resource counts in top nav bar (default to 0 when empty)
 - Station menu now lists all docked spacecrafts with icons and type
@@ -44,6 +46,7 @@
 - Fuel system now reads from and persists to spacecraft data (per-ship fuel via updateFuel API)
 - Extracted FuelBar class from TacticalBackground (scene/fuel-bar.ts) for reusable per-ship fuel logic
 - Moved fuel bar JSX into FuelBar component (components/FuelBar)
+- Fuel bar now uses MUI LinearProgress and positioned further from ship
 ## 2026-05-09
 
 - Added mining summary screen (HudCard) shown after drill ends — displays extracted resources with rarity colors, amounts, and storage cost

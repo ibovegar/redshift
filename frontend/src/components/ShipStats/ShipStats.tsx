@@ -134,6 +134,31 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, 
                 variant="overline"
                 sx={{ fontSize: 11, letterSpacing: 1, lineHeight: 1, color: 'rgba(0,0,0,0.5)' }}
               >
+                FUEL
+              </Typography>
+              <Typography sx={{ fontSize: 12, fontFamily: 'monospace' }}>
+                {spacecraft.fuel} / {spacecraft.maxFuel}
+              </Typography>
+            </Stack>
+            <ProgressBar
+              value={Math.round((spacecraft.fuel / spacecraft.maxFuel) * 100)}
+              color={
+                spacecraft.fuel / spacecraft.maxFuel > 0.5
+                  ? 'primary'
+                  : spacecraft.fuel / spacecraft.maxFuel > 0.2
+                    ? 'warning'
+                    : 'error'
+              }
+            />
+          </Stack>
+        </Box>
+        <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', pt: 2 }}>
+          <Stack spacing={1}>
+            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography
+                variant="overline"
+                sx={{ fontSize: 11, letterSpacing: 1, lineHeight: 1, color: 'rgba(0,0,0,0.5)' }}
+              >
                 CARGO HOLD
               </Typography>
               <Typography sx={{ fontSize: 12, fontFamily: 'monospace' }}>

@@ -58,12 +58,12 @@ export class TravelLine {
       const y1 = shipScreen.y + dy * t1
       const segOffset = dashAnim - t0 * totalLen
       const depth = invertThickness ? 1 - t0 : t0
-      const scale = 0.03 + depth * depth * 0.97
+      const scale = 0.03 + depth * depth * 0.6
 
       // Glow
       ctx.lineDashOffset = segOffset
       ctx.strokeStyle = 'rgba(68, 136, 255, 0.35)'
-      ctx.lineWidth = 18 * scale
+      ctx.lineWidth = 12 * scale
       ctx.beginPath()
       ctx.moveTo(x0, y0)
       ctx.lineTo(x1, y1)

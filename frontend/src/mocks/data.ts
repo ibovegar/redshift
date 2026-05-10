@@ -26,6 +26,8 @@ export const spacecrafts: Spacecraft[] = [
     },
     condition: 82,
     fuel: 64,
+    maxFuel: 100,
+    fuelConsumption: 8,
     id: '3',
     attachedUpgrades: [],
     cargoCapacity: 150,
@@ -225,6 +227,8 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: 'xlx_JF5wn2s',
     condition: 100,
     fuel: 100,
+    maxFuel: 80,
+    fuelConsumption: 10,
     attachedUpgrades: [],
     cargoCapacity: 80,
     cargo: []
@@ -250,6 +254,8 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: 'ZlxiBZwJNzQ',
     condition: 100,
     fuel: 100,
+    maxFuel: 120,
+    fuelConsumption: 6,
     attachedUpgrades: [],
     cargoCapacity: 100,
     cargo: []
@@ -275,6 +281,8 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: '7HPjuzsjfqA',
     condition: 100,
     fuel: 100,
+    maxFuel: 60,
+    fuelConsumption: 5,
     attachedUpgrades: [],
     cargoCapacity: 60,
     cargo: []
@@ -300,6 +308,8 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: '2xicbh7qnyM',
     condition: 100,
     fuel: 100,
+    maxFuel: 150,
+    fuelConsumption: 12,
     attachedUpgrades: [],
     cargoCapacity: 200,
     cargo: []
@@ -325,6 +335,8 @@ export const store: (Spacecraft | Upgrade)[] = [
     id: '91jnAAKoBKg',
     condition: 100,
     fuel: 100,
+    maxFuel: 100,
+    fuelConsumption: 8,
     attachedUpgrades: [],
     cargoCapacity: 150,
     cargo: []
