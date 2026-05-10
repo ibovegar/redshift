@@ -1,3 +1,4 @@
+import type { Selectable } from './selection-zoom'
 import type { Ship } from './ship'
 
 export interface SceneUIRefs {
@@ -23,12 +24,12 @@ export interface SceneUIState {
 
 export function updateTooltip(
   el: HTMLDivElement | null,
-  ship: Ship,
+  target: Selectable & { hoverCurrent: number },
   screenPos: { x: number; y: number } | null,
   travelMode: boolean
 ) {
   if (!el) return
-  const show = ship.hoverCurrent > 0.1 && !ship.isSelected && !ship.isZoomed && !travelMode
+  const show = target.hoverCurrent > 0.1 && !target.isSelected && !travelMode
   el.style.opacity = show ? '1' : '0'
   if (show && screenPos) {
     el.style.left = `${screenPos.x}px`
@@ -126,8 +127,13 @@ export function updateShipStats(
   el.style.opacity = String(Math.min(1, Math.max(0, (t - fadeStart) / fadeRange)))
 }
 
-export function updateButtonStates(dockedMesh: unknown, scanning: boolean, dockedAsteroidScanned: boolean) {
-  updateButton('dock-btn', !dockedMesh)
+export function updateButtonStates(
+  dockedMesh: unknown,
+  scanning: boolean,
+  dockedAsteroidScanned: boolean,
+  dockedToStation: boolean
+) {
+  updateButton('dock-btn', !dockedToStation)
   updateButton('scan-btn', !dockedMesh || scanning || dockedAsteroidScanned)
   updateButton('mining-btn', !dockedMesh || !dockedAsteroidScanned)
 }

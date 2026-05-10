@@ -27,7 +27,8 @@ export class TravelLine {
     canvas: HTMLCanvasElement,
     shipScreen: { x: number; y: number },
     endScreen: { x: number; y: number },
-    elapsed: number
+    elapsed: number,
+    invertThickness = false
   ) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
@@ -56,7 +57,8 @@ export class TravelLine {
       const x1 = shipScreen.x + dx * t1
       const y1 = shipScreen.y + dy * t1
       const segOffset = dashAnim - t0 * totalLen
-      const scale = 0.03 + t0 * t0 * 0.97
+      const depth = invertThickness ? 1 - t0 : t0
+      const scale = 0.03 + depth * depth * 0.97
 
       // Glow
       ctx.lineDashOffset = segOffset

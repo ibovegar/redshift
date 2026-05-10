@@ -1,10 +1,10 @@
 import { forwardRef } from 'react'
 
-interface ShipTooltipProps {
+interface HudTooltipProps {
   name: string
 }
 
-export const ShipTooltip = forwardRef<HTMLDivElement, ShipTooltipProps>((props, ref) => {
+export const HudTooltip = forwardRef<HTMLDivElement, HudTooltipProps>((props, ref) => {
   const { name } = props
 
   return (

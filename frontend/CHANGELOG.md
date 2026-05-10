@@ -5,6 +5,24 @@
 - Fixed ship not being selected after completing a mining operation
 - Replaced star background with HDR nebula texture (HDR_multi_nebulae_2.hdr)
 - Added loading screen with progress bar while scene assets load
+- Added space station (gateway_1k) at ship starting position
+- Rotated space station 45° and disabled parallax panning on it
+- Tilted space station 30° and moved ship next to it
+- Fixed space station panning with mouse — now stays fixed like the ship
+- Renamed ShipMenu to HudMenu, accepts configurable menu items
+- Made space station selectable with its own menu (Details, Engineering, Comms)
+- Added blue selection ring indicator around the station when selected
+- Added pointer cursor on station hover and white dashed connector line to station menu
+- Made space station a travel target — ship can fly to station like asteroids
+- Dock button only enabled when ship is at the station; docking hides the ship
+- Extracted space station code into `scene/station.ts` (Station class)
+- Moved station menu further from station (160px right / 120px up)
+- Added station details zoom using reusable `SelectionZoom` class (also used for ship zoom)
+- Fixed station menu clicks being intercepted by the scene click handler
+- Added `Selectable` interface to `SelectionZoom` — ring auto-hides on zoom-in, restores on zoom-out
+- Renamed ShipTooltip to HudTooltip; made `updateTooltip` generic (accepts any `Selectable & { hoverCurrent }`)
+- Added reusable `ModelHighlight` class for additive glow overlay on any Object3D model
+- Space station now shows highlight overlay on hover in travel mode and blinks during travel
 
 ## 2026-05-09
 

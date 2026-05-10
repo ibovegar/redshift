@@ -14,15 +14,17 @@ const SvgLayer = styled('svg')({
 interface ConnectorLinesProps {
   menuLineRef: React.Ref<SVGLineElement>
   scanLineRef: React.Ref<SVGLineElement>
+  stationLineRef?: React.Ref<SVGLineElement>
 }
 
 export const ConnectorLines = forwardRef<SVGSVGElement, ConnectorLinesProps>((props, ref) => {
-  const { menuLineRef, scanLineRef } = props
+  const { menuLineRef, scanLineRef, stationLineRef } = props
 
   return (
     <SvgLayer ref={ref} role="img" aria-label="Menu connector line">
       <line ref={menuLineRef} stroke="#ffffff" strokeWidth="1" opacity="0" strokeDasharray="6 4" />
       <line ref={scanLineRef} stroke="#ffffff" strokeWidth="1" opacity="0" strokeDasharray="6 4" />
+      <line ref={stationLineRef} stroke="#ffffff" strokeWidth="1" opacity="0" strokeDasharray="6 4" />
     </SvgLayer>
   )
 })

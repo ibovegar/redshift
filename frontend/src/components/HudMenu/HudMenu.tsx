@@ -1,6 +1,11 @@
 import { HudButton } from 'components/HudButton/HudButton'
 
-const BUTTONS = [
+export interface MenuItem {
+  label: string
+  id: string
+}
+
+const DEFAULT_ITEMS: MenuItem[] = [
   { label: 'Move', id: 'travel-btn' },
   { label: 'Scan', id: 'scan-btn' },
   { label: 'Mining', id: 'mining-btn' },
@@ -8,7 +13,13 @@ const BUTTONS = [
   { label: 'Details', id: 'details-btn' }
 ]
 
-export const ShipMenu = () => {
+interface HudMenuProps {
+  items?: MenuItem[]
+}
+
+export const HudMenu = (props: HudMenuProps) => {
+  const { items = DEFAULT_ITEMS } = props
+
   return (
     <div
       style={{
@@ -19,8 +30,8 @@ export const ShipMenu = () => {
         padding: '20px'
       }}
     >
-      {BUTTONS.map(({ label, id }) => (
-        <HudButton key={label} id={id}>
+      {items.map(({ label, id }) => (
+        <HudButton key={id} id={id}>
           {label}
         </HudButton>
       ))}
