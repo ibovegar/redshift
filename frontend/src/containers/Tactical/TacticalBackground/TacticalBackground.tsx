@@ -630,8 +630,9 @@ export const TacticalBackground = () => {
     // Animation loop
     let frameId: number
     let elapsed = 0
-    const clock = new THREE.Clock()
+    const clock = new THREE.Timer()
     const animate = () => {
+      clock.update()
       const dt = clock.getDelta()
       elapsed += dt
       // Detail zoom

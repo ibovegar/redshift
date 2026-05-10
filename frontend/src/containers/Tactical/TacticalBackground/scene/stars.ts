@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
+import { HDRLoader } from 'three/addons/loaders/HDRLoader.js'
 
 export class Stars {
   readonly mesh: THREE.Mesh
@@ -9,7 +9,7 @@ export class Stars {
   private readonly z = -76
 
   constructor(camera: THREE.PerspectiveCamera, onLoad?: () => void) {
-    new RGBELoader().load('/images/planets/HDR_multi_nebulae_2.hdr', (hdrTexture) => {
+    new HDRLoader().load('/images/planets/HDR_multi_nebulae_2.hdr', (hdrTexture) => {
       hdrTexture.mapping = THREE.EquirectangularReflectionMapping
       hdrTexture.minFilter = THREE.LinearMipmapLinearFilter
       hdrTexture.magFilter = THREE.LinearFilter
