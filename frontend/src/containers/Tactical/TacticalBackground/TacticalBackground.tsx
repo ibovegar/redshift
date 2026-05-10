@@ -1,5 +1,6 @@
 import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
 import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
+import { FuelBar } from 'components/FuelBar/FuelBar'
 import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
 import { HudButton } from 'components/HudButton/HudButton'
 import { HudMenu } from 'components/HudMenu/HudMenu'
@@ -27,7 +28,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { AsteroidBelts, BELT_SPEED } from './scene/asteroid-belts'
 import { AsteroidHighlight } from './scene/asteroid-highlight'
 import { CameraZoom } from './scene/camera-zoom'
-import { FuelBar } from './scene/fuel-bar'
+import { FuelBarController } from './scene/fuel-bar'
 import { GodRays } from './scene/god-rays'
 import { LensFlare } from './scene/lens-flare'
 import { ModelHighlight } from './scene/model-highlight'
@@ -97,7 +98,7 @@ export const TacticalBackground = () => {
   const [_shipShield, setShipShield] = useState(55)
   const shipShieldRef = useRef(55)
   const initialFuelRef = useRef(spacecraft.fuel)
-  const fuelBarObjRef = useRef<FuelBar | null>(null)
+  const fuelBarObjRef = useRef<FuelBarController | null>(null)
   const miningZoomRef = useRef(false)
   const miningMeshRef = useRef<THREE.InstancedMesh | null>(null)
   const miningInstanceIdRef = useRef(-1)
@@ -262,7 +263,7 @@ export const TacticalBackground = () => {
     ship.addToScene(scene)
     ship.load(gltfLoader, onAssetLoaded)
 
-    const fuelBar = new FuelBar(initialFuelRef.current)
+    const fuelBar = new FuelBarController(initialFuelRef.current)
     fuelBar.bind(fuelBarRef.current)
     fuelBarObjRef.current = fuelBar
 
@@ -1371,60 +1372,7 @@ export const TacticalBackground = () => {
         stationLineRef={stationLineRef}
         dockedLineRef={dockedLineRef}
       />
-      <div
-        ref={fuelBarRef}
-        style={{
-          display: 'none',
-          position: 'fixed',
-          transform: 'translateX(-50%)',
-          zIndex: 15,
-          pointerEvents: 'none'
-        }}
-      >
-        <div
-          style={{
-            width: 80,
-            height: 6,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            borderRadius: 3,
-            overflow: 'hidden',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            position: 'relative'
-          }}
-        >
-          <div
-            data-fuel-fill
-            style={{
-              height: '100%',
-              backgroundColor: '#66ddff',
-              transition: 'width 0.2s ease',
-              position: 'absolute',
-              left: 0,
-              top: 0
-            }}
-          />
-          <div
-            data-fuel-cost
-            style={{
-              height: '100%',
-              backgroundColor: '#ff8800',
-              position: 'absolute',
-              top: 0,
-              display: 'none'
-            }}
-          />
-        </div>
-        <div
-          data-fuel-text
-          style={{
-            fontSize: 10,
-            color: '#aaddff',
-            textAlign: 'center',
-            marginTop: 2,
-            textShadow: '0 0 4px rgba(0,0,0,0.8)'
-          }}
-        />
-      </div>
+      <FuelBar ref={fuelBarRef} />
       <HudPanel ref={menuRef}>
         <HudMenu />
         {scanResult.visible && !scanResult.isRemote && scanResult.asteroid && (

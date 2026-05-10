@@ -3,7 +3,7 @@ import * as THREE from 'three'
 const MAX_FUEL = 100
 const FUEL_PER_UNIT = 3
 
-export class FuelBar {
+export class FuelBarController {
   current: number
   private el: HTMLDivElement | null = null
 

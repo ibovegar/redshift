@@ -43,6 +43,7 @@
 - Ship refuels to 100% when docking at station
 - Fuel system now reads from and persists to spacecraft data (per-ship fuel via updateFuel API)
 - Extracted FuelBar class from TacticalBackground (scene/fuel-bar.ts) for reusable per-ship fuel logic
+- Moved fuel bar JSX into FuelBar component (components/FuelBar)
 ## 2026-05-09
 
 - Added mining summary screen (HudCard) shown after drill ends — displays extracted resources with rarity colors, amounts, and storage cost

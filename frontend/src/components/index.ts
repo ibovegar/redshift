@@ -1,6 +1,7 @@
 export { BarButton } from './BarButton/BarButton'
 export { Cart } from './Cart/Cart'
 export { ErrorBoundary } from './ErrorBoundary/ErrorBoundary'
+export { FuelBar } from './FuelBar/FuelBar'
 export { GridButton } from './GridButton/GridButton'
 export { HudButton } from './HudButton/HudButton'
 export { HudCard } from './HudCard/HudCard'
