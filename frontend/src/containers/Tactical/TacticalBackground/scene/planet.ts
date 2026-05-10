@@ -12,9 +12,9 @@ export class Planet {
 
   private atmosMat: THREE.ShaderMaterial
 
-  constructor(renderer: THREE.WebGLRenderer) {
+  constructor(renderer: THREE.WebGLRenderer, loadingManager?: THREE.LoadingManager) {
     this.sunDirection = new THREE.Vector3(2.0, 1.2, -0.8).normalize()
-    const textureLoader = new THREE.TextureLoader()
+    const textureLoader = new THREE.TextureLoader(loadingManager)
 
     this.planetTexture = textureLoader.load('/images/planets/8k_mars.jpg')
     this.planetTexture.colorSpace = THREE.SRGBColorSpace

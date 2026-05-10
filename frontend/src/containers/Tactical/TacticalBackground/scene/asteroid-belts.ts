@@ -30,8 +30,8 @@ export class AsteroidBelts {
   private readonly counters: number[]
   private readonly dummy = new THREE.Object3D()
 
-  constructor() {
-    const textureLoader = new THREE.TextureLoader()
+  constructor(loadingManager?: THREE.LoadingManager) {
+    const textureLoader = new THREE.TextureLoader(loadingManager)
 
     // Chunk textures
     this.textures = []

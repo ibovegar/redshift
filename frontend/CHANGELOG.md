@@ -3,6 +3,8 @@
 ## 2026-05-10
 
 - Fixed ship not being selected after completing a mining operation
+- Replaced star background with HDR nebula texture (HDR_multi_nebulae_2.hdr)
+- Added loading screen with progress bar while scene assets load
 
 ## 2026-05-09
 

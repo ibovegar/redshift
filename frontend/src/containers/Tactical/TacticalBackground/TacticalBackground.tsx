@@ -2,6 +2,7 @@ import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
 import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
 import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
 import { HudPanel } from 'components/HudPanel/HudPanel'
+import { LoadingScreen } from 'components/LoadingScreen/LoadingScreen'
 import { RadiationWarning } from 'components/RadiationWarning/RadiationWarning'
 import { ScanResult } from 'components/ScanResult/ScanResult'
 import { ShipMenu } from 'components/ShipMenu/ShipMenu'
@@ -85,6 +86,8 @@ export const TacticalBackground = () => {
   const miningScreenCenterRef = useRef<{ x: number; y: number } | null>(null)
   const dockedMeshRef = useRef<THREE.InstancedMesh | null>(null)
   const dockedInstanceIdRef = useRef(-1)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [loaded, setLoaded] = useState(false)
 
   const startMiningDirectRef = useRef<
     ((asteroid: Asteroid, mesh: THREE.InstancedMesh, instanceId: number) => void) | undefined
@@ -175,12 +178,23 @@ export const TacticalBackground = () => {
     // No ambient light — dark side must be pitch black
     scene.environment = null
 
+    // --- Asset loading tracker ---
+    const TOTAL_ASSETS = 3 // loadingManager items count as 1, plus stars HDR, plus ship GLB
+    let assetsLoaded = 0
+    const onAssetLoaded = () => {
+      assetsLoaded++
+      setLoadingProgress(assetsLoaded / TOTAL_ASSETS)
+      if (assetsLoaded >= TOTAL_ASSETS) setLoaded(true)
+    }
+
+    const loadingManager = new THREE.LoadingManager(onAssetLoaded)
+
     // Planet, atmosphere, clouds
-    const planetObj = new Planet(renderer)
+    const planetObj = new Planet(renderer, loadingManager)
     planetObj.addToScene(scene)
 
     // Stars — milky way flat background
-    const starsObj = new Stars(camera)
+    const starsObj = new Stars(camera, onAssetLoaded)
     starsObj.addToScene(scene)
 
     // Sun
@@ -189,7 +203,7 @@ export const TacticalBackground = () => {
     sun.addToScene(scene)
 
     // Asteroid belts
-    const belts = new AsteroidBelts()
+    const belts = new AsteroidBelts(loadingManager)
     belts.addToScene(scene)
 
     // --- Ships ---
@@ -204,7 +218,7 @@ export const TacticalBackground = () => {
       ringTilt: [0.7, -0.4, 0.2]
     })
     ship.addToScene(scene)
-    ship.load(gltfLoader)
+    ship.load(gltfLoader, onAssetLoaded)
 
     // --- Travel mode line (ship to cursor) ---
     const travelLine = new TravelLine()
@@ -1068,6 +1082,7 @@ export const TacticalBackground = () => {
 
   return (
     <>
+      <LoadingScreen progress={loadingProgress} loaded={loaded} />
       <RadiationWarning phase={solarPhase} countdown={solarCountdown} />
       <FullscreenLayer ref={containerRef} sx={{ zIndex: 0, pointerEvents: 'auto' }} />
       {isMining && miningAsteroid && (

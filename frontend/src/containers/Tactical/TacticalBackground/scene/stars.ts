@@ -1,18 +1,23 @@
 import * as THREE from 'three'
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
 
 export class Stars {
   readonly mesh: THREE.Mesh
   private readonly geo: THREE.PlaneGeometry
   private readonly mat: THREE.MeshBasicMaterial
-  private readonly texture: THREE.Texture
+  private texture: THREE.Texture | null = null
   private readonly z = -76
 
-  constructor(camera: THREE.PerspectiveCamera) {
-    const textureLoader = new THREE.TextureLoader()
-    this.texture = textureLoader.load('/images/planets/8k_stars_milky_way.jpg')
-    this.texture.colorSpace = THREE.SRGBColorSpace
-    this.texture.minFilter = THREE.LinearMipmapLinearFilter
-    this.texture.magFilter = THREE.LinearFilter
+  constructor(camera: THREE.PerspectiveCamera, onLoad?: () => void) {
+    new RGBELoader().load('/images/planets/HDR_multi_nebulae_2.hdr', (hdrTexture) => {
+      hdrTexture.mapping = THREE.EquirectangularReflectionMapping
+      hdrTexture.minFilter = THREE.LinearMipmapLinearFilter
+      hdrTexture.magFilter = THREE.LinearFilter
+      this.texture = hdrTexture
+      this.mat.map = hdrTexture
+      this.mat.needsUpdate = true
+      onLoad?.()
+    })
 
     const dist = Math.abs(this.z - camera.position.z)
     const h = 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))
@@ -36,6 +41,6 @@ export class Stars {
   dispose() {
     this.geo.dispose()
     this.mat.dispose()
-    this.texture.dispose()
+    this.texture?.dispose()
   }
 }

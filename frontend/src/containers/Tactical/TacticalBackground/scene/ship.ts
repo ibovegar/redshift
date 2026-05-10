@@ -207,7 +207,7 @@ export class Ship {
     scene.add(this.strobeGlare)
   }
 
-  load(loader: GLTFLoader) {
+  load(loader: GLTFLoader, onLoad?: () => void) {
     loader.load(this.config.modelPath, (gltf) => {
       this.model = gltf.scene
       this.model.position.set(...this.config.position)
@@ -218,6 +218,7 @@ export class Ship {
       shipLight.position.set(0, 8, 15)
       this.model.add(shipLight)
       this.ringGroup.parent?.add(this.model)
+      onLoad?.()
     })
   }
 
