@@ -42,6 +42,7 @@
 - Hovering a travel target shows projected fuel cost as orange overlay on fuel bar (red if insufficient)
 - Ship refuels to 100% when docking at station
 - Fuel system now reads from and persists to spacecraft data (per-ship fuel via updateFuel API)
+- Extracted FuelBar class from TacticalBackground (scene/fuel-bar.ts) for reusable per-ship fuel logic
 ## 2026-05-09
 
 - Added mining summary screen (HudCard) shown after drill ends — displays extracted resources with rarity colors, amounts, and storage cost

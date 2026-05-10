@@ -27,6 +27,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { AsteroidBelts, BELT_SPEED } from './scene/asteroid-belts'
 import { AsteroidHighlight } from './scene/asteroid-highlight'
 import { CameraZoom } from './scene/camera-zoom'
+import { FuelBar } from './scene/fuel-bar'
 import { GodRays } from './scene/god-rays'
 import { LensFlare } from './scene/lens-flare'
 import { ModelHighlight } from './scene/model-highlight'
@@ -93,12 +94,10 @@ export const TacticalBackground = () => {
 
   const [isMining, setIsMining] = useState(false)
   const [miningAsteroid, setMiningAsteroid] = useState<Asteroid | null>(null)
-  const [_shipFuel, setShipFuel] = useState(spacecraft.fuel)
   const [_shipShield, setShipShield] = useState(55)
-  const shipFuelRef = useRef(spacecraft.fuel)
   const shipShieldRef = useRef(55)
-  const MAX_FUEL = 100
-  const FUEL_PER_UNIT = 3
+  const initialFuelRef = useRef(spacecraft.fuel)
+  const fuelBarObjRef = useRef<FuelBar | null>(null)
   const miningZoomRef = useRef(false)
   const miningMeshRef = useRef<THREE.InstancedMesh | null>(null)
   const miningInstanceIdRef = useRef(-1)
@@ -115,9 +114,8 @@ export const TacticalBackground = () => {
       updateCargo.mutate({ spacecraftId: spacecraft.id, cargo: [] })
     }
     updateStatus.mutate({ spacecraftId: spacecraft.id, status: 'docked' })
-    shipFuelRef.current = MAX_FUEL
-    setShipFuel(MAX_FUEL)
-    updateFuel.mutate({ spacecraftId: spacecraft.id, fuel: MAX_FUEL })
+    const fuel = fuelBarObjRef.current?.refuel() ?? 100
+    updateFuel.mutate({ spacecraftId: spacecraft.id, fuel })
   }
 
   const onUndockRef = useRef<(() => void) | undefined>(undefined)
@@ -263,6 +261,10 @@ export const TacticalBackground = () => {
     const shipHomePosition: [number, number, number] = [...ship.config.position]
     ship.addToScene(scene)
     ship.load(gltfLoader, onAssetLoaded)
+
+    const fuelBar = new FuelBar(initialFuelRef.current)
+    fuelBar.bind(fuelBarRef.current)
+    fuelBarObjRef.current = fuelBar
 
     // --- Space station ---
     const station = new Station({
@@ -526,11 +528,8 @@ export const TacticalBackground = () => {
       // Travel mode: click on asteroid or station to move ship there
       if (travelMode) {
         const deductFuel = (target: THREE.Vector3) => {
-          const dist = new THREE.Vector3(...ship.config.position).distanceTo(target)
-          const cost = dist * FUEL_PER_UNIT
-          shipFuelRef.current = Math.max(0, shipFuelRef.current - cost)
-          setShipFuel(Math.round(shipFuelRef.current))
-          persistFuelRef.current?.(Math.round(shipFuelRef.current))
+          const newFuel = fuelBar.deduct(ship.config.position, target)
+          persistFuelRef.current?.(newFuel)
         }
         if (station.raycast(raycaster)) {
           const target = new THREE.Vector3(...shipHomePosition)
@@ -772,7 +771,7 @@ export const TacticalBackground = () => {
 
       // Fuel consumption on travel start is handled at click time
       // Hull damage when fuel is empty during travel
-      if (shipTravelTarget && shipTravelStart && shipFuelRef.current <= 0) {
+      if (shipTravelTarget && shipTravelStart && fuelBar.current <= 0) {
         const hullDrain = 0.3 * dt
         if (shipShieldRef.current > 0) {
           shipShieldRef.current = Math.max(0, shipShieldRef.current - hullDrain)
@@ -1098,61 +1097,23 @@ export const TacticalBackground = () => {
       }
 
       // Fuel bar — show during travel mode and active travel
-      if (fuelBarRef.current) {
-        const showFuelBar = travelMode || !!shipTravelTarget
-        if (showFuelBar) {
-          const shipScreen = ship.getScreenPosition(camera)
-          if (shipScreen) {
-            fuelBarRef.current.style.display = 'block'
-            fuelBarRef.current.style.left = `${shipScreen.x}px`
-            fuelBarRef.current.style.top = `${shipScreen.y - 30}px`
-
-            const fuelFill = fuelBarRef.current.querySelector<HTMLElement>('[data-fuel-fill]')
-            const fuelCost = fuelBarRef.current.querySelector<HTMLElement>('[data-fuel-cost]')
-            const fuelText = fuelBarRef.current.querySelector<HTMLElement>('[data-fuel-text]')
-
-            if (fuelFill) {
-              const pct = (shipFuelRef.current / MAX_FUEL) * 100
-              fuelFill.style.width = `${pct}%`
-              fuelFill.style.backgroundColor = pct > 30 ? '#66ddff' : pct > 15 ? '#ffaa33' : '#ff4444'
-            }
-
-            // Show projected fuel cost when hovering a target in travel mode
-            if (fuelCost) {
-              if (travelMode && (highlightedAsteroidIdx >= 0 || highlightedStation)) {
-                let targetPos: THREE.Vector3 | null = null
-                if (highlightedStation) {
-                  targetPos = new THREE.Vector3(...shipHomePosition)
-                } else if (highlightedMesh && highlightedAsteroidIdx >= 0) {
-                  highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
-                  instanceMatrix.premultiply(highlightedMesh.matrixWorld)
-                  targetPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
-                }
-                if (targetPos) {
-                  const dist = new THREE.Vector3(...ship.config.position).distanceTo(targetPos)
-                  const cost = dist * FUEL_PER_UNIT
-                  const costPct = (cost / MAX_FUEL) * 100
-                  const afterPct = Math.max(0, (shipFuelRef.current - cost) / MAX_FUEL) * 100
-                  const afterFuel = shipFuelRef.current - cost
-                  fuelCost.style.left = `${afterPct}%`
-                  fuelCost.style.width = `${Math.min(costPct, (shipFuelRef.current / MAX_FUEL) * 100)}%`
-                  fuelCost.style.display = 'block'
-                  fuelCost.style.backgroundColor = afterFuel < 0 ? '#ff4444' : '#ff8800'
-                } else {
-                  fuelCost.style.display = 'none'
-                }
-              } else {
-                fuelCost.style.display = 'none'
-              }
-            }
-
-            if (fuelText) {
-              fuelText.textContent = `${Math.round(shipFuelRef.current)}%`
-            }
+      {
+        let hoverTarget: THREE.Vector3 | null = null
+        if (travelMode && (highlightedAsteroidIdx >= 0 || highlightedStation)) {
+          if (highlightedStation) {
+            hoverTarget = new THREE.Vector3(...shipHomePosition)
+          } else if (highlightedMesh && highlightedAsteroidIdx >= 0) {
+            highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
+            instanceMatrix.premultiply(highlightedMesh.matrixWorld)
+            hoverTarget = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
           }
-        } else {
-          fuelBarRef.current.style.display = 'none'
         }
+        fuelBar.update({
+          visible: travelMode || !!shipTravelTarget,
+          shipScreen: ship.getScreenPosition(camera),
+          hoverTarget,
+          shipPosition: ship.config.position
+        })
       }
 
       // Sun screen position for god rays & lens flare (offset by pan so sun stays static)
