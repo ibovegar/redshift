@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-10
+
+- Fixed ship not being selected after completing a mining operation
+
 ## 2026-05-09
 
 - Added mining summary screen (HudCard) shown after drill ends — displays extracted resources with rarity colors, amounts, and storage cost
@@ -40,7 +44,7 @@
 - Created FullscreenLayer styled component; applied to Three.js container and ConnectorLines SVG
 - Extracted AsteroidBelts, Stars, TravelLine classes and SceneUI helpers from TacticalBackground
 - Ship menu flips to the opposite side of the ship when it would overflow the viewport edge
-- Added Details button to ship menu; ship click shows menu, Details triggers zoom
+- Added Details button to ship menu; ship click shows menu, Details triggers zoom8888888888888888888
 - Ship stats panel appears on opposite side of ship when entering details mode
 - Extracted reusable HudPanel component for tactical overlay layout; removed ShipMenuContainer in favor of composition
 - Moved spacecraft stat/type labels to data/labels.ts

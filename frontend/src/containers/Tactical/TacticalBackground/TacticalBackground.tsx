@@ -680,6 +680,8 @@ export const TacticalBackground = () => {
       if (!miningZoomRef.current && miningZoom.target) {
         miningZoom.zoomOut()
         miningStarted = false
+        ship.select()
+        if (dockedMesh) showMenu()
       }
 
       // Asteroid hover highlight
