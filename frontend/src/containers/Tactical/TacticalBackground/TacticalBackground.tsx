@@ -130,6 +130,7 @@ export const TacticalBackground = () => {
   }
 
   const deployShipRef = useRef<(() => void) | undefined>(undefined)
+  const markDepletedRef = useRef<(() => void) | undefined>(undefined)
 
   const startMiningDirectRef = useRef<
     ((asteroid: Asteroid, mesh: THREE.InstancedMesh, instanceId: number) => void) | undefined
@@ -184,6 +185,7 @@ export const TacticalBackground = () => {
         if (prev) prev.depleted = true
         return null
       })
+      markDepletedRef.current?.()
       setIsMining(false)
       miningZoomRef.current = false
       miningMeshRef.current = null
@@ -354,6 +356,7 @@ export const TacticalBackground = () => {
     let dockOffset = new THREE.Vector3()
     let dockedAsteroid: Asteroid | null = null
     let dockedToStation = true
+    let preTravelDockedToStation = false
     let shipHidden = false
     let dockedInstanceHidden = false
     const savedDockedMatrix = new THREE.Matrix4()
@@ -458,6 +461,10 @@ export const TacticalBackground = () => {
       hideStationMenu()
       station.deselect()
       onUndockRef.current?.()
+    }
+
+    markDepletedRef.current = () => {
+      belts.markDepleted()
     }
 
     const handleMouseDown = (e: MouseEvent) => {
@@ -622,6 +629,9 @@ export const TacticalBackground = () => {
           highlightedAsteroidIdx = -1
           highlightedMesh = null
           highlightedStation = false
+          dockedToStation = preTravelDockedToStation
+          selectShip()
+          showMenu()
         } else if (detailZoom.isZoomed) {
           exitDetails()
         } else if (ship.isSelected) {
@@ -639,7 +649,7 @@ export const TacticalBackground = () => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
       lastMouseScreen = { x: e.clientX, y: e.clientY }
-      if (!detailZoom.isZoomed && !miningZoomRef.current && !shipTravelTarget) {
+      if (!detailZoom.isZoomed && !miningZoomRef.current && !shipTravelTarget && !scanning) {
         panTargetX = mouse.x * PAN_AMOUNT
         panTargetY = mouse.y * PAN_AMOUNT
       }
@@ -654,6 +664,11 @@ export const TacticalBackground = () => {
         planetRotX += dy
         prevDragX = e.clientX
         prevDragY = e.clientY
+      }
+
+      // Update travel cursor position before throttle so the line stays smooth
+      if (travelMode && !shipTravelTarget) {
+        travelCursorScreen = { x: e.clientX, y: e.clientY }
       }
 
       // Throttle raycasting to ~15fps
@@ -691,7 +706,6 @@ export const TacticalBackground = () => {
         }
 
         // Store cursor screen position for travel line (drawn in animation loop)
-        travelCursorScreen = { x: e.clientX, y: e.clientY }
       } else {
         if (ship.raycast(raycaster)) {
           cursor = 'pointer'
@@ -798,7 +812,7 @@ export const TacticalBackground = () => {
 
       const shipDocked = !shipTravelTarget && !dockedMesh && !travelMode
       const beltSpeed = shipDocked && !miningZoomRef.current ? BELT_SPEED : 0
-      if (beltSpeed > 0) belts.update(beltSpeed)
+      if (beltSpeed > 0 || belts.needsUpdate) belts.update(beltSpeed)
 
       // Scan flash update
       highlight.updateFlash(dt)
@@ -927,7 +941,7 @@ export const TacticalBackground = () => {
         }
         shipTravelProgress = Math.min(1, shipTravelProgress + (fuelBar.current <= 0 ? 0.0003 : 0.001))
         fuelBar.drainFuel(shipTravelProgress)
-        const easeT = 1 - (1 - shipTravelProgress) ** 3
+        const easeT = 1 - (1 - shipTravelProgress) ** 2
         ship.config.position[0] = shipTravelStart.x + (shipTravelTarget.x - shipTravelStart.x) * easeT
         ship.config.position[1] = shipTravelStart.y + (shipTravelTarget.y - shipTravelStart.y) * easeT
         ship.config.position[2] = shipTravelStart.z + (shipTravelTarget.z - shipTravelStart.z) * easeT
@@ -1008,29 +1022,18 @@ export const TacticalBackground = () => {
             stationLineRef.current.setAttribute('opacity', el.style.opacity)
           }
 
-          // Position docked list on opposite side
+          // Position docked list to the right of station menu
           const hasDocked = spacecraftsRef.current.some((s) => s.status === 'docked')
           if (dockedListRef.current && hasDocked) {
             const dl = dockedListRef.current
-            const dlWidth = dl.offsetWidth
-            const dlX = flipped ? sx + 240 : sx - 180 - dlWidth
+            const dlX = menuX + menuWidth + 12
             const dlY = menuY
             dl.style.left = `${dlX}px`
             dl.style.top = `${dlY}px`
-            dl.style.transformOrigin = flipped ? 'left center' : 'right center'
-            const dlRy = flipped ? -3 + mouse.x * 2 : 3 - mouse.x * 2
-            const dlSkew = flipped ? 0.5 : -0.5
+            dl.style.transformOrigin = 'left center'
+            const dlRy = -3 + mouse.x * 2
+            const dlSkew = 0.5
             dl.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${dlRy}deg) skewY(${dlSkew}deg) translateY(-50%)`
-
-            // Docked list connector line
-            if (dockedLineRef.current) {
-              const dlLineX = flipped ? dlX : dlX + dlWidth
-              dockedLineRef.current.setAttribute('x1', String(sx))
-              dockedLineRef.current.setAttribute('y1', String(sy))
-              dockedLineRef.current.setAttribute('x2', String(dlLineX))
-              dockedLineRef.current.setAttribute('y2', String(dlY))
-              dockedLineRef.current.setAttribute('opacity', el.style.opacity)
-            }
           }
         } else {
           if (stationLineRef.current) stationLineRef.current.setAttribute('opacity', '0')
@@ -1229,6 +1232,7 @@ export const TacticalBackground = () => {
     // Travel button handler
     const handleTravelClick = () => {
       const wasDocked = shipHidden
+      preTravelDockedToStation = dockedToStation
       travelMode = true
       travelCursorScreen = { x: lastMouseScreen.x, y: lastMouseScreen.y }
       dockedMesh = null
@@ -1286,6 +1290,8 @@ export const TacticalBackground = () => {
       scanStartTime = performance.now()
       scanProgress = 0
       scanning = true
+      panTargetX = panX
+      panTargetY = panY
       ship.ringGroup.visible = false
       // Flash the asteroid highlight
       highlight.flash()

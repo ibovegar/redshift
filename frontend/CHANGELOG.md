@@ -2,6 +2,19 @@
 
 ## 2026-05-11
 
+- Slow down resource count-up animation (80ms tick, up to 60 steps)
+- Fix travel line stutter — update cursor position before raycasting throttle
+- Fix Dock option disappearing after pressing Move then Escape at station
+- Remove resource counter from station menu
+- Fix asteroid not disappearing after mining (belt update was skipped while docked)
+- Animate resource count-up in toolbar when cargo is transferred to station
+- Remove connector line from docked ships panel to station
+- Show resource counter in station menu when cargo is stored
+- Move docked ships panel to the right of station menu
+- Increase cloud coverage on planet surface (lower smoothstep threshold)
+- Reduce ship travel slowdown effect (ease-out power 3→2)
+- Disable camera panning during asteroid scanning
+- Fix mined asteroid not disappearing (markDepleted was never called)
 - Reduced asteroid IcosahedronGeometry detail from 3→2 (~75% fewer vertices per chunk, invisible at scale)
 - Reduced god rays occlusion sphere from 32×32 to 16×16 segments (binary mask doesn't need high-poly)
 - Reduced travel line segments from 24→16 (33% fewer canvas stroke ops per frame)

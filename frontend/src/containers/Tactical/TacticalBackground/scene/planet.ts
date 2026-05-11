@@ -139,7 +139,7 @@ export class Planet {
         varying vec2 vUv;
         void main() {
           float cloud = texture2D(uTexture, vUv).r;
-          cloud = smoothstep(0.15, 0.65, cloud);
+          cloud = smoothstep(0.05, 0.55, cloud);
           float light = dot(vNormal, uSunDir);
           light = smoothstep(0.08, 0.38, light) * 1.35;
           vec3 color = vec3(0.95, 0.9, 0.85) * cloud * light;

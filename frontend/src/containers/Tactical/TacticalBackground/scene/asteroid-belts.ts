@@ -120,6 +120,10 @@ export class AsteroidBelts {
     this._depletedDirty = true
   }
 
+  get needsUpdate() {
+    return this._depletedDirty
+  }
+
   private get depletedSet(): Set<number> {
     if (!this._depletedDirty) return this._depletedSet
     this._depletedSet.clear()
