@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react()],
@@ -11,6 +11,16 @@ export default defineConfig({
     open: true
   },
   build: {
-    outDir: 'build'
+    outDir: 'build',
+    sourcemap: false,
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three'],
+          vendor: ['react', 'react-dom', '@mui/material', '@tanstack/react-query']
+        }
+      }
+    }
   }
-});
+})

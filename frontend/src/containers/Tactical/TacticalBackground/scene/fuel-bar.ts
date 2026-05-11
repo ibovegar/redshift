@@ -7,6 +7,11 @@ export class FuelBarController {
   private tripCost = 0
   private maxFuel: number
   private fuelPerUnit: number
+  private lastVisible = false
+  private lastLeft = ''
+  private lastTop = ''
+  private lastPct = -1
+  private lastDisplayPct = -1
 
   constructor(initialFuel: number, maxFuel: number, fuelPerUnit: number) {
     this.current = initialFuel
@@ -44,13 +49,27 @@ export class FuelBarController {
     const { visible, shipScreen, hoverTarget, shipPosition } = params
 
     if (!visible || !shipScreen) {
-      this.el.style.display = 'none'
+      if (this.lastVisible) {
+        this.el.style.display = 'none'
+        this.lastVisible = false
+      }
       return
     }
 
-    this.el.style.display = 'block'
-    this.el.style.left = `${shipScreen.x}px`
-    this.el.style.top = `${shipScreen.y - 50}px`
+    if (!this.lastVisible) {
+      this.el.style.display = 'block'
+      this.lastVisible = true
+    }
+    const left = `${shipScreen.x}px`
+    const top = `${shipScreen.y - 50}px`
+    if (left !== this.lastLeft) {
+      this.el.style.left = left
+      this.lastLeft = left
+    }
+    if (top !== this.lastTop) {
+      this.el.style.top = top
+      this.lastTop = top
+    }
 
     const bar = this.el.querySelector<HTMLElement>('.MuiLinearProgress-bar')
     const text = this.el.querySelector<HTMLElement>('[data-fuel-text]')
@@ -62,8 +81,12 @@ export class FuelBarController {
         const tripCost = dist * this.fuelPerUnit
         pct = Math.max(0, ((this.current - tripCost) / this.maxFuel) * 100)
       }
-      bar.style.transform = `translateX(-${100 - pct}%)`
-      bar.style.backgroundColor = pct > 50 ? '' : pct > 20 ? '#ffaa33' : '#ff4444'
+      const roundedPct = Math.round(pct * 10) / 10
+      if (roundedPct !== this.lastPct) {
+        this.lastPct = roundedPct
+        bar.style.transform = `translateX(-${100 - pct}%)`
+        bar.style.backgroundColor = pct > 50 ? '' : pct > 20 ? '#ffaa33' : '#ff4444'
+      }
     }
 
     if (text) {
@@ -73,7 +96,10 @@ export class FuelBarController {
         const tripCost = dist * this.fuelPerUnit
         displayPct = Math.max(0, Math.round(this.current - tripCost))
       }
-      text.textContent = `${displayPct}%`
+      if (displayPct !== this.lastDisplayPct) {
+        this.lastDisplayPct = displayPct
+        text.textContent = `${displayPct}%`
+      }
     }
   }
 }

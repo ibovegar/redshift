@@ -15,7 +15,7 @@ export interface AsteroidBeltData {
 }
 
 export function createAsteroidGeometry(radius: number, seed: number): THREE.BufferGeometry {
-  const geo = new THREE.IcosahedronGeometry(radius, 3)
+  const geo = new THREE.IcosahedronGeometry(radius, 2)
   const pos = geo.attributes.position
   const rng = (s: number) => {
     s = Math.sin(s * 127.1 + 311.7) * 43758.5453

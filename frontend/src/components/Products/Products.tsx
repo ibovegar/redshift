@@ -12,9 +12,9 @@ export const Products = (props: Props) => {
 
   return (
     <Grid container spacing={6}>
-      {products.map((product, _index) => (
+      {products.map((product) => (
         <Grid size={12} key={product.id}>
-          <ProductCard product={product} onAddClick={() => onAddClick(product)} />
+          <ProductCard product={product} onAddClick={onAddClick} />
         </Grid>
       ))}
     </Grid>

@@ -31,7 +31,7 @@ export class GodRays {
     this.sunDisc.lookAt(camera.position)
     this.occlusionScene.add(this.sunDisc)
 
-    this.planetOccGeo = new THREE.SphereGeometry(6.2, 32, 32)
+    this.planetOccGeo = new THREE.SphereGeometry(6.2, 16, 16)
     this.planetOccMat = new THREE.MeshBasicMaterial({ color: 0x000000 })
     const planetOcc = new THREE.Mesh(this.planetOccGeo, this.planetOccMat)
     planetOcc.position.copy(planetPosition)
@@ -71,7 +71,7 @@ export class GodRays {
         uniform vec3 uColor;
         uniform float uTime;
         varying vec2 vUv;
-        const int NUM_SAMPLES = 50;
+        const int NUM_SAMPLES = 35;
         float hash(vec2 p) {
           return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
         }

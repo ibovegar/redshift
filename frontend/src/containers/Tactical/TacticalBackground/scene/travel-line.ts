@@ -4,6 +4,8 @@ export class TravelLine {
   private readonly geo: THREE.BufferGeometry
   private readonly mat: THREE.LineDashedMaterial
   readonly line: THREE.Line
+  private cachedW = 0
+  private cachedH = 0
 
   constructor() {
     this.mat = new THREE.LineDashedMaterial({
@@ -34,13 +36,19 @@ export class TravelLine {
     if (!ctx) return
 
     const dpr = window.devicePixelRatio || 1
-    canvas.width = window.innerWidth * dpr
-    canvas.height = window.innerHeight * dpr
-    ctx.scale(dpr, dpr)
+    const w = window.innerWidth * dpr
+    const h = window.innerHeight * dpr
+    if (w !== this.cachedW || h !== this.cachedH) {
+      canvas.width = w
+      canvas.height = h
+      this.cachedW = w
+      this.cachedH = h
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
 
     const dashAnim = -(elapsed * 50) % 11
-    const segments = 24
+    const segments = 16
     const dx = endScreen.x - shipScreen.x
     const dy = endScreen.y - shipScreen.y
     const totalLen = Math.sqrt(dx * dx + dy * dy)

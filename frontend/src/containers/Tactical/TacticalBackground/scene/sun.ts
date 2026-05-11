@@ -41,28 +41,25 @@ export class Sun {
           float core = exp(-d * 90.0) * 2.0 * breath;
 
           float spikes = 0.0;
-          for (int j = 0; j < 16; j++) {
-            float sa = float(j) * 6.28318 / 16.0;
-            float shimmer = 1.0 + sin(uTime * 0.5 + float(j) * 0.9) * 0.3;
-            float spike = pow(max(cos(angle - sa), 0.0), 100.0);
+          for (int j = 0; j < 8; j++) {
+            float sa = float(j) * 6.28318 / 8.0;
+            float shimmer = 1.0 + sin(uTime * 0.5 + float(j) * 1.8) * 0.3;
+            float spike = pow(max(cos(angle - sa), 0.0), 80.0);
             spike *= exp(-d * 12.0) * shimmer;
             spikes += spike;
           }
 
           float longRays = 0.0;
-          float rayAngles[5];
+          float rayAngles[3];
           rayAngles[0] = 0.3;  rayAngles[1] = 1.7;
-          rayAngles[2] = 3.1;  rayAngles[3] = 4.3;
-          rayAngles[4] = 5.4;
-          float rayLengths[5];
+          rayAngles[2] = 4.3;
+          float rayLengths[3];
           rayLengths[0] = 2.5; rayLengths[1] = 8.0;
-          rayLengths[2] = 4.0; rayLengths[3] = 10.0;
-          rayLengths[4] = 3.0;
-          float rayWidths[5];
+          rayLengths[2] = 10.0;
+          float rayWidths[3];
           rayWidths[0] = 250.0; rayWidths[1] = 350.0;
-          rayWidths[2] = 200.0; rayWidths[3] = 300.0;
-          rayWidths[4] = 280.0;
-          for (int j = 0; j < 5; j++) {
+          rayWidths[2] = 300.0;
+          for (int j = 0; j < 3; j++) {
             float ra = rayAngles[j];
             float rayPulse = 1.0 + sin(uTime * (0.3 + float(j) * 0.15) + float(j) * 1.5) * 0.4;
             float ray = pow(max(cos(angle - ra), 0.0), rayWidths[j]);
@@ -78,7 +75,13 @@ export class Sun {
           float flareGlow = uFlare * exp(-d * 1.5) * 0.6;
           float flareCore = uFlare * exp(-d * 8.0) * 1.2;
 
-          float intensity = core + spikes * 0.35 + longRays + glow + flareGlow + flareCore;
+          float intensity = core + spikes * 0.45 + longRays + glow + flareGlow + flareCore;
+
+          // Fade to zero at plane edges to prevent visible box clipping
+          float edgeDist = max(abs(center.x), abs(center.y));
+          float edgeFade = 1.0 - smoothstep(0.4, 0.5, edgeDist);
+          intensity *= edgeFade;
+
           vec3 color = uColor * intensity;
           color += vec3(0.2, 0.2, 0.4) * core * 0.2;
 

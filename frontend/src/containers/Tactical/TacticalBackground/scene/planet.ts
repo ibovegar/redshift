@@ -16,14 +16,14 @@ export class Planet {
     this.sunDirection = new THREE.Vector3(2.0, 1.2, -0.8).normalize()
     const textureLoader = new THREE.TextureLoader(loadingManager)
 
-    this.planetTexture = textureLoader.load('/images/planets/8k_mars.jpg')
+    this.planetTexture = textureLoader.load('/images/planets/4k_mars.jpg')
     this.planetTexture.colorSpace = THREE.SRGBColorSpace
     this.planetTexture.minFilter = THREE.LinearMipmapLinearFilter
     this.planetTexture.magFilter = THREE.LinearFilter
-    this.planetTexture.anisotropy = renderer.capabilities.getMaxAnisotropy()
+    this.planetTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
     this.planetTexture.generateMipmaps = true
 
-    const planetGeo = new THREE.SphereGeometry(18.5, 128, 128)
+    const planetGeo = new THREE.SphereGeometry(18.5, 64, 64)
     this.planetMat = new THREE.ShaderMaterial({
       uniforms: {
         uSunDir: { value: this.sunDirection },
@@ -111,13 +111,13 @@ export class Planet {
     this.atmosphere.scale.x = 0.94
 
     // Cloud layer
-    this.cloudTexture = textureLoader.load('/images/planets/8k_earth_clouds.jpg')
+    this.cloudTexture = textureLoader.load('/images/planets/4k_earth_clouds.jpg')
     this.cloudTexture.colorSpace = THREE.SRGBColorSpace
     this.cloudTexture.minFilter = THREE.LinearMipmapLinearFilter
     this.cloudTexture.magFilter = THREE.LinearFilter
-    this.cloudTexture.anisotropy = renderer.capabilities.getMaxAnisotropy()
+    this.cloudTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
 
-    const cloudGeo = new THREE.SphereGeometry(18.7, 128, 128)
+    const cloudGeo = new THREE.SphereGeometry(18.7, 64, 64)
     this.cloudMat = new THREE.ShaderMaterial({
       uniforms: {
         uSunDir: { value: this.sunDirection },

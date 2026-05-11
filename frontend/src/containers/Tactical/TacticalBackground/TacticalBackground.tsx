@@ -289,10 +289,11 @@ export const TacticalBackground = () => {
     const highlight = new AsteroidHighlight(scene)
     const scannedIndicators = new ScannedIndicators(scene)
 
-    // --- God Rays setup ---
+    // --- God Rays setup (quarter-res for performance) ---
     const godRays = new GodRays(sunPos, planetObj.planet.position, camera, width, height)
-    let rtWidth = Math.floor(width / 2)
-    let rtHeight = Math.floor(height / 2)
+    let rtWidth = Math.floor(width / 3)
+    let rtHeight = Math.floor(height / 3)
+    godRays.occlusionRT.setSize(rtWidth, rtHeight)
 
     // --- Lens Flare setup ---
     const lensFlare = new LensFlare(width, height)
@@ -301,6 +302,9 @@ export const TacticalBackground = () => {
     const solarWave = new SolarWave(width, height)
 
     const sunScreenHelper = new THREE.Vector3()
+    // Reusable temp vectors to avoid per-frame allocations
+    const _tmpVec3A = new THREE.Vector3()
+    const _tmpVec3B = new THREE.Vector3()
 
     // Hover raycasting
     const raycaster = new THREE.Raycaster()
@@ -332,7 +336,8 @@ export const TacticalBackground = () => {
     // Mining zoom state (aggressive zoom toward mined asteroid)
     const miningZoom = new CameraZoom(0.03, 0.92, 2, 4)
 
-    // Travel mode state
+    // Reusable plane for travel cursor raycasting
+    const travelPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 3.5)
     let travelMode = false
     const travelCursorWorld = new THREE.Vector3()
     let travelCursorScreen = { x: 0, y: 0 }
@@ -352,6 +357,7 @@ export const TacticalBackground = () => {
     let shipHidden = false
     let dockedInstanceHidden = false
     const savedDockedMatrix = new THREE.Matrix4()
+    const zeroScaleMatrix = new THREE.Matrix4().makeScale(0, 0, 0)
     let scanning = false
     let scanProgress = 0
     let scanDuration = 0
@@ -627,6 +633,8 @@ export const TacticalBackground = () => {
         }
       }
     }
+    let lastRaycastTime = 0
+    let lastCursor = 'default'
     const handleMouseMove = (e: MouseEvent) => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
@@ -635,14 +643,34 @@ export const TacticalBackground = () => {
         panTargetX = mouse.x * PAN_AMOUNT
         panTargetY = mouse.y * PAN_AMOUNT
       }
+
+      // Planet drag doesn't need raycasting — handle separately
+      if (isDraggingPlanet && !detailZoom.isZoomed && !travelMode) {
+        const dx = (e.clientX - prevDragX) * ROTATE_SPEED
+        const dy = (e.clientY - prevDragY) * ROTATE_SPEED
+        planetVelY = dx
+        planetVelX = dy
+        planetRotY += dx
+        planetRotX += dy
+        prevDragX = e.clientX
+        prevDragY = e.clientY
+      }
+
+      // Throttle raycasting to ~15fps
+      const now = performance.now()
+      if (now - lastRaycastTime < 66) {
+        if (container) container.style.cursor = lastCursor
+        return
+      }
+      lastRaycastTime = now
+
       raycaster.setFromCamera(mouse, camera)
       let cursor = 'default'
 
       if (travelMode) {
         cursor = 'crosshair'
         // Update cursor world position for travel line
-        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 3.5)
-        raycaster.ray.intersectPlane(plane, travelCursorWorld)
+        raycaster.ray.intersectPlane(travelPlane, travelCursorWorld)
 
         // Check asteroid/station hover
         highlightedAsteroidIdx = -1
@@ -691,16 +719,7 @@ export const TacticalBackground = () => {
       }
 
       if (container) container.style.cursor = cursor
-      if (isDraggingPlanet && !detailZoom.isZoomed && !travelMode) {
-        const dx = (e.clientX - prevDragX) * ROTATE_SPEED
-        const dy = (e.clientY - prevDragY) * ROTATE_SPEED
-        planetVelY = dx
-        planetVelX = dy
-        planetRotY += dx
-        planetRotX += dy
-        prevDragX = e.clientX
-        prevDragY = e.clientY
-      }
+      lastCursor = cursor
     }
     window.addEventListener('mousedown', handleMouseDown)
     window.addEventListener('mouseup', handleMouseUp)
@@ -712,7 +731,14 @@ export const TacticalBackground = () => {
     let frameId: number
     let elapsed = 0
     const clock = new THREE.Timer()
+
+    // Pre-compile all shaders to avoid frame stutters on first render
+    renderer.compile(scene, camera)
+    renderer.compile(godRays.occlusionScene, camera)
+
     const animate = () => {
+      frameId = requestAnimationFrame(animate)
+      if (document.hidden) return
       clock.update()
       const dt = clock.getDelta()
       elapsed += dt
@@ -724,8 +750,7 @@ export const TacticalBackground = () => {
       if (dockedMesh && dockedInstanceId >= 0) {
         if (detailZoom.isZoomed && !dockedInstanceHidden) {
           dockedMesh.getMatrixAt(dockedInstanceId, savedDockedMatrix)
-          const zeroMatrix = new THREE.Matrix4().makeScale(0, 0, 0)
-          dockedMesh.setMatrixAt(dockedInstanceId, zeroMatrix)
+          dockedMesh.setMatrixAt(dockedInstanceId, zeroScaleMatrix)
           dockedMesh.instanceMatrix.needsUpdate = true
           dockedInstanceHidden = true
         } else if (!detailZoom.isZoomed && dockedInstanceHidden) {
@@ -735,6 +760,8 @@ export const TacticalBackground = () => {
         }
       }
 
+      const prevPanX = panX
+      const prevPanY = panY
       panX += (panTargetX - panX) * 0.03
       panY += (panTargetY - panY) * 0.03
       detailZoom.applyToCamera(camera, panX, panY, defaultCamZ)
@@ -745,12 +772,15 @@ export const TacticalBackground = () => {
       miningZoom.apply(camera)
 
       // Reduce apparent pan on asteroids and sun by partially following the camera
-      belts.applyParallax(panX, panY)
-      sun.mesh.position.x = sunPos.x + panX
-      sun.mesh.position.y = sunPos.y + panY
-      godRays.sunDisc.position.x = sunPos.x + panX
-      godRays.sunDisc.position.y = sunPos.y + panY
-      starsObj.applyParallax(panX, panY)
+      const panChanged = Math.abs(panX - prevPanX) > 0.00001 || Math.abs(panY - prevPanY) > 0.00001
+      if (panChanged) {
+        belts.applyParallax(panX, panY)
+        sun.mesh.position.x = sunPos.x + panX
+        sun.mesh.position.y = sunPos.y + panY
+        godRays.sunDisc.position.x = sunPos.x + panX
+        godRays.sunDisc.position.y = sunPos.y + panY
+        starsObj.applyParallax(panX, panY)
+      }
 
       planetRotY += 0.00005
       if (!isDragging) {
@@ -767,7 +797,8 @@ export const TacticalBackground = () => {
       godRays.mat.uniforms.uTime.value = elapsed
 
       const shipDocked = !shipTravelTarget && !dockedMesh && !travelMode
-      belts.update(shipDocked && !miningZoomRef.current ? BELT_SPEED : 0)
+      const beltSpeed = shipDocked && !miningZoomRef.current ? BELT_SPEED : 0
+      if (beltSpeed > 0) belts.update(beltSpeed)
 
       // Scan flash update
       highlight.updateFlash(dt)
@@ -780,21 +811,21 @@ export const TacticalBackground = () => {
       if (miningZoomRef.current && mMesh && mId >= 0) {
         mMesh.getMatrixAt(mId, instanceMatrix)
         instanceMatrix.premultiply(mMesh.matrixWorld)
-        const worldPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
+        _tmpVec3A.setFromMatrixPosition(instanceMatrix)
         if (miningZoom.target) {
-          miningZoom.updateTarget(worldPos)
+          miningZoom.updateTarget(_tmpVec3A)
         } else {
-          miningZoom.zoomTo(worldPos)
+          miningZoom.zoomTo(_tmpVec3A)
         }
 
         // Center camera XY on asteroid so it appears in the middle of the screen
         const zoomT = Math.min(1, miningZoom.progress / 1) // 0..1
         const eased = 1 - (1 - zoomT) ** 2
-        camera.position.x += (worldPos.x - camera.position.x) * eased
-        camera.position.y += (worldPos.y - camera.position.y) * eased
+        camera.position.x += (_tmpVec3A.x - camera.position.x) * eased
+        camera.position.y += (_tmpVec3A.y - camera.position.y) * eased
 
         // Project to screen
-        const projected = worldPos.clone().project(camera)
+        const projected = _tmpVec3B.copy(_tmpVec3A).project(camera)
         const sx = (projected.x * 0.5 + 0.5) * window.innerWidth
         const sy = (-projected.y * 0.5 + 0.5) * window.innerHeight
         miningScreenCenterRef.current = { x: sx, y: sy }
@@ -807,7 +838,7 @@ export const TacticalBackground = () => {
       } else if (miningZoomRef.current && dockedMesh && dockedInstanceId >= 0) {
         dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
         instanceMatrix.premultiply(dockedMesh.matrixWorld)
-        scanZoom.zoomTo(new THREE.Vector3().setFromMatrixPosition(instanceMatrix))
+        scanZoom.zoomTo(_tmpVec3A.setFromMatrixPosition(instanceMatrix))
       } else if (!scanning && scanZoom.target) {
         // Only zoom out if not scanning and not mining
         if (!miningZoomRef.current) scanZoom.zoomOut()
@@ -891,8 +922,8 @@ export const TacticalBackground = () => {
         if (dockedMesh && dockedInstanceId >= 0) {
           dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
           instanceMatrix.premultiply(dockedMesh.matrixWorld)
-          const asteroidPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
-          shipTravelTarget.copy(asteroidPos).add(dockOffset)
+          _tmpVec3A.setFromMatrixPosition(instanceMatrix)
+          shipTravelTarget.copy(_tmpVec3A).add(dockOffset)
         }
         shipTravelProgress = Math.min(1, shipTravelProgress + (fuelBar.current <= 0 ? 0.0003 : 0.001))
         fuelBar.drainFuel(shipTravelProgress)
@@ -923,10 +954,9 @@ export const TacticalBackground = () => {
         // After arrival, keep following the asteroid
         dockedMesh.getMatrixAt(dockedInstanceId, instanceMatrix)
         instanceMatrix.premultiply(dockedMesh.matrixWorld)
-        const pos = new THREE.Vector3()
-        pos.setFromMatrixPosition(instanceMatrix)
-        pos.add(dockOffset)
-        ship.config.position = [pos.x, pos.y, pos.z]
+        _tmpVec3A.setFromMatrixPosition(instanceMatrix)
+        _tmpVec3A.add(dockOffset)
+        ship.config.position = [_tmpVec3A.x, _tmpVec3A.y, _tmpVec3A.z]
       }
 
       // Position tooltip above ship
@@ -1055,6 +1085,7 @@ export const TacticalBackground = () => {
             ship.ringGroup.visible = ship.isSelected
             if (dockedAsteroid) {
               dockedAsteroid.scanned = true
+              belts.markScanned()
               renderScanResult(dockedAsteroid, true, true)
             }
           }
@@ -1065,10 +1096,10 @@ export const TacticalBackground = () => {
       if (standaloneScanRef.current && scanResultVisible && hoveredMesh && hoveredInstanceId >= 0) {
         hoveredMesh.getMatrixAt(hoveredInstanceId, instanceMatrix)
         instanceMatrix.premultiply(hoveredMesh.matrixWorld)
-        const asteroidPos = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
-        asteroidPos.project(camera)
-        const ax = (asteroidPos.x * 0.5 + 0.5) * window.innerWidth
-        const ay = (-asteroidPos.y * 0.5 + 0.5) * window.innerHeight
+        _tmpVec3A.setFromMatrixPosition(instanceMatrix)
+        _tmpVec3A.project(camera)
+        const ax = (_tmpVec3A.x * 0.5 + 0.5) * window.innerWidth
+        const ay = (-_tmpVec3A.y * 0.5 + 0.5) * window.innerHeight
         updateScanPanel(standaloneScanRef.current, scanLineRef.current, ax, ay, mouse.x, mouse.y, asteroidZoom.progress)
       } else {
         hideScanPanel(standaloneScanRef.current, scanLineRef.current)
@@ -1081,19 +1112,19 @@ export const TacticalBackground = () => {
           let endX = travelCursorScreen.x
           let endY = travelCursorScreen.y
           if (shipTravelTarget) {
-            const targetScreen = shipTravelTarget.clone().project(camera)
-            endX = (targetScreen.x * 0.5 + 0.5) * window.innerWidth
-            endY = (-targetScreen.y * 0.5 + 0.5) * window.innerHeight
+            _tmpVec3A.copy(shipTravelTarget).project(camera)
+            endX = (_tmpVec3A.x * 0.5 + 0.5) * window.innerWidth
+            endY = (-_tmpVec3A.y * 0.5 + 0.5) * window.innerHeight
           } else if (highlightedStation) {
-            const homeScreen = new THREE.Vector3(...shipHomePosition).project(camera)
-            endX = (homeScreen.x * 0.5 + 0.5) * window.innerWidth
-            endY = (-homeScreen.y * 0.5 + 0.5) * window.innerHeight
+            _tmpVec3A.set(...shipHomePosition).project(camera)
+            endX = (_tmpVec3A.x * 0.5 + 0.5) * window.innerWidth
+            endY = (-_tmpVec3A.y * 0.5 + 0.5) * window.innerHeight
           } else if (highlightedMesh && highlightedAsteroidIdx >= 0) {
             highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
             instanceMatrix.premultiply(highlightedMesh.matrixWorld)
-            const astScreen = new THREE.Vector3().setFromMatrixPosition(instanceMatrix).project(camera)
-            endX = (astScreen.x * 0.5 + 0.5) * window.innerWidth
-            endY = (-astScreen.y * 0.5 + 0.5) * window.innerHeight
+            _tmpVec3A.setFromMatrixPosition(instanceMatrix).project(camera)
+            endX = (_tmpVec3A.x * 0.5 + 0.5) * window.innerWidth
+            endY = (-_tmpVec3A.y * 0.5 + 0.5) * window.innerHeight
           }
           const invert = shipTravelTarget ? dockedToStation : highlightedStation
           travelLine.draw(travelLineRef.current, shipScreen, { x: endX, y: endY }, elapsed, invert)
@@ -1105,11 +1136,11 @@ export const TacticalBackground = () => {
         let hoverTarget: THREE.Vector3 | null = null
         if (travelMode && (highlightedAsteroidIdx >= 0 || highlightedStation)) {
           if (highlightedStation) {
-            hoverTarget = new THREE.Vector3(...shipHomePosition)
+            hoverTarget = _tmpVec3A.set(...shipHomePosition)
           } else if (highlightedMesh && highlightedAsteroidIdx >= 0) {
             highlightedMesh.getMatrixAt(highlightedAsteroidIdx, instanceMatrix)
             instanceMatrix.premultiply(highlightedMesh.matrixWorld)
-            hoverTarget = new THREE.Vector3().setFromMatrixPosition(instanceMatrix)
+            hoverTarget = _tmpVec3A.setFromMatrixPosition(instanceMatrix)
           }
         }
         fuelBar.update({
@@ -1173,23 +1204,25 @@ export const TacticalBackground = () => {
       renderer.render(lensFlare.overlay, godRays.overlayCamera)
       if (solarWave.isActive) renderer.render(solarWave.overlay, godRays.overlayCamera)
       renderer.autoClear = true
-
-      frameId = requestAnimationFrame(animate)
     }
     frameId = requestAnimationFrame(animate)
 
-    // Resize handler
+    // Resize handler (debounced to avoid redundant resizes during drag)
+    let resizeTimer: ReturnType<typeof setTimeout>
     const handleResize = () => {
-      const w = window.innerWidth
-      const h = window.innerHeight
-      camera.aspect = w / h
-      camera.updateProjectionMatrix()
-      renderer.setSize(w, h)
-      rtWidth = Math.floor(w / 2)
-      rtHeight = Math.floor(h / 2)
-      godRays.occlusionRT.setSize(rtWidth, rtHeight)
-      lensFlare.mat.uniforms.uAspect.value = w / h
-      solarWave.mat.uniforms.uAspect.value = w / h
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => {
+        const w = window.innerWidth
+        const h = window.innerHeight
+        camera.aspect = w / h
+        camera.updateProjectionMatrix()
+        renderer.setSize(w, h)
+        rtWidth = Math.floor(w / 3)
+        rtHeight = Math.floor(h / 3)
+        godRays.occlusionRT.setSize(rtWidth, rtHeight)
+        lensFlare.mat.uniforms.uAspect.value = w / h
+        solarWave.mat.uniforms.uAspect.value = w / h
+      }, 150)
     }
     window.addEventListener('resize', handleResize)
 
@@ -1274,6 +1307,7 @@ export const TacticalBackground = () => {
       highlight.hide()
       if (dockedMesh && dockedInstanceId >= 0) {
         startMiningDirectRef.current?.(dockedAsteroid, dockedMesh, dockedInstanceId)
+        belts.markScanned()
       } else {
         ship.ringGroup.visible = false
         renderScanResult(dockedAsteroid, true, true)
@@ -1317,6 +1351,7 @@ export const TacticalBackground = () => {
     if (exitDetailsBtn) exitDetailsBtn.addEventListener('click', handleExitDetailsClick)
 
     return () => {
+      clearTimeout(resizeTimer)
       if (travelBtn) travelBtn.removeEventListener('click', handleTravelClick)
       if (dockBtn) dockBtn.removeEventListener('click', handleDockClick)
       if (scanBtn) scanBtn.removeEventListener('click', handleScanClick)

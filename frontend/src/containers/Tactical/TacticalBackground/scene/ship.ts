@@ -289,13 +289,15 @@ export class Ship {
     this.solidRingMat.opacity = 0
 
     this.reticleMat.uniforms.uTime.value = elapsed
-    this.reticleMat.uniforms.uHover.value = this.hoverCurrent
-    this.reticleMat.uniforms.uZoom.value = zoomT
+    if (this.ringGroup.visible) {
+      this.reticleMat.uniforms.uHover.value = this.hoverCurrent
+      this.reticleMat.uniforms.uZoom.value = zoomT
+    }
 
     // Strobe: two rapid blinks then pause
-    this.strobeLight.position.set(shipX, shipY + 0.07, this.config.position[2] + 0.05)
-    this.strobeGlare.position.set(shipX, shipY + 0.07, this.config.position[2] + 0.05)
     if (!this.isSelected) {
+      this.strobeLight.position.set(shipX, shipY + 0.07, this.config.position[2] + 0.05)
+      this.strobeGlare.position.set(shipX, shipY + 0.07, this.config.position[2] + 0.05)
       const cycle = (elapsed * 0.8) % 1.0
       let blink = 0
       if (cycle < 0.03) blink = 1

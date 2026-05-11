@@ -3,7 +3,7 @@ import { Cart, Products } from 'components'
 import { usePurchase, useStoreProducts, useUser } from 'hooks'
 import { useCart } from 'hooks/useCart'
 import type { Spacecraft, Upgrade } from 'models'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { filterObjArr } from 'utils/helpers'
 import { SpacecraftFilter } from './SpacecraftFilter/SpacecraftFilter'
 import { StoreTypeFilter } from './StoreTypeFilter/StoreTypeFilter'
@@ -37,9 +37,12 @@ export const Marketplace = () => {
     })
   }, [purchaseMutation, cart, clearCart])
 
-  let filtered: (Spacecraft | Upgrade)[] = products
-  filtered = filterObjArr(products, spacecraftFilter, 'spacecraftRegistry')
-  filtered = filterObjArr(filtered, productTypeFilter, 'storeType')
+  const filtered: (Spacecraft | Upgrade)[] = useMemo(() => {
+    let result: (Spacecraft | Upgrade)[] = products
+    result = filterObjArr(result, spacecraftFilter, 'spacecraftRegistry')
+    result = filterObjArr(result, productTypeFilter, 'storeType')
+    return result
+  }, [products, spacecraftFilter, productTypeFilter])
 
   return (
     <Grid container spacing={6} sx={{ position: 'relative' }}>

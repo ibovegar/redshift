@@ -1,16 +1,19 @@
 import { Box, Button, Card, CardContent, Chip, Divider } from '@mui/material'
 import Typography from '@mui/material/Typography'
 import type { Spacecraft, Upgrade } from 'models'
+import { memo, useCallback } from 'react'
 import { isSpacecraft } from 'utils/guards'
 import { formatCurrency } from 'utils/helpers'
 
 interface Props {
   product: Spacecraft | Upgrade
-  onAddClick: () => void
+  onAddClick: (product: Spacecraft | Upgrade) => void
 }
 
-export const ProductCard = (props: Props) => {
+export const ProductCard = memo((props: Props) => {
   const { product, onAddClick } = props
+
+  const handleClick = useCallback(() => onAddClick(product), [onAddClick, product])
 
   const imgUrl = isSpacecraft(product)
     ? `/images/spacecraft_lg/${product.spacecraftRegistry}.png`
@@ -22,6 +25,7 @@ export const ProductCard = (props: Props) => {
         component="img"
         src={imgUrl}
         alt="Live from space album cover"
+        loading="lazy"
         sx={{ width: 320, minWidth: 320, maxWidth: 320, height: 220, objectFit: 'cover' }}
       />
       <CardContent sx={{ flex: 1, p: 8 }}>
@@ -39,10 +43,10 @@ export const ProductCard = (props: Props) => {
       <Box sx={{ p: 8, textAlign: 'right' }}>
         <Typography component="h6">{formatCurrency(product.price)}</Typography>
         <Divider sx={{ mt: 2, mb: 6 }} />
-        <Button variant="contained" size="small" color="primary" onClick={onAddClick}>
+        <Button variant="contained" size="small" color="primary" onClick={handleClick}>
           ADD
         </Button>
       </Box>
     </Card>
   )
-}
+})

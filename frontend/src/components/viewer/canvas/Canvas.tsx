@@ -146,7 +146,7 @@ export const Canvas = (props: Props) => {
       alpha: true,
       antialias: true
     })
-    renderer.setPixelRatio(devicePixelRatio)
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
     renderer.setSize(canvas.clientWidth, canvas.clientHeight)
     renderer.outputColorSpace = THREE.SRGBColorSpace
     canvas.appendChild(renderer.domElement)
@@ -169,6 +169,8 @@ export const Canvas = (props: Props) => {
 
     return () => {
       if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current)
+      controls.dispose()
+      renderer.dispose()
       canvas.removeChild(renderer.domElement)
     }
   }, [animate])

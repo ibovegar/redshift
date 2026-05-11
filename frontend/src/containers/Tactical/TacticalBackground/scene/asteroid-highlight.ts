@@ -6,6 +6,7 @@ export class AsteroidHighlight {
   private scanning = false
   private flashTime = 0
   private flashDuration = 0.4
+  private readonly scaleVec = new THREE.Vector3()
 
   constructor(scene: THREE.Scene) {
     this.material = new THREE.MeshBasicMaterial({
@@ -24,11 +25,11 @@ export class AsteroidHighlight {
   show(targetMesh: THREE.InstancedMesh, instanceId: number, instanceMatrix: THREE.Matrix4, scale = 1.1) {
     this.mesh.geometry = targetMesh.geometry
     targetMesh.getMatrixAt(instanceId, instanceMatrix)
-    instanceMatrix.scale(new THREE.Vector3(scale, scale, scale))
+    instanceMatrix.scale(this.scaleVec.set(scale, scale, scale))
     instanceMatrix.premultiply(targetMesh.matrixWorld)
     this.mesh.matrix.copy(instanceMatrix)
     this.mesh.visible = true
-    this.updateFlashColor()
+    if (this.flashTime > 0) this.updateFlashColor()
   }
 
   showWithBlink(
@@ -40,11 +41,11 @@ export class AsteroidHighlight {
   ) {
     this.mesh.geometry = targetMesh.geometry
     targetMesh.getMatrixAt(instanceId, instanceMatrix)
-    instanceMatrix.scale(new THREE.Vector3(scale, scale, scale))
+    instanceMatrix.scale(this.scaleVec.set(scale, scale, scale))
     instanceMatrix.premultiply(targetMesh.matrixWorld)
     this.mesh.matrix.copy(instanceMatrix)
     this.mesh.visible = Math.sin(elapsed * 20) > 0
-    this.updateFlashColor()
+    if (this.flashTime > 0) this.updateFlashColor()
   }
 
   flash() {

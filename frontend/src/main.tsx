@@ -10,7 +10,14 @@ import { ThemeDark } from './ui/theme/dark'
 
 import './assets/css/styles.css'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 10
+    }
+  }
+})
 
 const app = (
   <QueryClientProvider client={queryClient}>

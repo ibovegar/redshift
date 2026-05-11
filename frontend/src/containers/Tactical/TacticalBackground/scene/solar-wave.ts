@@ -121,10 +121,6 @@ export class SolarWave {
         if (p < 1) anyActive = true
       }
       if (!anyActive) this.active = false
-    } else {
-      this.mat.uniforms.uIntensity1.value = 0
-      this.mat.uniforms.uIntensity2.value = 0
-      this.mat.uniforms.uIntensity3.value = 0
     }
   }
 

@@ -30,18 +30,19 @@ export class LensFlare {
           vec2 sunToCenter = vec2(0.5) - uSunPos;
           vec3 flare = vec3(0.0);
           vec2 aspect = vec2(uAspect, 1.0);
-          for (int i = 0; i < 8; i++) {
-            float t = float(i) / 7.0 * 1.6 + 0.2;
+          vec3 ghostColors[6];
+          ghostColors[0] = vec3(0.5, 0.45, 0.7);
+          ghostColors[1] = vec3(0.7, 0.45, 0.3);
+          ghostColors[2] = vec3(0.3, 0.55, 0.45);
+          ghostColors[3] = vec3(0.45, 0.35, 0.65);
+          ghostColors[4] = vec3(0.35, 0.6, 0.5);
+          ghostColors[5] = vec3(0.45, 0.5, 0.7);
+          for (int i = 0; i < 6; i++) {
+            float t = float(i) / 5.0 * 1.6 + 0.2;
             vec2 ghostPos = uSunPos + sunToCenter * t;
             float size = 0.025 + float(i) * 0.006;
             float dist = length((vUv - ghostPos) * aspect);
-            vec3 gc = vec3(0.5, 0.45, 0.7);
-            if (i == 1) gc = vec3(0.7, 0.45, 0.3);
-            if (i == 2) gc = vec3(0.3, 0.55, 0.45);
-            if (i == 3) gc = vec3(0.45, 0.35, 0.65);
-            if (i == 5) gc = vec3(0.35, 0.6, 0.5);
-            if (i == 6) gc = vec3(0.6, 0.45, 0.35);
-            if (i == 7) gc = vec3(0.45, 0.5, 0.7);
+            vec3 gc = ghostColors[i];
             float outer = smoothstep(size, size * 0.2, dist);
             float inner = smoothstep(size * 0.7, size * 0.5, dist);
             flare += (outer - inner * 0.65) * gc * 0.07;

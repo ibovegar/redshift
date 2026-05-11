@@ -30,6 +30,7 @@ export const ResourceRow = ({ material, rarity, detail, rightDetail, sx }: Resou
         component="img"
         src={MATERIAL_ICONS[material]}
         alt={material}
+        loading="lazy"
         sx={{ width: 52, height: 'auto', flexShrink: 0 }}
       />
       <Stack spacing={0} sx={{ flex: 1, minWidth: 0 }}>

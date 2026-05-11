@@ -10,6 +10,8 @@ export interface SolarFlare {
 const HOME_POSITION: [number, number, number] = [1.2, 0.25, -3.5]
 const DOCK_RADIUS = 0.5
 
+const DOCK_RADIUS_SQ = DOCK_RADIUS * DOCK_RADIUS
+
 export class SolarEvent {
   phase: SolarEventPhase = 'idle'
 
@@ -51,7 +53,7 @@ export class SolarEvent {
     const dx = shipPos[0] - HOME_POSITION[0]
     const dy = shipPos[1] - HOME_POSITION[1]
     const dz = shipPos[2] - HOME_POSITION[2]
-    return Math.sqrt(dx * dx + dy * dy + dz * dz) < DOCK_RADIUS
+    return dx * dx + dy * dy + dz * dz < DOCK_RADIUS_SQ
   }
 
   update(elapsed: number, dt: number, shipPos: [number, number, number]) {

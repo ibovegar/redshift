@@ -136,7 +136,7 @@ export class Station {
     this.hitDisc.position.y = y
     this.ringGroup.position.x = x
     this.ringGroup.position.y = y
-    this.blockRingGroup.rotation.y = elapsed * 0.2
+    if (this.isSelected) this.blockRingGroup.rotation.y = elapsed * 0.2
   }
 
   getScreenPosition(camera: THREE.Camera): { x: number; y: number } {

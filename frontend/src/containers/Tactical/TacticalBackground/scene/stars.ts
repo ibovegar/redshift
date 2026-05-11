@@ -9,7 +9,7 @@ export class Stars {
   private readonly z = -76
 
   constructor(camera: THREE.PerspectiveCamera, onLoad?: () => void) {
-    new HDRLoader().load('/images/planets/HDR_multi_nebulae_2.hdr', (hdrTexture) => {
+    new HDRLoader().load('/images/planets/nebula_bg.hdr', (hdrTexture) => {
       hdrTexture.mapping = THREE.EquirectangularReflectionMapping
       hdrTexture.minFilter = THREE.LinearMipmapLinearFilter
       hdrTexture.magFilter = THREE.LinearFilter

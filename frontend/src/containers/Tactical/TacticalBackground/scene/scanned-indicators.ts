@@ -7,6 +7,7 @@ export class ScannedIndicators {
   private pool: THREE.Mesh[] = []
   private material: THREE.MeshBasicMaterial
   private activeCount = 0
+  private readonly scaleVec = new THREE.Vector3(1.15, 1.15, 1.15)
 
   constructor(private scene: THREE.Scene) {
     this.material = new THREE.MeshBasicMaterial({
@@ -38,7 +39,7 @@ export class ScannedIndicators {
       const indicator = this.pool[this.activeCount]
       indicator.geometry = targetMesh.geometry
       targetMesh.getMatrixAt(asteroid.instanceId, instanceMatrix)
-      instanceMatrix.scale(new THREE.Vector3(1.15, 1.15, 1.15))
+      instanceMatrix.scale(this.scaleVec)
       instanceMatrix.premultiply(targetMesh.matrixWorld)
       indicator.matrix.copy(instanceMatrix)
       indicator.visible = true

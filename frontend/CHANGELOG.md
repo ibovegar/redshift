@@ -1,5 +1,50 @@
 # Changelog
 
+## 2026-05-11
+
+- Reduced asteroid IcosahedronGeometry detail from 3→2 (~75% fewer vertices per chunk, invisible at scale)
+- Reduced god rays occlusion sphere from 32×32 to 16×16 segments (binary mask doesn't need high-poly)
+- Reduced travel line segments from 24→16 (33% fewer canvas stroke ops per frame)
+- Gate ship reticle uniform writes behind ringGroup.visible check
+- Gate ship strobe light position updates behind !isSelected check
+- Gate station blockRing rotation behind isSelected check (no-op when invisible)
+- Cache belts.allScanned — avoid filtering 750 asteroids every frame
+- Cap planet/cloud texture anisotropy at 8× (16× wastes bandwidth at this distance)
+- Replace Math.sqrt with squared distance comparison in solar event dock check
+- Remove redundant solar wave uniform writes when inactive (overlay not rendered anyway)
+- Vite build target set to esnext (smaller output, modern syntax)
+- Cache travel line canvas dimensions — avoid per-frame backing store reallocation
+- Reuse Vector3 instances in ScannedIndicators and AsteroidHighlight (was allocating per-frame)
+- Cache updateButtonStates inputs — skip DOM writes when state unchanged
+- Cache fuel bar position/value writes — skip redundant style/textContent updates
+- Reduce lens flare ghost elements 8→6, replace conditional color lookup with array
+- Skip asteroid highlight color reset when not flashing (avoid per-frame material uniform writes)
+- Pre-compile shaders with renderer.compile() before first frame to avoid stutter
+- Skip rendering entirely when browser tab is hidden (saves 100% GPU while away)
+- Throttle mousemove raycasting to ~15fps (was running every pixel movement)
+- Debounce window resize handler (150ms) to avoid 100+ redundant resize calls per drag
+- Skip asteroid belt update when belt speed is 0 (saves 750 matrix updates + 16 GPU syncs/frame when docked)
+- Reduced god rays occlusion pass from half-res to third-res
+- Cache depleted asteroid set instead of rebuilding Set every frame
+- Replaced per-frame Vector3/Matrix4/Plane allocations with reusable instances in animate loop
+- Skip parallax position updates when camera pan hasn't changed
+- Wrapped ProductCard in React.memo to prevent unnecessary re-renders in product lists
+- Stabilized callback references in Products/ProductCard to avoid creating closures per list item
+- Added `loading="lazy"` to product and resource images for deferred off-screen loading
+- Memoized filtered product array in Marketplace with useMemo
+- Capped Canvas viewer pixel ratio at 2× to reduce GPU load on high-DPI displays
+- Fixed WebGL context leak: added `renderer.dispose()` and `controls.dispose()` in Canvas cleanup
+- Reduced planet and cloud sphere geometry from 128×128 to 64×64 subdivisions (~50K fewer vertices)
+- Reduced god rays shader samples from 50 to 35 (less GPU fill-rate cost)
+- Configured TanStack Query with 5-minute staleTime to prevent unnecessary refetches
+- Added lazy loading for all route containers (Tactical, Marketplace, Inventory, Engineering)
+- Added Vite build code-splitting: separate chunks for Three.js and vendor libraries
+- Disabled production source maps
+- Downscaled planet textures from 8K to 4K (8k_mars 8MB→1.6MB, 8k_earth_clouds 11MB→2.9MB)
+- Replaced 92MB HDR nebula background with tonemapped 4K JPG (0.38MB) — removes HDRLoader dependency
+- Combined 16 asteroid chunk textures into single 2048×1024 atlas (eliminates 15 texture switches/frame)
+- Simplified sun shader: reduced spike rays 16→8, long rays 5→3 (halves per-pixel loop iterations)
+
 ## 2026-05-10
 
 - Fixed ship not being selected after completing a mining operation

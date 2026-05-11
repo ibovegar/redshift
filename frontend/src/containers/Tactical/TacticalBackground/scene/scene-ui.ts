@@ -127,12 +127,29 @@ export function updateShipStats(
   el.style.opacity = String(Math.min(1, Math.max(0, (t - fadeStart) / fadeRange)))
 }
 
+let lastBtnDocked: unknown = undefined
+let lastBtnScanning: boolean | undefined
+let lastBtnScanned: boolean | undefined
+let lastBtnStation: boolean | undefined
+
 export function updateButtonStates(
   dockedMesh: unknown,
   scanning: boolean,
   dockedAsteroidScanned: boolean,
   dockedToStation: boolean
 ) {
+  if (
+    dockedMesh === lastBtnDocked &&
+    scanning === lastBtnScanning &&
+    dockedAsteroidScanned === lastBtnScanned &&
+    dockedToStation === lastBtnStation
+  ) {
+    return
+  }
+  lastBtnDocked = dockedMesh
+  lastBtnScanning = scanning
+  lastBtnScanned = dockedAsteroidScanned
+  lastBtnStation = dockedToStation
   updateButton('dock-btn', !dockedToStation)
   updateButton('scan-btn', !dockedMesh || scanning || dockedAsteroidScanned)
   updateButton('mining-btn', !dockedMesh || !dockedAsteroidScanned)
