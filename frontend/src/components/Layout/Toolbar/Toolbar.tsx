@@ -1,6 +1,6 @@
-import { Tooltip, Typography } from '@mui/material'
+import { Box, Tooltip, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { MATERIAL_NAMES, MATERIAL_SYMBOLS } from 'data/materials'
+import { MATERIAL_ICONS, MATERIAL_NAMES, MATERIAL_SYMBOLS } from 'data/materials'
 import type { AsteroidMaterial } from 'models/asteroid'
 import type { CargoItem } from 'models/spacecraft'
 import { useEffect, useRef, useState } from 'react'
@@ -51,7 +51,7 @@ const Right = styled('div')(({ theme }) => ({
 const ResourceChip = styled('span')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  gap: theme.spacing(1),
+  gap: theme.spacing(3),
   fontSize: 13,
   color: theme.palette.text.secondary
 }))
@@ -105,6 +105,7 @@ export const Toolbar = (props: Props) => {
         {ALL_MATERIALS.map((material) => (
           <Tooltip key={material} title={MATERIAL_NAMES[material]}>
             <ResourceChip>
+              <Box component="img" src={MATERIAL_ICONS[material]} loading="lazy" sx={{ width: 40, height: 'auto' }} />
               <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary' }}>
                 {MATERIAL_SYMBOLS[material]}
               </Typography>
