@@ -60,8 +60,6 @@ export const Nav = () => {
         <Typography variant="overline">MENU</Typography>
       </Grid>
       <NavBarButton to="/tactical" label="TACTICAL" />
-      <NavBarButton to="/engineering" label="ENGINEERING" />
-      <NavBarButton to="/marketplace" label="STORE" />
       <Grid>
         <BarButton>
           <Button sx={buttonSx} variant="contained" size="small" disabled>
