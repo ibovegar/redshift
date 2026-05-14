@@ -1,5 +1,5 @@
 import { WarningRounded } from '@mui/icons-material'
-import { Box, Typography, type TypographyProps } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { SolarEventPhase } from 'containers/Tactical/TacticalBackground/scene/solar-event'
 import type { ReactNode } from 'react'
@@ -48,10 +48,6 @@ const WarningBanner = ({ color, animation, sx, children }: WarningBannerProps) =
   </Box>
 )
 
-const BannerText = ({ sx, ...props }: TypographyProps) => (
-  <Typography sx={{ fontWeight: 700, color: 'common.black', ...sx }} {...props} />
-)
-
 const SolarWarning = ({ countdown }: { countdown: number }) => {
   const minutes = Math.floor(countdown / 60)
   const seconds = countdown % 60
@@ -70,8 +66,8 @@ const SolarWarning = ({ countdown }: { countdown: number }) => {
         }
       }}
     >
-      <BannerText sx={{ fontSize: 16 }}>SOLAR EVENT INCOMING</BannerText>
-      <BannerText sx={{ fontSize: 26 }}>{timeStr}</BannerText>
+      <Typography variant="hud-alarm">SOLAR EVENT INCOMING</Typography>
+      <Typography variant="hud-alarm" sx={{ fontSize: 26 }}>{timeStr}</Typography>
     </WarningBanner>
   )
 }
@@ -87,8 +83,8 @@ const RadiationActive = () => (
       }
     }}
   >
-    <BannerText sx={{ fontSize: 18 }}>RADIATION ACTIVE</BannerText>
-    <BannerText sx={{ fontSize: 14 }}>SEEK SPACEDOCK IMMEDIATELY</BannerText>
+    <Typography variant="hud-alarm">RADIATION ACTIVE</Typography>
+    <Typography variant="hud-alarm" sx={{ fontSize: 14 }}>SEEK SPACEDOCK IMMEDIATELY</Typography>
   </WarningBanner>
 )
 

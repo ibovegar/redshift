@@ -49,33 +49,21 @@ const ArcGauge = ({ value, label, color }: { value: number; label: string; color
           />
         </svg>
         <Typography
-          sx={{
-            position: 'absolute',
-            bottom: 0,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            fontSize: 22,
-            fontWeight: 'bold',
-            fontFamily: 'monospace',
-            lineHeight: 1
-          }}
+          variant="hud-data-xl"
+          sx={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}
         >
           {value}
         </Typography>
       </Box>
-      <Typography variant="overline" sx={{ fontSize: 10, letterSpacing: 1.5, color: 'rgba(0,0,0,0.5)', lineHeight: 1 }}>
-        {label}
-      </Typography>
+      <Typography variant="hud-tag">{label}</Typography>
     </Stack>
   )
 }
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => (
   <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-    <Typography variant="overline" sx={{ fontSize: 11, letterSpacing: 1, lineHeight: 1.6, color: 'rgba(0,0,0,0.5)' }}>
-      {label}
-    </Typography>
-    <Typography sx={{ fontSize: 12, fontFamily: 'monospace' }}>{value}</Typography>
+    <Typography variant="hud-tag" sx={{ width: 100, flexShrink: 0 }}>{label}</Typography>
+    <Typography variant="hud-data">{value}</Typography>
   </Stack>
 )
 
@@ -90,10 +78,8 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, 
       <Stack spacing={2.5}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box>
-            <Typography variant="body2" sx={{ fontSize: 20, letterSpacing: 2, fontWeight: 'bold' }}>
-              {spacecraft.name}
-            </Typography>
-            <Typography variant="caption" sx={{ fontSize: 13, color: 'rgba(0,0,0,0.5)', letterSpacing: 0.5 }}>
+            <Typography variant="hud-title">{spacecraft.name}</Typography>
+            <Typography variant="hud-body" sx={{ color: 'hud.muted', letterSpacing: 0.5 }}>
               {TYPE_LABELS[spacecraft.type]} · {spacecraft.spacecraftRegistry.toUpperCase()} · {spacecraft.manufactured}
             </Typography>
           </Box>
@@ -111,16 +97,13 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, 
           <Stack spacing={1}>
             {STAT_LABELS.map(({ key, label }) => (
               <Stack key={key} direction="row" sx={{ alignItems: 'center', gap: 2 }}>
-                <Typography
-                  variant="overline"
-                  sx={{ fontSize: 11, letterSpacing: 1, width: 100, lineHeight: 1, flexShrink: 0 }}
-                >
+                <Typography variant="hud-tag" sx={{ width: 100, lineHeight: 1.6, flexShrink: 0 }}>
                   {label}
                 </Typography>
                 <Box sx={{ flex: 1 }}>
                   <ProgressBar value={spacecraft.baseStats[key]} />
                 </Box>
-                <Typography sx={{ fontSize: 12, fontFamily: 'monospace', width: 24, textAlign: 'right' }}>
+                <Typography variant="hud-data" sx={{ width: 24, textAlign: 'right' }}>
                   {spacecraft.baseStats[key]}
                 </Typography>
               </Stack>
@@ -130,13 +113,8 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, 
         <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', pt: 2 }}>
           <Stack spacing={1}>
             <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography
-                variant="overline"
-                sx={{ fontSize: 11, letterSpacing: 1, lineHeight: 1, color: 'rgba(0,0,0,0.5)' }}
-              >
-                FUEL
-              </Typography>
-              <Typography sx={{ fontSize: 12, fontFamily: 'monospace' }}>
+              <Typography variant="hud-tag">FUEL</Typography>
+              <Typography variant="hud-data">
                 {spacecraft.fuel} / {spacecraft.maxFuel}
               </Typography>
             </Stack>
@@ -155,13 +133,8 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, 
         <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', pt: 2 }}>
           <Stack spacing={1}>
             <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography
-                variant="overline"
-                sx={{ fontSize: 11, letterSpacing: 1, lineHeight: 1, color: 'rgba(0,0,0,0.5)' }}
-              >
-                CARGO HOLD
-              </Typography>
-              <Typography sx={{ fontSize: 12, fontFamily: 'monospace' }}>
+              <Typography variant="hud-tag">CARGO HOLD</Typography>
+              <Typography variant="hud-data">
                 {cargoUsed} / {spacecraft.cargoCapacity}
               </Typography>
             </Stack>
@@ -177,22 +150,16 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, 
                   const storageCost = item.amount * MATERIAL_STORAGE_COST[item.material]
                   return (
                     <Stack key={item.material} direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-                      <Typography sx={{ fontSize: 11, fontFamily: 'monospace', color, width: 28, flexShrink: 0 }}>
+                      <Typography variant="hud-data" sx={{ color, width: 28, flexShrink: 0 }}>
                         {MATERIAL_SYMBOLS[item.material]}
                       </Typography>
-                      <Typography sx={{ fontSize: 12, flex: 1 }}>{MATERIAL_NAMES[item.material]}</Typography>
-                      <Typography sx={{ fontSize: 11, fontFamily: 'monospace', color: 'rgba(0,0,0,0.4)' }}>
+                      <Typography variant="hud-body" sx={{ flex: 1 }}>
+                        {MATERIAL_NAMES[item.material]}
+                      </Typography>
+                      <Typography variant="hud-data" sx={{ color: 'hud.muted' }}>
                         ×{item.amount}
                       </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: 11,
-                          fontFamily: 'monospace',
-                          color: 'rgba(0,0,0,0.35)',
-                          width: 32,
-                          textAlign: 'right'
-                        }}
-                      >
+                      <Typography variant="hud-data" sx={{ color: 'hud.faint', width: 32, textAlign: 'right' }}>
                         {storageCost}u
                       </Typography>
                     </Stack>
@@ -201,7 +168,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, 
               </Stack>
             )}
             {spacecraft.cargo.length === 0 && (
-              <Typography sx={{ fontSize: 12, color: 'rgba(0,0,0,0.35)', fontStyle: 'italic', pt: 0.5 }}>
+              <Typography variant="hud-body" sx={{ color: 'hud.faint', fontStyle: 'italic', pt: 0.5 }}>
                 Empty
               </Typography>
             )}

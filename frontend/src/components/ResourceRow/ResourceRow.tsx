@@ -34,18 +34,20 @@ export const ResourceRow = ({ material, rarity, detail, rightDetail, sx }: Resou
         sx={{ width: 52, height: 'auto', flexShrink: 0 }}
       />
       <Stack spacing={0} sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: 8, color: rarityColor, fontWeight: 'bold', letterSpacing: 0.5 }}>
+        <Typography variant="hud-badge" sx={{ color: rarityColor }}>
           {RARITY_LABELS[rarity]}
         </Typography>
-        <Typography sx={{ fontSize: 11, color: '#000', fontWeight: 'bold' }}>
+        <Typography variant="hud-body" sx={{ color: '#000', fontWeight: 700 }}>
           {MATERIAL_NAMES[material] ?? material}
         </Typography>
-        {detail && <Typography sx={{ fontSize: 11, color: 'rgba(0,0,0,0.7)' }}>{detail}</Typography>}
+        {detail && (
+          <Typography variant="hud-body" sx={{ color: 'rgba(0,0,0,0.7)' }}>
+            {detail}
+          </Typography>
+        )}
       </Stack>
       {rightDetail && (
-        <Typography
-          sx={{ fontSize: 12, fontFamily: 'monospace', fontWeight: 'bold', color: '#000', flexShrink: 0, pr: 0.5 }}
-        >
+        <Typography variant="hud-data" sx={{ fontWeight: 700, color: '#000', flexShrink: 0, pr: 0.5 }}>
           {rightDetail}
         </Typography>
       )}

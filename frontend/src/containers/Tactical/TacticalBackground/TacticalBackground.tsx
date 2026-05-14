@@ -1,3 +1,4 @@
+import { Typography } from '@mui/material'
 import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
 import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
 import { FuelBar } from 'components/FuelBar/FuelBar'
@@ -1458,9 +1459,9 @@ export const TacticalBackground = () => {
             minWidth: 160
           }}
         >
-          <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+          <Typography variant="hud-tag" sx={{ color: '#888', mb: 1 }}>
             Docked
-          </div>
+          </Typography>
           {spacecrafts
             .filter((s) => s.status === 'docked')
             .map((s) => (

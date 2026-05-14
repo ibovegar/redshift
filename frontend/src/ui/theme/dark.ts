@@ -1,4 +1,14 @@
 import { type Components, createTheme, type PaletteOptions, type Theme } from '@mui/material/styles'
+import { hudColors, hudTypographyVariants } from './typography'
+
+declare module '@mui/material/styles' {
+  interface Palette {
+    hud: typeof hudColors
+  }
+  interface PaletteOptions {
+    hud?: Partial<typeof hudColors>
+  }
+}
 
 const spacing = 4
 
@@ -46,7 +56,8 @@ const palette: PaletteOptions = {
     hover: '#2e3843',
     selected: '#19385b',
     disabledBackground: '#3b444f'
-  }
+  },
+  hud: hudColors,
 }
 
 const components: Components<Theme> = {
@@ -63,7 +74,7 @@ const components: Components<Theme> = {
         borderRadius: 2,
         clipPath: `polygon(
           0 0, 0 0, /* top-left */
-          100% 0%, 100% 0, /* top-right */ 
+          100% 0%, 100% 0, /* top-right */
           100% 100%, 100% 100%, /* bottom-right */
           10px 100%, 0% calc(100% - 10px)) /* bottom-left */`,
         transition: 'none'
@@ -95,32 +106,14 @@ export const ThemeDark = createTheme({
   palette,
   components,
   typography: {
-    h1: {
-      fontSize: '3.5rem'
-    },
-    h2: {
-      fontSize: '2.75rem'
-    },
-    h3: {
-      fontSize: '2rem',
-      fontWeight: 300
-    },
-    h4: {
-      fontSize: '1.5rem',
-      fontWeight: 300
-    },
-    h5: {
-      fontSize: '1.25rem',
-      fontWeight: 400
-    },
-    h6: {
-      fontSize: '1rem'
-    },
-    subtitle1: {
-      fontSize: '0.85rem'
-    },
-    subtitle2: {
-      fontSize: '0.7rem'
-    }
+    h1: { fontSize: '3.5rem' },
+    h2: { fontSize: '2.75rem' },
+    h3: { fontSize: '2rem', fontWeight: 300 },
+    h4: { fontSize: '1.5rem', fontWeight: 300 },
+    h5: { fontSize: '1.25rem', fontWeight: 400 },
+    h6: { fontSize: '1rem' },
+    subtitle1: { fontSize: '0.85rem' },
+    subtitle2: { fontSize: '0.7rem' },
+    ...hudTypographyVariants,
   }
 })

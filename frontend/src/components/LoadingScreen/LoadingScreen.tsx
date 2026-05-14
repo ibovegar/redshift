@@ -36,15 +36,8 @@ export const LoadingScreen = (props: LoadingScreenProps) => {
       }}
     >
       <Typography
-        variant="caption"
-        sx={{
-          color: 'rgba(140, 200, 255, 0.7)',
-          letterSpacing: '0.3em',
-          textTransform: 'uppercase',
-          mb: 2,
-          fontWeight: 300,
-          fontSize: '0.7rem'
-        }}
+        variant="hud-tag"
+        sx={{ color: 'rgba(140, 200, 255, 0.7)', letterSpacing: '0.3em', fontWeight: 300, mb: 2 }}
       >
         Loading systems
       </Typography>

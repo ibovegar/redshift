@@ -33,13 +33,10 @@ export const ScanResult = forwardRef<HTMLDivElement, ScanResultProps>(
         <HudCard visible={visible} interactive={visible && revealed} size="medium">
           {asteroid && (
             <Stack spacing={0}>
-              <Typography variant="body2" sx={{ fontSize: 15, letterSpacing: 1, mb: 1, fontWeight: 'bold' }}>
+              <Typography variant="hud-heading" sx={{ mb: 1 }}>
                 {asteroid.name}
               </Typography>
-              <Typography
-                variant="caption"
-                sx={{ fontSize: 11, color: 'rgba(0,0,0,0.6)', mb: 2.5, letterSpacing: 0.5 }}
-              >
+              <Typography variant="hud-body" sx={{ color: 'hud.muted', letterSpacing: 0.5, mb: 2.5 }}>
                 Class {asteroid.stats.class} · {asteroid.stats.mass.toFixed(0)} Mt · {asteroid.stats.density.toFixed(0)}{' '}
                 kg/m³
               </Typography>
@@ -48,9 +45,7 @@ export const ScanResult = forwardRef<HTMLDivElement, ScanResultProps>(
               </Stack>
               {!revealed && (
                 <Stack spacing={0.75} sx={{ mt: 1, alignItems: 'center' }}>
-                  <Typography variant="overline" sx={{ fontSize: 9, color: 'rgba(0,0,0,0.4)', letterSpacing: 1 }}>
-                    SCANNING...
-                  </Typography>
+                  <Typography variant="hud-tag">SCANNING...</Typography>
                   <ProgressBar value={(progress ?? 0) * 100} size="large" animated />
                 </Stack>
               )}

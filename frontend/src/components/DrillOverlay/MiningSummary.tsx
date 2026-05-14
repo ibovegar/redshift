@@ -43,13 +43,10 @@ export function MiningSummary({ collected, reason, onContinue }: MiningSummaryPr
         <HudCard visible interactive size="large">
           <Stack spacing={4}>
             <Box>
-              <Typography
-                variant="overline"
-                sx={{ fontSize: 11, letterSpacing: 2, color: REASON_COLORS[reason], lineHeight: 1 }}
-              >
+              <Typography variant="hud-label" sx={{ color: REASON_COLORS[reason] }}>
                 {REASON_LABELS[reason]}
               </Typography>
-              <Typography variant="body2" sx={{ fontSize: 20, letterSpacing: 2, fontWeight: 'bold', mt: 0.5 }}>
+              <Typography variant="hud-title" sx={{ mt: 0.5 }}>
                 Mining Summary
               </Typography>
             </Box>
@@ -57,10 +54,7 @@ export function MiningSummary({ collected, reason, onContinue }: MiningSummaryPr
             <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', pt: 4 }}>
               {cargoItems.length > 0 ? (
                 <Stack spacing={6}>
-                  <Typography
-                    variant="overline"
-                    sx={{ fontSize: 11, letterSpacing: 1, color: 'rgba(0,0,0,0.5)', lineHeight: 1, mb: 6 }}
-                  >
+                  <Typography variant="hud-tag" sx={{ mb: 6 }}>
                     TRANSFERRED TO CARGO
                   </Typography>
                   <Stack spacing={3.5} sx={{ pt: 0.5 }}>
@@ -71,7 +65,7 @@ export function MiningSummary({ collected, reason, onContinue }: MiningSummaryPr
                         rarity={MATERIAL_RARITY[item.material]}
                         rightDetail={
                           <>
-                            <span style={{ color: 'rgba(0,0,0,0.4)' }}>×{item.amount}</span> {item.storageCost}u
+                            <span style={{ color: 'hud.muted' }}>×{item.amount}</span> {item.storageCost}u
                           </>
                         }
                       />
@@ -88,19 +82,14 @@ export function MiningSummary({ collected, reason, onContinue }: MiningSummaryPr
                       pr: 3
                     }}
                   >
-                    <Typography
-                      variant="overline"
-                      sx={{ fontSize: 11, letterSpacing: 1, color: 'rgba(0,0,0,0.5)', lineHeight: 1 }}
-                    >
-                      TOTAL STORAGE
-                    </Typography>
-                    <Typography sx={{ fontSize: 12, fontFamily: 'monospace', fontWeight: 'bold', color: '#000' }}>
+                    <Typography variant="hud-tag">TOTAL STORAGE</Typography>
+                    <Typography variant="hud-data" sx={{ fontWeight: 700, color: '#000' }}>
                       {totalStorage}u
                     </Typography>
                   </Stack>
                 </Stack>
               ) : (
-                <Typography sx={{ fontSize: 13, color: 'rgba(0,0,0,0.4)', fontStyle: 'italic' }}>
+                <Typography variant="hud-body" sx={{ color: 'hud.faint', fontStyle: 'italic' }}>
                   No resources extracted
                 </Typography>
               )}
