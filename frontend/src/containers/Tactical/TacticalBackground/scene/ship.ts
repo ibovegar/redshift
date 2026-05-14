@@ -319,6 +319,16 @@ export class Ship {
     }
   }
 
+  getScreenHalfWidth(camera: THREE.PerspectiveCamera): number {
+    if (!this.model) return 80
+    const box = new THREE.Box3().setFromObject(this.model)
+    const halfX = (box.max.x - box.min.x) / 2
+    const center = box.getCenter(new THREE.Vector3())
+    const distance = Math.max(camera.near, camera.position.distanceTo(center))
+    const fovRad = (camera.fov * Math.PI) / 180
+    return (halfX / distance) * (window.innerHeight / (2 * Math.tan(fovRad / 2)))
+  }
+
   dispose() {
     this.ringGroup.traverse((child) => {
       if (child instanceof THREE.Mesh) {

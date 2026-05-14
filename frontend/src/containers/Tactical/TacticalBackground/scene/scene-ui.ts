@@ -1,3 +1,4 @@
+import type * as THREE from 'three'
 import type { Selectable } from './selection-zoom'
 import type { Ship } from './ship'
 
@@ -92,39 +93,35 @@ export function updateMenu(
 
 export function updateShipStats(
   el: HTMLDivElement | null,
-  menuEl: HTMLDivElement | null,
+  _menuEl: HTMLDivElement | null,
   ship: Ship,
   screenPos: { x: number; y: number } | null,
-  mouseX: number,
-  mouseY: number,
+  camera: THREE.PerspectiveCamera,
   t: number,
   maxZoom: number
 ) {
   if (!el) return
   if (!ship.isZoomed || !screenPos) {
     el.style.opacity = '0'
+    el.style.pointerEvents = 'none'
     return
   }
 
-  const statsWidth = el.offsetWidth
-  const menuOnRight = menuEl ? parseFloat(menuEl.style.left || '0') > screenPos.x : true
-  const statsOffset = 140 + t * 280
-  const statsX = menuOnRight ? screenPos.x - statsOffset - statsWidth : screenPos.x + statsOffset
-  const statsY = screenPos.y - 100
-
-  el.style.left = `${statsX}px`
-  el.style.top = `${statsY}px`
-  const origin = menuOnRight ? 'right center' : 'left center'
-  el.style.transformOrigin = origin
-
-  const rx = mouseY * 2
-  const ry = menuOnRight ? 3 - mouseX * 2 : -3 + mouseX * 2
-  const skew = menuOnRight ? -0.5 : 0.5
-  el.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) skewY(${skew}deg) translateY(-50%)`
+  el.style.left = '0'
+  el.style.top = '0'
+  el.style.width = '100vw'
+  el.style.height = '100vh'
+  el.style.transform = ''
+  el.style.setProperty('--ship-x', `${screenPos.x}px`)
+  el.style.setProperty('--ship-y', `${screenPos.y}px`)
+  const gap = Math.round(ship.getScreenHalfWidth(camera) + 12)
+  el.style.setProperty('--ship-gap', `${gap}px`)
 
   const fadeStart = maxZoom * 0.6
   const fadeRange = maxZoom * 0.4
-  el.style.opacity = String(Math.min(1, Math.max(0, (t - fadeStart) / fadeRange)))
+  const opacity = Math.min(1, Math.max(0, (t - fadeStart) / fadeRange))
+  el.style.opacity = String(opacity)
+  el.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none'
 }
 
 let lastBtnDocked: unknown = undefined

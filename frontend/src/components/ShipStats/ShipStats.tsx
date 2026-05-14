@@ -1,45 +1,165 @@
+import { keyframes } from '@mui/material/styles'
 import { Box, Stack, Typography } from '@mui/material'
 import { HudButton } from 'components/HudButton/HudButton'
-import { HudCard } from 'components/HudCard/HudCard'
-import { ProgressBar } from 'components/ProgressBar/ProgressBar'
 import { STAT_LABELS, TYPE_LABELS } from 'data'
-import { MATERIAL_NAMES, MATERIAL_STORAGE_COST, MATERIAL_SYMBOLS } from 'data/materials'
+import { MATERIAL_ICONS, MATERIAL_NAMES, MATERIAL_STORAGE_COST } from 'data/materials'
 import { RARITY_COLORS } from 'data/rarity'
 import type { Spacecraft } from 'models'
 import { forwardRef } from 'react'
 import { MATERIAL_RARITY } from 'utils/asteroid-generator'
+
+const pulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+`
+
+const ACCENT = '#42a5f5'
+const PANEL_BG = '#040b18'
+const PANEL_BORDER = 'rgba(33,150,243,0.35)'
+const CRITICAL_BG = '#0d2d6b'
+const CORNER = 10
+const COL_WIDTH = 300
+
+const STATUS_COLORS: Record<string, string> = {
+  docked: '#81c784',
+  deployed: '#64b5f6',
+  'in-transit': '#ffb74d',
+}
+const STATUS_LABELS: Record<string, string> = {
+  docked: 'DOCKED',
+  deployed: 'DEPLOYED',
+  'in-transit': 'IN TRANSIT',
+}
+
+const UPGRADE_SLOTS = ['Engine', 'Plating', 'Deflector', 'Weapons', 'Stabilizer']
 
 interface ShipStatsProps {
   visible: boolean
   spacecraft?: Spacecraft
 }
 
+const SciFiPanel = ({
+  title,
+  children,
+  accent = false,
+}: {
+  title: string
+  children: React.ReactNode
+  accent?: boolean
+}) => (
+  <Box
+    sx={{
+      position: 'relative',
+      width: COL_WIDTH,
+      bgcolor: accent ? CRITICAL_BG : PANEL_BG,
+      p: 6,
+      boxShadow: accent
+        ? `0 0 32px rgba(33,150,243,0.45), inset 0 0 24px rgba(33,150,243,0.06)`
+        : `0 0 14px rgba(33,150,243,0.1)`,
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: -1,
+        left: -1,
+        width: CORNER,
+        height: CORNER,
+        borderTop: `2px solid ${ACCENT}`,
+        borderLeft: `2px solid ${ACCENT}`,
+        pointerEvents: 'none',
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: -1,
+        right: -1,
+        width: CORNER,
+        height: CORNER,
+        borderBottom: `2px solid ${ACCENT}`,
+        borderRight: `2px solid ${ACCENT}`,
+        pointerEvents: 'none',
+      },
+    }}
+  >
+    <Box
+      sx={{
+        pb: 1,
+        mb: 1.5,
+        borderBottom: `1px solid ${accent ? 'rgba(255,255,255,0.15)' : PANEL_BORDER}`,
+      }}
+    >
+      <Typography
+        variant="hud-tag"
+        sx={{ color: accent ? 'rgba(255,255,255,0.55)' : ACCENT, fontFamily: 'monospace' }}
+      >
+        {title}
+      </Typography>
+    </Box>
+    {children}
+  </Box>
+)
+
+const Label = ({ children }: { children: React.ReactNode }) => (
+  <Typography variant="hud-tag" sx={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>
+    {children}
+  </Typography>
+)
+
+const Value = ({ children, sx }: { children: React.ReactNode; sx?: object }) => (
+  <Typography variant="hud-data" sx={{ color: '#fff', fontWeight: 700, ...sx }}>
+    {children}
+  </Typography>
+)
+
+const DarkBar = ({ value, color = '#1e88e5' }: { value: number; color?: string }) => (
+  <Box sx={{ position: 'relative', height: 3, bgcolor: 'rgba(255,255,255,0.08)', width: '100%' }}>
+    <Box
+      sx={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        height: '100%',
+        width: `${Math.min(100, Math.max(0, value))}%`,
+        bgcolor: color,
+        boxShadow: `0 0 6px ${color}80`,
+        transition: 'width 0.3s ease',
+      }}
+    />
+  </Box>
+)
+
+const StatusDot = ({ color }: { color: string }) => (
+  <Box
+    sx={{
+      width: 6,
+      height: 6,
+      borderRadius: '50%',
+      bgcolor: color,
+      boxShadow: `0 0 6px ${color}`,
+      flexShrink: 0,
+      animation: `${pulse} 2s ease-in-out infinite`,
+    }}
+  />
+)
+
 const ArcGauge = ({ value, label, color }: { value: number; label: string; color: string }) => {
-  const radius = 48
-  const stroke = 7
+  const radius = 42
+  const stroke = 6
   const circumference = Math.PI * radius
   const offset = circumference - (value / 100) * circumference
 
   return (
     <Stack sx={{ alignItems: 'center', gap: 0.5 }}>
-      <Box sx={{ position: 'relative', width: 108, height: 64 }}>
-        <svg
-          width="108"
-          height="64"
-          viewBox="0 0 108 64"
-          role="img"
-          aria-label={`${label}: ${value}%`}
-          style={{ overflow: 'visible' }}
-        >
+      <Box sx={{ position: 'relative', width: 96, height: 58 }}>
+        <svg width="96" height="58" viewBox="0 0 96 58" style={{ overflow: 'visible' }}>
           <path
-            d={`M ${6} ${58} A ${radius} ${radius} 0 0 1 ${102} ${58}`}
+            d={`M 6 54 A ${radius} ${radius} 0 0 1 90 54`}
             fill="none"
-            stroke="rgba(0,0,0,0.08)"
+            stroke="rgba(255,255,255,0.12)"
             strokeWidth={stroke}
             strokeLinecap="round"
           />
           <path
-            d={`M ${6} ${58} A ${radius} ${radius} 0 0 1 ${102} ${58}`}
+            d={`M 6 54 A ${radius} ${radius} 0 0 1 90 54`}
             fill="none"
             stroke={color}
             strokeWidth={stroke}
@@ -50,139 +170,247 @@ const ArcGauge = ({ value, label, color }: { value: number; label: string; color
         </svg>
         <Typography
           variant="hud-data-xl"
-          sx={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}
+          sx={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', color: '#fff' }}
         >
           {value}
         </Typography>
       </Box>
-      <Typography variant="hud-tag">{label}</Typography>
+      <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
+        <StatusDot color={color} />
+        <Label>{label}</Label>
+      </Stack>
     </Stack>
   )
 }
 
-const InfoRow = ({ label, value }: { label: string; value: string }) => (
-  <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-    <Typography variant="hud-tag" sx={{ width: 100, flexShrink: 0 }}>{label}</Typography>
-    <Typography variant="hud-data">{value}</Typography>
-  </Stack>
-)
-
-export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ visible, spacecraft }, ref) => {
+export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraft }, ref) => {
   if (!spacecraft) return null
 
-  const cargoUsed = spacecraft.cargo.reduce((sum, item) => sum + item.amount * MATERIAL_STORAGE_COST[item.material], 0)
+  const cargoUsed = spacecraft.cargo.reduce(
+    (sum, item) => sum + item.amount * MATERIAL_STORAGE_COST[item.material],
+    0,
+  )
   const cargoPercent = Math.round((cargoUsed / spacecraft.cargoCapacity) * 100)
+  const fuelPercent = Math.round((spacecraft.fuel / spacecraft.maxFuel) * 100)
+  const statusColor = STATUS_COLORS[spacecraft.status] ?? '#fff'
+  const statusLabel = STATUS_LABELS[spacecraft.status] ?? spacecraft.status.toUpperCase()
+  const upgradeCount = spacecraft.attachedUpgrades.length
 
   return (
-    <HudCard ref={ref} visible={visible} size="large">
-      <Stack spacing={2.5}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box>
-            <Typography variant="hud-title">{spacecraft.name}</Typography>
-            <Typography variant="hud-body" sx={{ color: 'hud.muted', letterSpacing: 0.5 }}>
-              {TYPE_LABELS[spacecraft.type]} · {spacecraft.spacecraftRegistry.toUpperCase()} · {spacecraft.manufactured}
-            </Typography>
-          </Box>
-          <HudButton id="exit-details-btn">Exit</HudButton>
-        </Box>
-        <Stack direction="row" sx={{ justifyContent: 'center', gap: 6, py: 1.5 }}>
-          <ArcGauge value={spacecraft.fuel} label="FUEL" color="#1976d2" />
-          <ArcGauge
-            value={spacecraft.condition}
-            label="CONDITION"
-            color={spacecraft.condition > 50 ? '#2e7d32' : '#d32f2f'}
-          />
-        </Stack>
-        <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', pt: 2 }}>
-          <Stack spacing={1}>
+    <Box
+      ref={ref}
+      sx={{ position: 'relative', width: '100%', height: '100%', pointerEvents: 'none' }}
+    >
+      {/* LEFT COLUMN */}
+      <Stack
+        spacing={2}
+        sx={{
+          position: 'absolute',
+          right: 'calc(100% - var(--ship-x) + var(--ship-gap))',
+          top: 'var(--ship-y)',
+          transform: 'translateY(-50%)',
+          width: COL_WIDTH,
+        }}
+      >
+        <SciFiPanel title="VESSEL IDENTITY">
+          <Stack spacing={2}>
+            <Box>
+              <Typography
+                variant="hud-title"
+                sx={{ color: '#fff', fontFamily: 'monospace', lineHeight: 1.2 }}
+              >
+                {spacecraft.name}
+              </Typography>
+              <Typography
+                variant="hud-label"
+                sx={{ color: ACCENT, fontFamily: 'monospace', mt: 0.5, display: 'block' }}
+              >
+                {TYPE_LABELS[spacecraft.type]}
+              </Typography>
+            </Box>
+            <Stack spacing={1.2}>
+              {[
+                { label: 'Registry', value: spacecraft.spacecraftRegistry.toUpperCase() },
+                { label: 'Manufactured', value: String(spacecraft.manufactured) },
+                { label: 'Manufacturer', value: spacecraft.manufacturer },
+              ].map(({ label, value }) => (
+                <Stack key={label} direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
+                  <Label>{label}</Label>
+                  <Value>{value}</Value>
+                </Stack>
+              ))}
+              <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                <Label>Status</Label>
+                <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
+                  <StatusDot color={statusColor} />
+                  <Value sx={{ color: statusColor }}>{statusLabel}</Value>
+                </Stack>
+              </Stack>
+            </Stack>
+          </Stack>
+        </SciFiPanel>
+
+        <SciFiPanel title="COMBAT PROFILE">
+          <Stack spacing={1.5}>
             {STAT_LABELS.map(({ key, label }) => (
-              <Stack key={key} direction="row" sx={{ alignItems: 'center', gap: 2 }}>
-                <Typography variant="hud-tag" sx={{ width: 100, lineHeight: 1.6, flexShrink: 0 }}>
-                  {label}
-                </Typography>
-                <Box sx={{ flex: 1 }}>
-                  <ProgressBar value={spacecraft.baseStats[key]} />
-                </Box>
-                <Typography variant="hud-data" sx={{ width: 24, textAlign: 'right' }}>
-                  {spacecraft.baseStats[key]}
-                </Typography>
+              <Stack key={key} spacing={0.6}>
+                <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Label>{label}</Label>
+                  <Value>{spacecraft.baseStats[key]}</Value>
+                </Stack>
+                <DarkBar value={spacecraft.baseStats[key]} />
               </Stack>
             ))}
           </Stack>
-        </Box>
-        <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', pt: 2 }}>
-          <Stack spacing={1}>
-            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="hud-tag">FUEL</Typography>
-              <Typography variant="hud-data">
-                {spacecraft.fuel} / {spacecraft.maxFuel}
-              </Typography>
+        </SciFiPanel>
+
+        <SciFiPanel title="UPGRADE SLOTS">
+          <Stack spacing={1.2}>
+            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+              <Label>Installed</Label>
+              <Value>{upgradeCount} / {UPGRADE_SLOTS.length}</Value>
             </Stack>
-            <ProgressBar
-              value={Math.round((spacecraft.fuel / spacecraft.maxFuel) * 100)}
-              color={
-                spacecraft.fuel / spacecraft.maxFuel > 0.5
-                  ? 'primary'
-                  : spacecraft.fuel / spacecraft.maxFuel > 0.2
-                    ? 'warning'
-                    : 'error'
-              }
-            />
+            {UPGRADE_SLOTS.map((slot, i) => {
+              const filled = i < upgradeCount
+              return (
+                <Stack key={slot} direction="row" sx={{ alignItems: 'center', gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '2px',
+                      bgcolor: filled ? ACCENT : 'transparent',
+                      border: `1px solid ${filled ? ACCENT : 'rgba(255,255,255,0.2)'}`,
+                      boxShadow: filled ? `0 0 6px ${ACCENT}80` : 'none',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Label>{slot.toUpperCase()}</Label>
+                  <Box sx={{ flex: 1 }} />
+                  <Typography
+                    variant="hud-tag"
+                    sx={{ color: filled ? ACCENT : 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}
+                  >
+                    {filled ? 'ACTIVE' : '---'}
+                  </Typography>
+                </Stack>
+              )
+            })}
           </Stack>
+        </SciFiPanel>
+      </Stack>
+
+      {/* RIGHT COLUMN */}
+      <Stack
+        spacing={2}
+        sx={{
+          position: 'absolute',
+          left: 'calc(var(--ship-x) + var(--ship-gap))',
+          top: 'var(--ship-y)',
+          transform: 'translateY(-50%)',
+          width: COL_WIDTH,
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', pointerEvents: 'auto' }}>
+          <HudButton id="exit-details-btn">Exit</HudButton>
         </Box>
-        <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', pt: 2 }}>
-          <Stack spacing={1}>
-            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="hud-tag">CARGO HOLD</Typography>
-              <Typography variant="hud-data">
-                {cargoUsed} / {spacecraft.cargoCapacity}
-              </Typography>
+
+        <SciFiPanel title="CRITICAL SYSTEMS" accent>
+          <Stack spacing={2}>
+            <Stack direction="row" sx={{ justifyContent: 'center', gap: 3 }}>
+              <ArcGauge value={spacecraft.fuel} label="FUEL" color="#64b5f6" />
+              <ArcGauge
+                value={spacecraft.condition}
+                label="CONDITION"
+                color={spacecraft.condition > 50 ? '#81c784' : '#e57373'}
+              />
             </Stack>
-            <ProgressBar
-              value={cargoPercent}
-              color={cargoPercent > 90 ? 'error' : cargoPercent > 70 ? 'warning' : 'primary'}
-            />
-            {spacecraft.cargo.length > 0 && (
-              <Stack spacing={0.5} sx={{ pt: 0.5 }}>
+            <Stack spacing={0.6}>
+              <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+                <Label>Fuel Reserves</Label>
+                <Value>{spacecraft.fuel} / {spacecraft.maxFuel}</Value>
+              </Stack>
+              <DarkBar
+                value={fuelPercent}
+                color={fuelPercent > 50 ? '#64b5f6' : fuelPercent > 20 ? '#ffb74d' : '#ef5350'}
+              />
+            </Stack>
+            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+              <Label>Consumption</Label>
+              <Value sx={{ color: 'rgba(255,255,255,0.6)' }}>{spacecraft.fuelConsumption} u/jump</Value>
+            </Stack>
+          </Stack>
+        </SciFiPanel>
+
+        <SciFiPanel title="CARGO MANIFEST">
+          <Stack spacing={1.5}>
+            <Stack spacing={0.6}>
+              <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+                <Label>Capacity</Label>
+                <Value>{cargoUsed} / {spacecraft.cargoCapacity}</Value>
+              </Stack>
+              <DarkBar
+                value={cargoPercent}
+                color={cargoPercent > 90 ? '#ef5350' : cargoPercent > 70 ? '#ffb74d' : '#1e88e5'}
+              />
+            </Stack>
+            {spacecraft.cargo.length > 0 ? (
+              <Stack spacing={1}>
                 {spacecraft.cargo.map((item) => {
                   const rarity = MATERIAL_RARITY[item.material]
                   const color = RARITY_COLORS[rarity]
                   const storageCost = item.amount * MATERIAL_STORAGE_COST[item.material]
                   return (
-                    <Stack key={item.material} direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-                      <Typography variant="hud-data" sx={{ color, width: 28, flexShrink: 0 }}>
-                        {MATERIAL_SYMBOLS[item.material]}
-                      </Typography>
-                      <Typography variant="hud-body" sx={{ flex: 1 }}>
+                    <Stack key={item.material} direction="row" sx={{ alignItems: 'center', gap: 1.5 }}>
+                      <Box
+                        component="img"
+                        src={MATERIAL_ICONS[item.material]}
+                        alt={item.material}
+                        loading="lazy"
+                        sx={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }}
+                      />
+                      <Typography
+                        variant="hud-body"
+                        sx={{ color: 'rgba(255,255,255,0.8)', flex: 1, fontWeight: 700 }}
+                      >
                         {MATERIAL_NAMES[item.material]}
                       </Typography>
-                      <Typography variant="hud-data" sx={{ color: 'hud.muted' }}>
+                      <Typography variant="hud-data" sx={{ color }}>
                         ×{item.amount}
                       </Typography>
-                      <Typography variant="hud-data" sx={{ color: 'hud.faint', width: 32, textAlign: 'right' }}>
+                      <Typography
+                        variant="hud-data"
+                        sx={{ color: 'rgba(255,255,255,0.3)', width: 32, textAlign: 'right' }}
+                      >
                         {storageCost}u
                       </Typography>
                     </Stack>
                   )
                 })}
               </Stack>
-            )}
-            {spacecraft.cargo.length === 0 && (
-              <Typography variant="hud-body" sx={{ color: 'hud.faint', fontStyle: 'italic', pt: 0.5 }}>
-                Empty
+            ) : (
+              <Typography variant="hud-body" sx={{ color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>
+                No cargo
               </Typography>
             )}
           </Stack>
-        </Box>
-        <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', pt: 2 }}>
-          <Stack spacing={0.5}>
-            <InfoRow label="Manufacturer" value={spacecraft.manufacturer} />
-            <InfoRow label="Height" value={`${spacecraft.height} m`} />
-            <InfoRow label="Length" value={`${spacecraft.length} m`} />
-            <InfoRow label="Price" value={`${spacecraft.price.toLocaleString()} cr`} />
+        </SciFiPanel>
+
+        <SciFiPanel title="TECHNICAL SPECS">
+          <Stack spacing={1.2}>
+            {[
+              { label: 'Height', value: `${spacecraft.height} m` },
+              { label: 'Length', value: `${spacecraft.length} m` },
+              { label: 'Price', value: `${spacecraft.price.toLocaleString()} cr` },
+            ].map(({ label, value }) => (
+              <Stack key={label} direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
+                <Label>{label}</Label>
+                <Value>{value}</Value>
+              </Stack>
+            ))}
           </Stack>
-        </Box>
+        </SciFiPanel>
       </Stack>
-    </HudCard>
+    </Box>
   )
 })

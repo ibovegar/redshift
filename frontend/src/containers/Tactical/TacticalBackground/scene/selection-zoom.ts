@@ -50,6 +50,9 @@ export class SelectionZoom {
   }
 
   update() {
+    if (this.isZoomed && this.activeTarget) {
+      this.target.copy(this.activeTarget.getCamTarget())
+    }
     if (this.isZoomed) {
       this.progress = Math.min(1, this.progress + ZOOM_SPEED)
       this.t = Math.min(this.maxZoom, 1 - (1 - this.progress) ** 9)

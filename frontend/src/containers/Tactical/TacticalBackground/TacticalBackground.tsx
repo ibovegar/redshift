@@ -319,6 +319,8 @@ export const TacticalBackground = () => {
     const PAN_AMOUNT = 0.3
     let isDragging = false
     let isDraggingPlanet = false
+    let isDraggingShip = false
+    let suppressNextClick = false
     let prevDragX = 0
     let prevDragY = 0
     let planetVelX = 0
@@ -473,6 +475,10 @@ export const TacticalBackground = () => {
       isDragging = true
       prevDragX = e.clientX
       prevDragY = e.clientY
+      if (detailZoom.isZoomed) {
+        isDraggingShip = true
+        return
+      }
       // Check if mousedown is on the planet
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
@@ -486,8 +492,11 @@ export const TacticalBackground = () => {
     const handleMouseUp = () => {
       isDragging = false
       isDraggingPlanet = false
+      if (isDraggingShip) suppressNextClick = true
+      isDraggingShip = false
     }
     const handleClick = (e: MouseEvent) => {
+      if (suppressNextClick) { suppressNextClick = false; return }
       if (miningZoomRef.current) return
       // Check if click is on menu
       if (menuRef.current?.contains(e.target as Node)) return
@@ -653,6 +662,14 @@ export const TacticalBackground = () => {
       if (!detailZoom.isZoomed && !miningZoomRef.current && !shipTravelTarget && !scanning) {
         panTargetX = mouse.x * PAN_AMOUNT
         panTargetY = mouse.y * PAN_AMOUNT
+      }
+
+      // Ship drag-to-rotate in details mode
+      if (isDraggingShip && detailZoom.isZoomed && ship.model) {
+        const dx = e.clientX - prevDragX
+        ship.model.rotation.y += dx * 0.01
+        prevDragX = e.clientX
+        prevDragY = e.clientY
       }
 
       // Planet drag doesn't need raycasting — handle separately
@@ -926,7 +943,7 @@ export const TacticalBackground = () => {
         const dx = travelCursorWorld.x - ship.model.position.x
         const targetYaw = Math.atan2(dx, 3)
         ship.model.rotation.y += (targetYaw - ship.model.rotation.y) * 0.08
-      } else if (!travelMode && !shipTravelTarget && ship.model) {
+      } else if (!travelMode && !shipTravelTarget && ship.model && !detailZoom.isZoomed) {
         // Smoothly return to default rotation
         ship.model.rotation.y += (ship.config.rotation[1] - ship.model.rotation.y) * 0.05
       }
@@ -993,7 +1010,7 @@ export const TacticalBackground = () => {
         )
 
         // Position ship stats panel on opposite side of menu when in details mode
-        updateShipStats(shipStatsRef.current, menuRef.current, ship, screenPos, mouse.x, mouse.y, t, detailZoom.maxZoom)
+        updateShipStats(shipStatsRef.current, menuRef.current, ship, screenPos, camera, t, detailZoom.maxZoom)
 
         // Position station menu
         if (stationMenuRef.current && station.isSelected) {
