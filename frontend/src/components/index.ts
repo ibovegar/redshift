@@ -1,6 +1,6 @@
 export { BarButton } from './BarButton/BarButton'
 export { ErrorBoundary } from './ErrorBoundary/ErrorBoundary'
-export { FuelBar } from './FuelBar/FuelBar'
+export { HudProgressBar } from './HudProgressBar/HudProgressBar'
 export { GridButton } from './GridButton/GridButton'
 export { HudButton } from './HudButton/HudButton'
 export { HudCard } from './HudCard/HudCard'

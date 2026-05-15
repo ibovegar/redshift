@@ -23,6 +23,7 @@ export const HudTooltip = forwardRef<HTMLDivElement, HudTooltipProps>((props, re
       }}
     >
       <div
+        data-hud-name
         style={{
           background: '#2040e0',
           color: '#ffffff',

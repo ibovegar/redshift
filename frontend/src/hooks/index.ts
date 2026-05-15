@@ -6,5 +6,5 @@ export {
   useUpdateFuel,
   useUpdateSpacecraftStatus
 } from './useSpacecrafts'
-export { useStation, useTransferCargo } from './useStation'
+export { useBuildSection, useStation, useTransferCargo } from './useStation'
 export { usePatchUser, useUser } from './useUser'

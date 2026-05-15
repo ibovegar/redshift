@@ -1,9 +1,9 @@
 import { Typography } from '@mui/material'
 import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
 import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
-import { FuelBar } from 'components/FuelBar/FuelBar'
 import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
 import { HudButton } from 'components/HudButton/HudButton'
+import { HudCard } from 'components/HudCard/HudCard'
 import { HudMenu } from 'components/HudMenu/HudMenu'
 import { HudPanel } from 'components/HudPanel/HudPanel'
 import { HudTooltip } from 'components/HudTooltip/HudTooltip'
@@ -11,23 +11,29 @@ import { LoadingScreen } from 'components/LoadingScreen/LoadingScreen'
 import { RadiationWarning } from 'components/RadiationWarning/RadiationWarning'
 import { ScanResult } from 'components/ScanResult/ScanResult'
 import { ShipStats } from 'components/ShipStats/ShipStats'
+import { HudProgressBar } from 'components/HudProgressBar/HudProgressBar'
+import { StationBuildMenu } from 'components/StationBuildMenu/StationBuildMenu'
 import { MATERIAL_STORAGE_COST } from 'data/materials'
 import {
+  useBuildSection,
   usePatchUser,
   useSpacecraft,
   useSpacecrafts,
+  useStation,
   useTransferCargo,
   useUpdateCargo,
   useUpdateFuel,
   useUpdateSpacecraftStatus,
   useUser
 } from 'hooks'
+import type { SectionType } from 'models/station-section'
 import type { Asteroid } from 'models/asteroid'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { AsteroidBelts, BELT_SPEED } from './scene/asteroid-belts'
 import { AsteroidHighlight } from './scene/asteroid-highlight'
+import { BuildBarController } from './scene/build-bar'
 import { CameraZoom } from './scene/camera-zoom'
 import { FuelBarController } from './scene/fuel-bar'
 import { GodRays } from './scene/god-rays'
@@ -58,13 +64,17 @@ export const TacticalBackground = () => {
   const { data: spacecraft } = useSpacecraft('3')
   const { data: spacecrafts } = useSpacecrafts()
   const { data: user } = useUser()
+  const { data: station } = useStation()
   const patchUser = usePatchUser()
   const updateCargo = useUpdateCargo()
   const transferCargo = useTransferCargo()
   const updateStatus = useUpdateSpacecraftStatus()
   const updateFuel = useUpdateFuel()
+  const buildSection = useBuildSection()
   const spacecraftsRef = useRef(spacecrafts)
   spacecraftsRef.current = spacecrafts
+  const stationDataRef = useRef(station)
+  stationDataRef.current = station
   const containerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -77,7 +87,13 @@ export const TacticalBackground = () => {
   const stationLineRef = useRef<SVGLineElement>(null)
   const dockedListRef = useRef<HTMLDivElement>(null)
   const dockedLineRef = useRef<SVGLineElement>(null)
+  const buildMenuRef = useRef<HTMLDivElement>(null)
   const fuelBarRef = useRef<HTMLDivElement>(null)
+  const sectionBuildBarRef = useRef<HTMLDivElement>(null)
+  const buildBarObjRef = useRef<BuildBarController | null>(null)
+  const [buildMenuOpen, setBuildMenuOpen] = useState(false)
+  const stationSceneRef = useRef<Station | null>(null)
+  const hoveredSectionTypeRef = useRef<SectionType | null>(null)
   const [detailsMode, setDetailsMode] = useState(false)
   const [solarPhase, setSolarPhase] = useState<SolarEventPhase>('idle')
   const [solarCountdown, setSolarCountdown] = useState(0)
@@ -99,6 +115,7 @@ export const TacticalBackground = () => {
   const initialFuelRef = useRef(spacecraft.fuel)
   const maxFuelRef = useRef(spacecraft.maxFuel)
   const fuelConsumptionRef = useRef(spacecraft.fuelConsumption)
+  const initialDockedRef = useRef(spacecraft.status === 'docked')
   const fuelBarObjRef = useRef<FuelBarController | null>(null)
   const miningZoomRef = useRef(false)
   const miningMeshRef = useRef<THREE.InstancedMesh | null>(null)
@@ -202,6 +219,10 @@ export const TacticalBackground = () => {
   }, [])
 
   useEffect(() => {
+    stationSceneRef.current?.applySections(station.sections)
+  }, [station])
+
+  useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
@@ -265,6 +286,11 @@ export const TacticalBackground = () => {
     const shipHomePosition: [number, number, number] = [...ship.config.position]
     ship.addToScene(scene)
     ship.load(gltfLoader, onAssetLoaded)
+    if (initialDockedRef.current) {
+      ship.hitGroup.visible = false
+      ship.strobeLight.visible = false
+      ship.strobeGlare.visible = false
+    }
 
     const fuelBar = new FuelBarController(initialFuelRef.current, maxFuelRef.current, fuelConsumptionRef.current)
     fuelBar.bind(fuelBarRef.current)
@@ -278,9 +304,15 @@ export const TacticalBackground = () => {
       camOffset: 1.5
     })
     station.addToScene(scene)
+    stationSceneRef.current = station
+    const buildBar = new BuildBarController()
+    buildBar.bind(sectionBuildBarRef.current)
+    buildBar.setStation(station)
+    buildBarObjRef.current = buildBar
     const stationHighlight = new ModelHighlight(scene)
     station.load(gltfLoader, () => {
       if (station.model) stationHighlight.attach(station.model)
+      station.applySections(stationDataRef.current.sections)
       onAssetLoaded()
     })
 
@@ -360,7 +392,7 @@ export const TacticalBackground = () => {
     let dockedAsteroid: Asteroid | null = null
     let dockedToStation = true
     let preTravelDockedToStation = false
-    let shipHidden = false
+    let shipHidden = initialDockedRef.current
     let dockedInstanceHidden = false
     const savedDockedMatrix = new THREE.Matrix4()
     const zeroScaleMatrix = new THREE.Matrix4().makeScale(0, 0, 0)
@@ -429,6 +461,8 @@ export const TacticalBackground = () => {
         dockedListRef.current.style.opacity = '0'
         dockedListRef.current.style.pointerEvents = 'none'
       }
+      setBuildMenuOpen(false)
+      hoveredSectionTypeRef.current = null
     }
 
     function selectShip() {
@@ -444,9 +478,14 @@ export const TacticalBackground = () => {
     function exitDetails() {
       if (!detailZoom.isZoomed) return
       const target = detailZoom.activeTarget
+      if (target === station) {
+        station.showSectionHighlight(null)
+        setBuildMenuOpen(false)
+      }
       detailZoom.zoomOut()
       ship.zoomOut()
       setDetailsMode(false)
+      hoveredSectionTypeRef.current = null
       if (target?.isSelected) {
         if (target === ship) showMenu()
         else if (target === station) showStationMenu()
@@ -475,7 +514,7 @@ export const TacticalBackground = () => {
       isDragging = true
       prevDragX = e.clientX
       prevDragY = e.clientY
-      if (detailZoom.isZoomed) {
+      if (detailZoom.isZoomed && detailZoom.activeTarget === ship) {
         isDraggingShip = true
         return
       }
@@ -502,6 +541,7 @@ export const TacticalBackground = () => {
       if (menuRef.current?.contains(e.target as Node)) return
       if (stationMenuRef.current?.contains(e.target as Node)) return
       if (dockedListRef.current?.contains(e.target as Node)) return
+      if (buildMenuRef.current?.contains(e.target as Node)) return
       // Check if click is on scan result panel
       if (standaloneScanRef.current?.contains(e.target as Node)) return
 
@@ -610,6 +650,15 @@ export const TacticalBackground = () => {
         } else {
           showMenu()
         }
+        return
+      }
+      // In station details view: clicking the station shows the build screen, clicking outside exits
+      if (detailZoom.isZoomed && detailZoom.activeTarget === station) {
+        if (station.raycast(raycaster) || station.raycastSections(raycaster)) {
+          setBuildMenuOpen(true)
+          return
+        }
+        exitDetails()
         return
       }
       if (station.raycast(raycaster)) {
@@ -734,6 +783,14 @@ export const TacticalBackground = () => {
             cursor = 'pointer'
           }
         }
+        // Section hover — only active in station details view
+        const inStationDetails = detailZoom.isZoomed && detailZoom.activeTarget === station
+        const hitSection = inStationDetails ? station.raycastSections(raycaster) : null
+        if (hitSection !== hoveredSectionTypeRef.current) {
+          hoveredSectionTypeRef.current = hitSection
+          if (inStationDetails) station.showSectionHighlight(hitSection)
+        }
+        if (hitSection) cursor = 'pointer'
         if (cursor === 'default' && !scanning) {
           const allMeshes = belts.meshes
           for (const mesh of allMeshes) {
@@ -1053,9 +1110,15 @@ export const TacticalBackground = () => {
             const dlSkew = 0.5
             dl.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${dlRy}deg) skewY(${dlSkew}deg) translateY(-50%)`
           }
+
         } else {
           if (stationLineRef.current) stationLineRef.current.setAttribute('opacity', '0')
           if (dockedLineRef.current) dockedLineRef.current.setAttribute('opacity', '0')
+        }
+
+        // Section build progress bar
+        if (buildBar.update(camera)) {
+          station.showBuildHighlight(null)
         }
       } else {
         // Force-hide menu and tooltip during mining
@@ -1075,6 +1138,7 @@ export const TacticalBackground = () => {
           dockedListRef.current.style.opacity = '0'
           dockedListRef.current.style.pointerEvents = 'none'
         }
+        buildBar.hide()
       }
 
       // Update button disabled states
@@ -1358,10 +1422,12 @@ export const TacticalBackground = () => {
     const handleStationDetailsClick = () => {
       if (detailZoom.isZoomed) {
         exitDetails()
+        station.showSectionHighlight(null)
       } else {
         detailZoom.zoomTo(station)
         setDetailsMode(true)
         hideStationMenu()
+        hoveredSectionTypeRef.current = null
       }
     }
     const stationDetailsBtn = document.getElementById('station-details-btn')
@@ -1405,6 +1471,7 @@ export const TacticalBackground = () => {
       scannedIndicators.dispose()
       ship.dispose()
       station.dispose()
+      stationSceneRef.current = null
     }
   }, [])
 
@@ -1439,7 +1506,8 @@ export const TacticalBackground = () => {
         stationLineRef={stationLineRef}
         dockedLineRef={dockedLineRef}
       />
-      <FuelBar ref={fuelBarRef} />
+      <HudProgressBar ref={fuelBarRef} />
+      <HudProgressBar ref={sectionBuildBarRef} />
       <HudPanel ref={menuRef}>
         <HudMenu />
         {scanResult.visible && !scanResult.isRemote && scanResult.asteroid && (
@@ -1465,6 +1533,24 @@ export const TacticalBackground = () => {
           ]}
         />
       </HudPanel>
+      <div
+        ref={buildMenuRef}
+        style={{ position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 20, pointerEvents: buildMenuOpen ? 'auto' : 'none' }}
+      >
+        <HudCard visible={buildMenuOpen} interactive={buildMenuOpen} size="large" minWidth={800}>
+          <StationBuildMenu
+            sections={station.sections}
+            storage={station.storage}
+            isPending={buildSection.isPending}
+            onBuild={(type: SectionType) => {
+              setBuildMenuOpen(false)
+              buildBarObjRef.current?.start(type)
+              stationSceneRef.current?.showBuildHighlight(type)
+              buildSection.mutate(type)
+            }}
+          />
+        </HudCard>
+      </div>
       <HudPanel ref={dockedListRef}>
         <div
           style={{

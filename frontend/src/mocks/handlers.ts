@@ -1,5 +1,7 @@
 import type { Spacecraft, Station } from 'models'
 import type { CargoItem } from 'models/spacecraft'
+import { SECTION_COSTS } from 'models/station-section'
+import type { SectionType } from 'models/station-section'
 import { HttpResponse, http } from 'msw'
 import { spacecrafts, station, user } from './data'
 
@@ -72,6 +74,40 @@ export const handlers = [
         existing.amount += item.amount
       } else {
         db.station.storage.push({ material: item.material, amount: item.amount })
+      }
+    }
+    return HttpResponse.json(db.station)
+  }),
+
+  http.post(`${url}/station/sections/build`, async ({ request }) => {
+    const { type } = (await request.json()) as { type: SectionType }
+    const section = db.station.sections.find((s) => s.type === type)
+    if (!section || section.status !== 'available') {
+      return new HttpResponse(null, { status: 400 })
+    }
+    const costs = SECTION_COSTS[type]
+    for (const [material, amount] of Object.entries(costs)) {
+      const item = db.station.storage.find((s) => s.material === material)
+      if (!item || item.amount < amount) {
+        return new HttpResponse(null, { status: 400 })
+      }
+    }
+    for (const [material, amount] of Object.entries(costs)) {
+      const item = db.station.storage.find((s) => s.material === material)!
+      item.amount -= amount
+      if (item.amount <= 0) {
+        db.station.storage = db.station.storage.filter((s) => s.material !== material)
+      }
+    }
+    section.status = 'operational'
+    // Unlock next sections based on what was just built
+    if (type === 'research') {
+      for (const s of db.station.sections) {
+        if (s.type === 'engineering' || s.type === 'storage') s.status = 'available'
+      }
+    } else if (type === 'engineering') {
+      for (const s of db.station.sections) {
+        if (s.type === 'power') s.status = 'available'
       }
     }
     return HttpResponse.json(db.station)

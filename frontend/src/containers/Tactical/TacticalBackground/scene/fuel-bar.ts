@@ -72,7 +72,7 @@ export class FuelBarController {
     }
 
     const bar = this.el.querySelector<HTMLElement>('.MuiLinearProgress-bar')
-    const text = this.el.querySelector<HTMLElement>('[data-fuel-text]')
+    const text = this.el.querySelector<HTMLElement>('[data-bar-text]')
 
     if (bar) {
       let pct = (this.current / this.maxFuel) * 100

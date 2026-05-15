@@ -13,7 +13,7 @@ export const spacecrafts: Spacecraft[] = [
     manufactured: 2157,
     storeType: 'spacecraft',
     type: 'support',
-    status: 'deployed',
+    status: 'docked',
     height: 219,
     length: 456,
     price: 5000000,
@@ -38,5 +38,15 @@ export const spacecrafts: Spacecraft[] = [
 export const station: Station = {
   id: 'station-1',
   name: 'Gateway Station',
-  storage: []
+  storage: [
+    { material: 'iron', amount: 50 },
+    { material: 'copper', amount: 20 }
+  ],
+  sections: [
+    { type: 'command', status: 'operational' },
+    { type: 'research', status: 'available' },
+    { type: 'engineering', status: 'locked' },
+    { type: 'storage', status: 'locked' },
+    { type: 'power', status: 'locked' }
+  ]
 }

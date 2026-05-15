@@ -24,7 +24,6 @@ export const hudTypographyVariants: Record<HudTypographyVariant, CSSProperties> 
   'hud-title': {
     fontSize: 20,
     fontWeight: 700,
-    letterSpacing: 2,
   },
 
   // Sub-section heading — asteroid name, stat group titles
