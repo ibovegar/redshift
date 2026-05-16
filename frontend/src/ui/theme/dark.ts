@@ -61,6 +61,22 @@ const palette: PaletteOptions = {
 }
 
 const components: Components<Theme> = {
+  MuiTypography: {
+    defaultProps: {
+      variantMapping: {
+        'hud-title': 'p',
+        'hud-heading': 'p',
+        'hud-label': 'p',
+        'hud-tag': 'p',
+        'hud-badge': 'p',
+        'hud-data-xl': 'p',
+        'hud-data': 'p',
+        'hud-body': 'p',
+        'hud-mono': 'p',
+        'hud-alarm': 'p',
+      }
+    }
+  },
   MuiAppBar: {
     styleOverrides: {
       root: {

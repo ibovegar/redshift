@@ -18,6 +18,7 @@
 - Remove style constants from Nav/constants.ts and ShipStats/constants.ts; move all sx values inline into their components
 - Remove COLORS from StationBuildMenu/constants.ts; move color values inline into SectionCard, ReqRow, LockedOverlay
 - Add convention to project instructions: no sx styles in constants.ts files
+- Fix hud-* typography variants rendering inline (as span) instead of block — add variantMapping in dark theme so all hud variants render as p elements
 
 ## 2026-05-11
 
