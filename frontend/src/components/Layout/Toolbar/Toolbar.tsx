@@ -3,8 +3,8 @@ import { styled } from '@mui/material/styles'
 import { MATERIAL_ICONS, MATERIAL_NAMES, MATERIAL_SYMBOLS } from 'data/materials'
 import type { AsteroidMaterial } from 'models/asteroid'
 import type { CargoItem } from 'models/spacecraft'
-import { useEffect, useRef, useState } from 'react'
 import { Nav } from '../Nav/Nav'
+import { ResourceAmount } from './ResourceAmount/ResourceAmount'
 
 const ALL_MATERIALS: AsteroidMaterial[] = [
   'iron',
@@ -58,37 +58,6 @@ const ResourceChip = styled('span')(({ theme }) => ({
 
 interface Props {
   storage?: CargoItem[]
-}
-
-const TICK_MS = 80
-
-const ResourceAmount = (props: { target: number }) => {
-  const { target } = props
-
-  const [display, setDisplay] = useState(target)
-  const prevRef = useRef(target)
-
-  useEffect(() => {
-    if (target === prevRef.current) return
-    const from = prevRef.current
-    prevRef.current = target
-    const diff = target - from
-    if (diff <= 0) {
-      setDisplay(target)
-      return
-    }
-    const steps = Math.min(diff, 60)
-    let step = 0
-    const id = setInterval(() => {
-      step++
-      const t = step / steps
-      setDisplay(Math.round(from + diff * t))
-      if (step >= steps) clearInterval(id)
-    }, TICK_MS)
-    return () => clearInterval(id)
-  }, [target])
-
-  return <Typography variant="caption">{display}</Typography>
 }
 
 export const Toolbar = (props: Props) => {

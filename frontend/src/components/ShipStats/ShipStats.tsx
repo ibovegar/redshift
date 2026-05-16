@@ -1,4 +1,3 @@
-import { keyframes } from '@mui/material/styles'
 import { Box, Stack, Typography } from '@mui/material'
 import { HudButton } from 'components/HudButton/HudButton'
 import { STAT_LABELS, TYPE_LABELS } from 'data'
@@ -7,180 +6,17 @@ import { RARITY_COLORS } from 'data/rarity'
 import type { Spacecraft } from 'models'
 import { forwardRef } from 'react'
 import { MATERIAL_RARITY } from 'utils/asteroid-generator'
-
-const pulse = keyframes`
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
-`
-
-const ACCENT = '#42a5f5'
-const PANEL_BG = '#040b18'
-const PANEL_BORDER = 'rgba(33,150,243,0.35)'
-const CRITICAL_BG = '#0d2d6b'
-const CORNER = 10
-const COL_WIDTH = 300
-
-const STATUS_COLORS: Record<string, string> = {
-  docked: '#81c784',
-  deployed: '#64b5f6',
-  'in-transit': '#ffb74d',
-}
-const STATUS_LABELS: Record<string, string> = {
-  docked: 'DOCKED',
-  deployed: 'DEPLOYED',
-  'in-transit': 'IN TRANSIT',
-}
-
-const UPGRADE_SLOTS = ['Engine', 'Plating', 'Deflector', 'Weapons', 'Stabilizer']
+import { ArcGauge } from './ArcGauge/ArcGauge'
+import { DarkBar } from './DarkBar/DarkBar'
+import { Label } from './Label/Label'
+import { SciFiPanel } from './SciFiPanel/SciFiPanel'
+import { StatusDot } from './StatusDot/StatusDot'
+import { Value } from './Value/Value'
+import { ACCENT, COL_WIDTH, STATUS_COLORS, STATUS_LABELS, UPGRADE_SLOTS } from './constants'
 
 interface ShipStatsProps {
   visible: boolean
   spacecraft?: Spacecraft
-}
-
-const SciFiPanel = ({
-  title,
-  children,
-  accent = false,
-}: {
-  title: string
-  children: React.ReactNode
-  accent?: boolean
-}) => (
-  <Box
-    sx={{
-      position: 'relative',
-      width: COL_WIDTH,
-      bgcolor: accent ? CRITICAL_BG : PANEL_BG,
-      p: 6,
-      boxShadow: accent
-        ? `0 0 32px rgba(33,150,243,0.45), inset 0 0 24px rgba(33,150,243,0.06)`
-        : `0 0 14px rgba(33,150,243,0.1)`,
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: -1,
-        left: -1,
-        width: CORNER,
-        height: CORNER,
-        borderTop: `2px solid ${ACCENT}`,
-        borderLeft: `2px solid ${ACCENT}`,
-        pointerEvents: 'none',
-      },
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        bottom: -1,
-        right: -1,
-        width: CORNER,
-        height: CORNER,
-        borderBottom: `2px solid ${ACCENT}`,
-        borderRight: `2px solid ${ACCENT}`,
-        pointerEvents: 'none',
-      },
-    }}
-  >
-    <Box
-      sx={{
-        pb: 1,
-        mb: 1.5,
-        borderBottom: `1px solid ${accent ? 'rgba(255,255,255,0.15)' : PANEL_BORDER}`,
-      }}
-    >
-      <Typography
-        variant="hud-tag"
-        sx={{ color: accent ? 'rgba(255,255,255,0.55)' : ACCENT, fontFamily: 'monospace' }}
-      >
-        {title}
-      </Typography>
-    </Box>
-    {children}
-  </Box>
-)
-
-const Label = ({ children }: { children: React.ReactNode }) => (
-  <Typography variant="hud-tag" sx={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>
-    {children}
-  </Typography>
-)
-
-const Value = ({ children, sx }: { children: React.ReactNode; sx?: object }) => (
-  <Typography variant="hud-data" sx={{ color: '#fff', fontWeight: 700, ...sx }}>
-    {children}
-  </Typography>
-)
-
-const DarkBar = ({ value, color = '#1e88e5' }: { value: number; color?: string }) => (
-  <Box sx={{ position: 'relative', height: 3, bgcolor: 'rgba(255,255,255,0.08)', width: '100%' }}>
-    <Box
-      sx={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        height: '100%',
-        width: `${Math.min(100, Math.max(0, value))}%`,
-        bgcolor: color,
-        boxShadow: `0 0 6px ${color}80`,
-        transition: 'width 0.3s ease',
-      }}
-    />
-  </Box>
-)
-
-const StatusDot = ({ color }: { color: string }) => (
-  <Box
-    sx={{
-      width: 6,
-      height: 6,
-      borderRadius: '50%',
-      bgcolor: color,
-      boxShadow: `0 0 6px ${color}`,
-      flexShrink: 0,
-      animation: `${pulse} 2s ease-in-out infinite`,
-    }}
-  />
-)
-
-const ArcGauge = ({ value, label, color }: { value: number; label: string; color: string }) => {
-  const radius = 42
-  const stroke = 6
-  const circumference = Math.PI * radius
-  const offset = circumference - (value / 100) * circumference
-
-  return (
-    <Stack sx={{ alignItems: 'center', gap: 0.5 }}>
-      <Box sx={{ position: 'relative', width: 96, height: 58 }}>
-        <svg width="96" height="58" viewBox="0 0 96 58" style={{ overflow: 'visible' }}>
-          <path
-            d={`M 6 54 A ${radius} ${radius} 0 0 1 90 54`}
-            fill="none"
-            stroke="rgba(255,255,255,0.12)"
-            strokeWidth={stroke}
-            strokeLinecap="round"
-          />
-          <path
-            d={`M 6 54 A ${radius} ${radius} 0 0 1 90 54`}
-            fill="none"
-            stroke={color}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-          />
-        </svg>
-        <Typography
-          variant="hud-data-xl"
-          sx={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', color: '#fff' }}
-        >
-          {value}
-        </Typography>
-      </Box>
-      <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
-        <StatusDot color={color} />
-        <Label>{label}</Label>
-      </Stack>
-    </Stack>
-  )
 }
 
 export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraft }, ref) => {

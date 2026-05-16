@@ -11,6 +11,10 @@
 - Fix asteroid belt moving after mining — belt lateral drift now correctly tied to dockedToStation, not dockedMesh; asteroids always keep spinning
 - Refactor StationBuildMenu: extract ReqRow, LockedOverlay, SectionCard into own subfolders; shared constants in constants.ts
 - Add child-component subfolder convention to project instructions
+- Refactor Toolbar: extract ResourceAmount into own subfolder
+- Refactor Nav: extract NavBarButton into own subfolder; shared StyledIcon and buttonSx in constants.ts
+- Refactor RadiationWarning: extract WarningBanner, SolarWarning, RadiationActive into own subfolders
+- Refactor ShipStats: extract SciFiPanel, Label, Value, DarkBar, StatusDot, ArcGauge into own subfolders; shared constants in constants.ts
 
 ## 2026-05-11
 
