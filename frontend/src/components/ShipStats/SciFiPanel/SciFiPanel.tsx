@@ -1,6 +1,5 @@
 import { Box, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
-import { ACCENT, CORNER, COL_WIDTH, PANEL_BG, PANEL_BORDER, CRITICAL_BG } from '../constants'
 
 interface SciFiPanelProps {
   title: string
@@ -12,8 +11,8 @@ export const SciFiPanel = ({ title, children, accent = false }: SciFiPanelProps)
   <Box
     sx={{
       position: 'relative',
-      width: COL_WIDTH,
-      bgcolor: accent ? CRITICAL_BG : PANEL_BG,
+      width: 300,
+      bgcolor: accent ? '#0d2d6b' : '#040b18',
       p: 6,
       boxShadow: accent
         ? `0 0 32px rgba(33,150,243,0.45), inset 0 0 24px rgba(33,150,243,0.06)`
@@ -23,10 +22,10 @@ export const SciFiPanel = ({ title, children, accent = false }: SciFiPanelProps)
         position: 'absolute',
         top: -1,
         left: -1,
-        width: CORNER,
-        height: CORNER,
-        borderTop: `2px solid ${ACCENT}`,
-        borderLeft: `2px solid ${ACCENT}`,
+        width: 10,
+        height: 10,
+        borderTop: '2px solid #42a5f5',
+        borderLeft: '2px solid #42a5f5',
         pointerEvents: 'none',
       },
       '&::after': {
@@ -34,10 +33,10 @@ export const SciFiPanel = ({ title, children, accent = false }: SciFiPanelProps)
         position: 'absolute',
         bottom: -1,
         right: -1,
-        width: CORNER,
-        height: CORNER,
-        borderBottom: `2px solid ${ACCENT}`,
-        borderRight: `2px solid ${ACCENT}`,
+        width: 10,
+        height: 10,
+        borderBottom: '2px solid #42a5f5',
+        borderRight: '2px solid #42a5f5',
         pointerEvents: 'none',
       },
     }}
@@ -46,12 +45,12 @@ export const SciFiPanel = ({ title, children, accent = false }: SciFiPanelProps)
       sx={{
         pb: 1,
         mb: 1.5,
-        borderBottom: `1px solid ${accent ? 'rgba(255,255,255,0.15)' : PANEL_BORDER}`,
+        borderBottom: `1px solid ${accent ? 'rgba(255,255,255,0.15)' : 'rgba(33,150,243,0.35)'}`,
       }}
     >
       <Typography
         variant="hud-tag"
-        sx={{ color: accent ? 'rgba(255,255,255,0.55)' : ACCENT, fontFamily: 'monospace' }}
+        sx={{ color: accent ? 'rgba(255,255,255,0.55)' : '#42a5f5', fontFamily: 'monospace' }}
       >
         {title}
       </Typography>

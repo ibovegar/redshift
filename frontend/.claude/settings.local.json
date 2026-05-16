@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(git lfs *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Vegar Eeg\\\\workspace\\\\redshift\\\\frontend\\\\src\\\\components\" -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(del \"c:\\\\Users\\\\Vegar Eeg\\\\workspace\\\\redshift\\\\frontend\\\\src\\\\ui\\\\theme\\\\typography.d.ts\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Vegar Eeg\\\\workspace\\\\redshift\\\\frontend\\\\src\\\\containers\\\\Tactical\\\\TacticalBackground\\\\scene\\\\\" -Recurse | Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Vegar Eeg\\\\workspace\\\\redshift\\\\frontend\" -Depth 0)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\Vegar Eeg\\\\workspace\\\\redshift\\\\frontend\\\\src\\\\components\" -Depth 1 | Where-Object { $_.PSIsContainer } | Select-Object Name)",
+      "Bash(npx vite *)",
+      "Bash(node -e ' *)",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"public\\\\models\\\\tellrx5.glb\"\\); $jsonLen = [BitConverter]::ToUInt32\\($bytes, 12\\); $json = [System.Text.Encoding]::UTF8.GetString\\($bytes, 20, $jsonLen\\); $obj = $json | ConvertFrom-Json; $obj.nodes | ForEach-Object { $_.name })",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"public\\\\models\\\\tellrx5.glb\"\\); $jsonLen = [BitConverter]::ToUInt32\\($bytes, 12\\); $json = [System.Text.Encoding]::UTF8.GetString\\($bytes, 20, $jsonLen\\); $obj = $json | ConvertFrom-Json; \"SCENES:\"; $obj.scenes | ConvertTo-Json -Depth 5; \"NODES:\"; for \\($i = 0; $i -lt $obj.nodes.Count; $i++\\) { $n = $obj.nodes[$i]; $childList = if \\($n.children\\) { $n.children -join \",\" } else { \"-\" }; \"[{0}] {1} children=\\({2}\\)\" -f $i, $n.name, $childList })",
+      "PowerShell(foreach \\($f in @\\(\"cygf35.glb\",\"drax22.glb\",\"hamm2.glb\",\"vanguard.glb\"\\)\\) { \"=== $f ===\"; $p = \"public\\\\models\\\\$f\"; $bytes = [System.IO.File]::ReadAllBytes\\($p\\); $jsonLen = [BitConverter]::ToUInt32\\($bytes, 12\\); $json = [System.Text.Encoding]::UTF8.GetString\\($bytes, 20, $jsonLen\\); $obj = $json | ConvertFrom-Json; $obj.nodes | ForEach-Object { $_.name } })",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"public\\\\models\\\\tellrx5.glb\"\\); $jsonLen = [BitConverter]::ToUInt32\\($bytes, 12\\); $json = [System.Text.Encoding]::UTF8.GetString\\($bytes, 20, $jsonLen\\); $obj = $json | ConvertFrom-Json; \"Scene name:\"; $obj.scenes[0].name; \"Node children index 0 \\(cockpit\\):\"; $obj.nodes[0] | ConvertTo-Json -Depth 3; \"Node with mesh + children?\"; $obj.nodes | Where-Object { $_.children } | ForEach-Object { \"$\\($_.name\\) -> $\\($_.children -join ','\\)\" })",
+      "Bash(npm run *)",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"public\\\\models\\\\tellrx5.glb\"\\); $jsonLen = [BitConverter]::ToUInt32\\($bytes, 12\\); $json = [System.Text.Encoding]::UTF8.GetString\\($bytes, 20, $jsonLen\\); $obj = $json | ConvertFrom-Json; \"Total nodes: $\\($obj.nodes.Count\\)\"; \"Total meshes: $\\($obj.meshes.Count\\)\"; \"\"; \"All nodes \\(full dump\\):\"; for \\($i = 0; $i -lt $obj.nodes.Count; $i++\\) { $n = $obj.nodes[$i]; $hasMesh = if \\($null -ne $n.mesh\\) { \"mesh=$\\($n.mesh\\)\" } else { \"no-mesh\" }; $kids = if \\($n.children\\) { \"kids=[$\\($n.children -join ','\\)]\" } else { \"no-kids\" }; \"[$i] '$\\($n.name\\)' $hasMesh $kids\" }; \"\"; \"Meshes:\"; for \\($i = 0; $i -lt $obj.meshes.Count; $i++\\) { \"[$i] '$\\($obj.meshes[$i].name\\)' prims=$\\($obj.meshes[$i].primitives.Count\\)\" })",
+      "Bash(pnpm typecheck *)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\Vegar Eeg\\\\workspace\\\\redshift\\\\frontend\\\\src\\\\components\\\\StationBuildMenu\\\\ReqRow.tsx\", \"c:\\\\Users\\\\Vegar Eeg\\\\workspace\\\\redshift\\\\frontend\\\\src\\\\components\\\\StationBuildMenu\\\\LockedOverlay.tsx\", \"c:\\\\Users\\\\Vegar Eeg\\\\workspace\\\\redshift\\\\frontend\\\\src\\\\components\\\\StationBuildMenu\\\\SectionCard.tsx\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Vegar Eeg\\\\workspace\\\\redshift\\\\frontend\\\\src\\\\components\" -Recurse -Include \"*.tsx\", \"*.ts\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(pnpm tsc *)",
+      "Bash(cd \"c:\\\\Users\\\\Vegar Eeg\\\\workspace\\\\redshift\\\\frontend\" && rm src/components/Layout/Nav/constants.ts)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Vegar Eeg\\workspace\\redshift\\frontend\\src\\components\\Layout\\Nav"
+    ]
+  }
+}

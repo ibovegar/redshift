@@ -11,7 +11,7 @@ import {
   SECTION_NAMES
 } from 'models/station-section'
 import type { SectionStatus, SectionType } from 'models/station-section'
-import { BLUEPRINT_IMAGE, COLORS, STATUS_LABEL, canAfford, heldAmount } from '../constants'
+import { BLUEPRINT_IMAGE, STATUS_LABEL, canAfford, heldAmount } from '../constants'
 import { LockedOverlay } from '../LockedOverlay/LockedOverlay'
 import { ReqRow } from '../ReqRow/ReqRow'
 
@@ -33,11 +33,7 @@ export const SectionCard = ({ type, status, blueprintMet, storage, isPending, on
   const affordable = canAfford(costs, storage)
   const interactive = !isLocked && !isOperational
 
-  const statusColor = isOperational
-    ? COLORS.operational
-    : isAvailable
-      ? COLORS.textMuted
-      : COLORS.textLocked
+  const statusColor = isOperational ? '#5a9e6f' : isAvailable ? '#888' : '#bbb'
 
   return (
     <Box
@@ -49,9 +45,9 @@ export const SectionCard = ({ type, status, blueprintMet, storage, isPending, on
         overflow: 'hidden',
         cursor: interactive ? 'pointer' : 'default',
         transition: 'box-shadow 0.18s, transform 0.18s',
-        boxShadow: COLORS.cardShadow,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
         '&:hover': interactive
-          ? { boxShadow: COLORS.cardShadowHover, transform: 'translateY(-4px)' }
+          ? { boxShadow: '0 8px 28px rgba(0,0,0,0.18)', transform: 'translateY(-4px)' }
           : undefined
       }}
     >
@@ -60,7 +56,7 @@ export const SectionCard = ({ type, status, blueprintMet, storage, isPending, on
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          backgroundColor: COLORS.cardBg,
+          backgroundColor: '#fff',
           filter: isLocked ? 'blur(3px)' : 'none',
           opacity: isLocked ? 0.55 : 1
         }}
@@ -91,7 +87,7 @@ export const SectionCard = ({ type, status, blueprintMet, storage, isPending, on
 
         <Box sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Typography variant="hud-title" sx={{ color: COLORS.textTitle }}>
+            <Typography variant="hud-title" sx={{ color: '#222' }}>
               {SECTION_NAMES[type]}
             </Typography>
             <Typography
@@ -117,7 +113,7 @@ export const SectionCard = ({ type, status, blueprintMet, storage, isPending, on
           {isOperational ? (
             <Typography
               variant="caption"
-              sx={{ color: COLORS.operational, fontWeight: 700, mt: 'auto' }}
+              sx={{ color: '#5a9e6f', fontWeight: 700, mt: 'auto' }}
             >
               Module active
             </Typography>

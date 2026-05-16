@@ -58,6 +58,7 @@ applyTo: "**"
 - Suspense at top level
 - Lefthook: typecheck on commit, lint on push
 - Child components always live in their own subfolder (`Component/Component.tsx`), even when nested inside a parent component's folder (e.g. `StationBuildMenu/SectionCard/SectionCard.tsx`). Shared non-component files (constants, helpers) sit at the parent folder root.
+- Do NOT extract sx styles or style-related values into a `constants.ts` file. Write styles inline directly in the component. Only put non-style logic (helper functions, data constants, type mappings) in `constants.ts`.
 
 ---
 

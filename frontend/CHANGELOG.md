@@ -14,7 +14,10 @@
 - Refactor Toolbar: extract ResourceAmount into own subfolder
 - Refactor Nav: extract NavBarButton into own subfolder; shared StyledIcon and buttonSx in constants.ts
 - Refactor RadiationWarning: extract WarningBanner, SolarWarning, RadiationActive into own subfolders
-- Refactor ShipStats: extract SciFiPanel, Label, Value, DarkBar, StatusDot, ArcGauge into own subfolders; shared constants in constants.ts
+- Refactor ShipStats: extract SciFiPanel, Label, Value, DarkBar, StatusDot, ArcGauge into own subfolders; styles inline in each component
+- Remove style constants from Nav/constants.ts and ShipStats/constants.ts; move all sx values inline into their components
+- Remove COLORS from StationBuildMenu/constants.ts; move color values inline into SectionCard, ReqRow, LockedOverlay
+- Add convention to project instructions: no sx styles in constants.ts files
 
 ## 2026-05-11
 

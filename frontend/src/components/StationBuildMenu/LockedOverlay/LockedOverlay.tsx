@@ -1,7 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { SECTION_NAMES } from 'models/station-section'
 import type { SectionType } from 'models/station-section'
-import { COLORS } from '../constants'
 
 interface LockedOverlayProps {
   blueprint: SectionType | null
@@ -12,7 +11,7 @@ export const LockedOverlay = ({ blueprint }: LockedOverlayProps) => (
     sx={{
       position: 'absolute',
       inset: 0,
-      backgroundColor: COLORS.overlayBg,
+      backgroundColor: 'rgba(255, 255, 255, 0.55)',
       backdropFilter: 'blur(6px)',
       display: 'flex',
       flexDirection: 'column',

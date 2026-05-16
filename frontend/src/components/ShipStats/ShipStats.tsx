@@ -12,7 +12,20 @@ import { Label } from './Label/Label'
 import { SciFiPanel } from './SciFiPanel/SciFiPanel'
 import { StatusDot } from './StatusDot/StatusDot'
 import { Value } from './Value/Value'
-import { ACCENT, COL_WIDTH, STATUS_COLORS, STATUS_LABELS, UPGRADE_SLOTS } from './constants'
+
+const STATUS_COLORS: Record<string, string> = {
+  docked: '#81c784',
+  deployed: '#64b5f6',
+  'in-transit': '#ffb74d',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  docked: 'DOCKED',
+  deployed: 'DEPLOYED',
+  'in-transit': 'IN TRANSIT',
+}
+
+const UPGRADE_SLOTS = ['Engine', 'Plating', 'Deflector', 'Weapons', 'Stabilizer']
 
 interface ShipStatsProps {
   visible: boolean
@@ -45,7 +58,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
           right: 'calc(100% - var(--ship-x) + var(--ship-gap))',
           top: 'var(--ship-y)',
           transform: 'translateY(-50%)',
-          width: COL_WIDTH,
+          width: 300,
         }}
       >
         <SciFiPanel title="VESSEL IDENTITY">
@@ -59,7 +72,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
               </Typography>
               <Typography
                 variant="hud-label"
-                sx={{ color: ACCENT, fontFamily: 'monospace', mt: 0.5, display: 'block' }}
+                sx={{ color: '#42a5f5', fontFamily: 'monospace', mt: 0.5, display: 'block' }}
               >
                 {TYPE_LABELS[spacecraft.type]}
               </Typography>
@@ -115,9 +128,9 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
                       width: 8,
                       height: 8,
                       borderRadius: '2px',
-                      bgcolor: filled ? ACCENT : 'transparent',
-                      border: `1px solid ${filled ? ACCENT : 'rgba(255,255,255,0.2)'}`,
-                      boxShadow: filled ? `0 0 6px ${ACCENT}80` : 'none',
+                      bgcolor: filled ? '#42a5f5' : 'transparent',
+                      border: `1px solid ${filled ? '#42a5f5' : 'rgba(255,255,255,0.2)'}`,
+                      boxShadow: filled ? '0 0 6px #42a5f580' : 'none',
                       flexShrink: 0,
                     }}
                   />
@@ -125,7 +138,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
                   <Box sx={{ flex: 1 }} />
                   <Typography
                     variant="hud-tag"
-                    sx={{ color: filled ? ACCENT : 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}
+                    sx={{ color: filled ? '#42a5f5' : 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}
                   >
                     {filled ? 'ACTIVE' : '---'}
                   </Typography>
@@ -144,7 +157,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
           left: 'calc(var(--ship-x) + var(--ship-gap))',
           top: 'var(--ship-y)',
           transform: 'translateY(-50%)',
-          width: COL_WIDTH,
+          width: 300,
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', pointerEvents: 'auto' }}>
