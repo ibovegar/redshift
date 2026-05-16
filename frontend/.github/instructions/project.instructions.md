@@ -57,6 +57,7 @@ applyTo: "**"
 - CartProvider context wraps the app
 - Suspense at top level
 - Lefthook: typecheck on commit, lint on push
+- Child components always live in their own subfolder (`Component/Component.tsx`), even when nested inside a parent component's folder (e.g. `StationBuildMenu/SectionCard/SectionCard.tsx`). Shared non-component files (constants, helpers) sit at the parent folder root.
 
 ---
 

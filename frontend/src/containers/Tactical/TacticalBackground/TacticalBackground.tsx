@@ -26,6 +26,7 @@ import {
   useUpdateSpacecraftStatus,
   useUser
 } from 'hooks'
+import { SECTION_NAMES } from 'models/station-section'
 import type { SectionType } from 'models/station-section'
 import type { Asteroid } from 'models/asteroid'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -38,7 +39,6 @@ import { CameraZoom } from './scene/camera-zoom'
 import { FuelBarController } from './scene/fuel-bar'
 import { GodRays } from './scene/god-rays'
 import { LensFlare } from './scene/lens-flare'
-import { ModelHighlight } from './scene/model-highlight'
 import { Planet } from './scene/planet'
 import { ScannedIndicators } from './scene/scanned-indicators'
 import { hideScanPanel, updateButtonStates, updateMenu, updateScanPanel, updateShipStats } from './scene/scene-ui'
@@ -281,7 +281,8 @@ export const TacticalBackground = () => {
       rotation: [0.2, -0.6, 0.12],
       scale: 0.012,
       camOffset: 0.4,
-      ringTilt: [0.7, -0.4, 0.2]
+      ringTilt: [0.7, -0.4, 0.2],
+      attachedUpgrades: spacecraft.attachedUpgrades
     })
     const shipHomePosition: [number, number, number] = [...ship.config.position]
     ship.addToScene(scene)
@@ -309,9 +310,7 @@ export const TacticalBackground = () => {
     buildBar.bind(sectionBuildBarRef.current)
     buildBar.setStation(station)
     buildBarObjRef.current = buildBar
-    const stationHighlight = new ModelHighlight(scene)
     station.load(gltfLoader, () => {
-      if (station.model) stationHighlight.attach(station.model)
       station.applySections(stationDataRef.current.sections)
       onAssetLoaded()
     })
@@ -507,6 +506,12 @@ export const TacticalBackground = () => {
 
     markDepletedRef.current = () => {
       belts.markDepleted()
+      dockedMesh = null
+      dockedInstanceId = -1
+      dockedMeshRef.current = null
+      dockedInstanceIdRef.current = -1
+      dockedAsteroid = null
+      ship.hitGroup.visible = true
     }
 
     const handleMouseDown = (e: MouseEvent) => {
@@ -885,9 +890,8 @@ export const TacticalBackground = () => {
       sun.mat.uniforms.uTime.value = elapsed
       godRays.mat.uniforms.uTime.value = elapsed
 
-      const shipDocked = !shipTravelTarget && !dockedMesh && !travelMode
-      const beltSpeed = shipDocked && !miningZoomRef.current ? BELT_SPEED : 0
-      if (beltSpeed > 0 || belts.needsUpdate) belts.update(beltSpeed)
+      const beltSpeed = dockedToStation && !shipTravelTarget && !travelMode && !miningZoomRef.current ? BELT_SPEED : 0
+      belts.update(beltSpeed)
 
       // Scan flash update
       highlight.updateFlash(dt)
@@ -935,14 +939,16 @@ export const TacticalBackground = () => {
       if (!miningZoomRef.current && miningZoom.target) {
         miningZoom.zoomOut()
         miningStarted = false
-        selectShip()
-        if (dockedMesh) showMenu()
+        if (!station.isSelected) {
+          selectShip()
+          showMenu()
+        }
       }
 
       // Asteroid hover highlight
       if (miningZoomRef.current) {
         highlight.hide()
-        stationHighlight.hide()
+        station.hideTravelHighlight()
         // Hide all asteroid chunks except the one containing the mining target
         const mMesh = miningMeshRef.current
         for (const mesh of belts.meshes) {
@@ -972,12 +978,10 @@ export const TacticalBackground = () => {
           highlight.hide()
         }
 
-        if (travelMode && highlightedStation) {
-          stationHighlight.show()
-        } else if (shipTravelTarget && dockedToStation) {
-          stationHighlight.show()
+        if ((travelMode && highlightedStation) || (shipTravelTarget && dockedToStation)) {
+          station.showTravelHighlight()
         } else {
-          stationHighlight.hide()
+          station.hideTravelHighlight()
         }
       }
 
@@ -1467,7 +1471,6 @@ export const TacticalBackground = () => {
       solarWave.dispose()
       travelLine.dispose()
       highlight.dispose()
-      stationHighlight.dispose()
       scannedIndicators.dispose()
       ship.dispose()
       station.dispose()
@@ -1527,9 +1530,13 @@ export const TacticalBackground = () => {
       <HudPanel ref={stationMenuRef}>
         <HudMenu
           items={[
-            { label: 'Details', id: 'station-details-btn' },
-            { label: 'Engineering', id: 'station-engineering-btn' },
-            { label: 'Comms', id: 'station-comms-btn' }
+            { label: 'Manage', id: 'station-details-btn' },
+            ...station.sections
+              .filter((s) => s.status === 'operational')
+              .map((s) => ({
+                label: SECTION_NAMES[s.type],
+                onClick: () => { setBuildMenuOpen(true) }
+              }))
           ]}
         />
       </HudPanel>

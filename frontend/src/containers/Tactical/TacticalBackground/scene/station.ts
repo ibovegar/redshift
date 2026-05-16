@@ -2,6 +2,8 @@ import { SECTION_COLORS } from 'models/station-section'
 import type { SectionType, StationSection } from 'models/station-section'
 import * as THREE from 'three'
 import type { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { EmissiveHighlight } from './emissive-highlight'
+import { HighlightOverlay } from './highlight-overlay'
 
 export interface StationConfig {
   modelPath: string
@@ -27,88 +29,11 @@ const FADE_DURATION_MS = 1200
 const BUILD_PULSE_BASE = 0.2
 const BUILD_PULSE_AMP = 0.15
 const BUILD_PULSE_SPEED = 3
+const BUILD_GHOST_OPACITY = 0.25
 
 interface FadeState {
   materials: THREE.Material[]
   startTime: number
-}
-
-/**
- * Additive overlay that mirrors a set of source meshes for a glow/highlight effect.
- * Reused for both section hover (white tint per color) and build-in-progress (pulsing blue).
- */
-class HighlightOverlay {
-  private group = new THREE.Group()
-  private mat: THREE.MeshBasicMaterial
-  private sourceMap = new Map<THREE.Mesh, THREE.Mesh>()
-  private scene: THREE.Scene
-
-  constructor(scene: THREE.Scene, params: { color: number; opacity: number }) {
-    this.scene = scene
-    this.mat = new THREE.MeshBasicMaterial({
-      color: params.color,
-      transparent: true,
-      opacity: params.opacity,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      depthTest: false
-    })
-    this.group.visible = false
-    scene.add(this.group)
-  }
-
-  show(sources: Iterable<THREE.Object3D>) {
-    this.group.clear()
-    this.sourceMap.clear()
-    for (const obj of sources) {
-      obj.traverse((o) => {
-        if (o instanceof THREE.Mesh && o.geometry) {
-          const clone = new THREE.Mesh(o.geometry, this.mat)
-          clone.matrixAutoUpdate = false
-          this.group.add(clone)
-          this.sourceMap.set(clone, o)
-        }
-      })
-    }
-    this.group.visible = true
-  }
-
-  hide() {
-    this.group.visible = false
-    this.group.clear()
-    this.sourceMap.clear()
-  }
-
-  setColor(hex: number) {
-    this.mat.color.setHex(hex)
-  }
-
-  setOpacity(opacity: number) {
-    this.mat.opacity = opacity
-  }
-
-  get visible() {
-    return this.group.visible
-  }
-
-  /** Copy world matrix from each source mesh so the overlay tracks station motion/rotation. */
-  sync() {
-    if (!this.group.visible) return
-    for (const child of this.group.children) {
-      const source = this.sourceMap.get(child as THREE.Mesh)
-      if (source) {
-        source.updateWorldMatrix(true, false)
-        child.matrixWorld.copy(source.matrixWorld)
-        child.matrix.copy(source.matrixWorld)
-      }
-    }
-  }
-
-  dispose() {
-    this.scene.remove(this.group)
-    this.mat.dispose()
-    this.sourceMap.clear()
-  }
 }
 
 function projectToScreen(point: THREE.Vector3, camera: THREE.Camera): { x: number; y: number } {
@@ -132,11 +57,14 @@ export class Station {
   private sectionMeshes = new Map<SectionType, THREE.Mesh[]>()
   private visibleSections = new Set<SectionType>()
   private fadingSections = new Map<SectionType, FadeState>()
+  private buildingSection: SectionType | null = null
   private groupsParsed = false
   private firstApply = true
 
-  private hoverOverlay: HighlightOverlay | null = null
+  private hoverOverlay: EmissiveHighlight | null = null
   private buildOverlay: HighlightOverlay | null = null
+  private travelOverlay: EmissiveHighlight | null = null
+  private travelHighlightSources: THREE.Object3D[] = []
 
   constructor(config: StationConfig) {
     this.config = config
@@ -211,8 +139,9 @@ export class Station {
   addToScene(scene: THREE.Scene) {
     scene.add(this.hitDisc)
     scene.add(this.ringGroup)
-    this.hoverOverlay = new HighlightOverlay(scene, { color: 0xffffff, opacity: 0.35 })
+    this.hoverOverlay = new EmissiveHighlight()
     this.buildOverlay = new HighlightOverlay(scene, { color: 0x4488ff, opacity: 0.3 })
+    this.travelOverlay = new EmissiveHighlight({ color: 0x66ccff, emissiveIntensity: 0.35, tintStrength: 0.15 })
   }
 
   load(loader: GLTFLoader, onLoad?: () => void) {
@@ -269,6 +198,13 @@ export class Station {
       const shouldShow = operational.has(type)
       const wasShown = this.visibleSections.has(type)
 
+      // While a section is being built, the build-highlight path owns its
+      // visibility + opacity (ghost effect). Skip so we don't fight it.
+      if (this.buildingSection === type) {
+        if (shouldShow) this.visibleSections.add(type)
+        continue
+      }
+
       if (shouldShow && !wasShown) {
         this.visibleSections.add(type)
         if (this.firstApply) {
@@ -283,6 +219,11 @@ export class Station {
     }
 
     this.firstApply = false
+
+    this.travelHighlightSources = []
+    for (const [type, groups] of this.sectionGroups) {
+      if (this.visibleSections.has(type)) this.travelHighlightSources.push(...groups)
+    }
   }
 
   private fadeIn(type: SectionType, groups: THREE.Object3D[]) {
@@ -321,21 +262,53 @@ export class Station {
 
   showSectionHighlight(type: SectionType | null) {
     if (!this.hoverOverlay) return
-    if (!type) {
+    const groups = type ? this.sectionGroups.get(type) : undefined
+    if (!groups) {
       this.hoverOverlay.hide()
       return
     }
-    this.hoverOverlay.setColor(SECTION_COLORS[type])
-    this.hoverOverlay.show(this.sectionGroups.get(type) ?? [])
+    this.hoverOverlay.setColor(SECTION_COLORS[type!])
+    this.hoverOverlay.show(groups)
   }
 
   showBuildHighlight(type: SectionType | null) {
     if (!this.buildOverlay) return
+    if (this.buildingSection && this.buildingSection !== type) {
+      this.setSectionOpacity(this.buildingSection, 1)
+      this.buildingSection = null
+    }
     if (!type) {
       this.buildOverlay.hide()
       return
     }
-    this.buildOverlay.show(this.sectionGroups.get(type) ?? [])
+    const groups = this.sectionGroups.get(type)
+    if (!groups) return
+    this.buildingSection = type
+    for (const g of groups) g.visible = true
+    this.setSectionOpacity(type, BUILD_GHOST_OPACITY)
+    this.buildOverlay.show(groups)
+  }
+
+  showTravelHighlight() {
+    if (!this.travelOverlay || this.travelHighlightSources.length === 0) return
+    this.travelOverlay.show(this.travelHighlightSources)
+  }
+
+  hideTravelHighlight() {
+    this.travelOverlay?.hide()
+  }
+
+  private setSectionOpacity(type: SectionType, opacity: number) {
+    const meshes = this.sectionMeshes.get(type)
+    if (!meshes) return
+    for (const mesh of meshes) {
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+      for (const m of mats) {
+        const std = m as THREE.MeshStandardMaterial
+        std.transparent = opacity < 1
+        std.opacity = opacity
+      }
+    }
   }
 
   // ─── Screen-space helpers ────────────────────────────────────────────────
@@ -397,7 +370,6 @@ export class Station {
     this.ringGroup.position.y = y
     if (this.isSelected) this.blockRingGroup.rotation.y = elapsed * 0.2
 
-    this.hoverOverlay?.sync()
     if (this.buildOverlay?.visible) {
       this.buildOverlay.setOpacity(BUILD_PULSE_BASE + BUILD_PULSE_AMP * Math.sin(elapsed * BUILD_PULSE_SPEED))
       this.buildOverlay.sync()
@@ -424,6 +396,8 @@ export class Station {
     this.hoverOverlay = null
     this.buildOverlay?.dispose()
     this.buildOverlay = null
+    this.travelOverlay?.dispose()
+    this.travelOverlay = null
 
     if (this.model) {
       this.model.parent?.remove(this.model)

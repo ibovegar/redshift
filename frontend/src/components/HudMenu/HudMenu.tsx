@@ -2,7 +2,8 @@ import { HudButton } from 'components/HudButton/HudButton'
 
 export interface MenuItem {
   label: string
-  id: string
+  id?: string
+  onClick?: () => void
 }
 
 const DEFAULT_ITEMS: MenuItem[] = [
@@ -30,8 +31,8 @@ export const HudMenu = (props: HudMenuProps) => {
         padding: '20px'
       }}
     >
-      {items.map(({ label, id }) => (
-        <HudButton key={id} id={id}>
+      {items.map(({ label, id, onClick }) => (
+        <HudButton key={id ?? label} id={id} onClick={onClick}>
           {label}
         </HudButton>
       ))}

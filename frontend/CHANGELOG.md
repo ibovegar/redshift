@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-05-16
+
+- Rename station menu "Details" button to "Manage"
+- Show only built (operational) sections as clickable items in the station menu; remove static Engineering and Comms buttons
+- Clicking a section item in the station menu opens the full StationBuildMenu directly
+- Travel/arrival station highlight now uses emissive overlay on built sections only (not full model)
+- Fix post-mining bug: ship hit disc was left invisible and dockedMesh not cleared, making ship unselectable
+- Fix post-mining animation loop override: no longer forces ship selection if station was already selected
+- Fix asteroid belt moving after mining — belt lateral drift now correctly tied to dockedToStation, not dockedMesh; asteroids always keep spinning
+- Refactor StationBuildMenu: extract ReqRow, LockedOverlay, SectionCard into own subfolders; shared constants in constants.ts
+- Add child-component subfolder convention to project instructions
+
 ## 2026-05-11
 
 - Slow down resource count-up animation (80ms tick, up to 60 steps)

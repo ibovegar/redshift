@@ -9,7 +9,12 @@ export interface ShipConfig {
   scale: number
   camOffset: number
   ringTilt: [number, number, number]
+  attachedUpgrades?: string[]
 }
+
+// Top-level GLB nodes prefixed with this are attachment slots; anything else
+// (e.g. GXX_Cockpit-*) is part of the base hull and always visible.
+const ATTACHMENT_NODE_PREFIX = 'GXX_L-'
 
 export class Ship {
   config: ShipConfig
@@ -213,6 +218,7 @@ export class Ship {
       this.model.position.set(...this.config.position)
       this.model.rotation.set(...this.config.rotation)
       this.model.scale.setScalar(this.config.scale)
+      this.applyAttachedUpgrades(this.config.attachedUpgrades ?? [])
       // Attach a light so the ship and nearby asteroids are lit during rotation
       const shipLight = new THREE.PointLight(0xddeeff, 1, 3)
       shipLight.position.set(0, 8, 15)
@@ -222,11 +228,22 @@ export class Ship {
     })
   }
 
+  private applyAttachedUpgrades(attachedUpgrades: string[]) {
+    if (!this.model) return
+    const attached = new Set(attachedUpgrades)
+    this.model.traverse((child) => {
+      if (child.name.startsWith(ATTACHMENT_NODE_PREFIX)) {
+        child.visible = attached.has(child.name)
+      }
+    })
+  }
+
   getCamTarget(): THREE.Vector3 {
     return this.camTarget
   }
 
   raycast(raycaster: THREE.Raycaster): boolean {
+    if (!this.hitGroup.visible) return false
     return raycaster.intersectObject(this.hitDisc).length > 0
   }
 
