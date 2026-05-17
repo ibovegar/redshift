@@ -24,7 +24,7 @@ export const SolarWarning = ({ countdown }: SolarWarningProps) => {
       }}
     >
       <Typography variant="hud-alarm">SOLAR EVENT INCOMING</Typography>
-      <Typography variant="hud-alarm" sx={{ fontSize: 26, marginLeft: 6 }}>{timeStr}</Typography>
+      <Typography variant="hud-alarm" sx={{ fontSize: 26 }}>{timeStr}</Typography>
     </WarningBanner>
   )
 }
