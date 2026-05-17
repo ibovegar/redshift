@@ -10,7 +10,7 @@ interface ReqRowProps {
 
 export const ReqRow = ({ met, label, image }: ReqRowProps) => {
   const Icon = met ? CheckCircleIcon : CancelOutlinedIcon
-  const color = met ? '#2e7d32' : '#c62828'
+  const color = met ? '#66bb6a' : '#ef5350'
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
       <Box
@@ -18,18 +18,18 @@ export const ReqRow = ({ met, label, image }: ReqRowProps) => {
         src={image}
         alt=""
         sx={{
-          width: 28,
-          height: 28,
+          width: 24,
+          height: 24,
           objectFit: 'contain',
-          borderRadius: '6px',
+          borderRadius: '4px',
           flexShrink: 0,
-          filter: met ? 'none' : 'grayscale(0.6) brightness(0.8)'
+          filter: met ? 'none' : 'grayscale(0.6) brightness(0.6)'
         }}
       />
-      <Typography sx={{ color: '#111', fontSize: 12, lineHeight: 1.4, flex: 1, fontWeight: 'bold' }}>
+      <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, lineHeight: 1.4, flex: 1, fontFamily: 'monospace' }}>
         {label}
       </Typography>
-      <Icon sx={{ fontSize: 18, color, flexShrink: 0 }} />
+      <Icon sx={{ fontSize: 16, color, flexShrink: 0 }} />
     </Box>
   )
 }

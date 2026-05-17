@@ -25,8 +25,8 @@ export const SECTION_NAMES: Record<SectionType, string> = {
 }
 
 export const SECTION_DESCRIPTIONS: Record<SectionType, string> = {
-  command: 'Central hub for station operations, docking, and construction.',
-  research: 'Research new ship blueprints, upgrades, and station sections.',
+  command: 'Central hub responsible for constructing all other station modules. Required before any expansion can begin.',
+  research: 'Dedicated research facility for developing blueprints for ships, ship addons, and advanced station modules. Does not produce materials.',
   engineering: 'Manufacture equipment and perform advanced ship repairs.',
   storage: 'Expanded cargo storage for resources and equipment.',
   power: 'Provides additional power capacity for all station modules.'
@@ -43,13 +43,13 @@ export const SECTION_COLORS: Record<SectionType, number> = {
 // Which module must be operational to unlock this one (its "blueprint" source)
 export const SECTION_BLUEPRINT: Record<SectionType, SectionType | null> = {
   command: null,
-  research: 'command',
-  engineering: 'research',
-  storage: 'research',
-  power: 'engineering'
+  engineering: 'command',
+  research: 'engineering',
+  power: 'research',
+  storage: 'research'
 }
 
-export const SECTION_ORDER: readonly SectionType[] = ['command', 'research', 'engineering', 'storage', 'power']
+export const SECTION_ORDER: readonly SectionType[] = ['command', 'engineering', 'research', 'power', 'storage']
 
 export const SECTION_IMAGES: Record<SectionType, string> = {
   command: '/images/modules/command.jpg',

@@ -3,7 +3,6 @@ import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
 import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
 import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
 import { HudButton } from 'components/HudButton/HudButton'
-import { HudCard } from 'components/HudCard/HudCard'
 import { HudMenu } from 'components/HudMenu/HudMenu'
 import { HudPanel } from 'components/HudPanel/HudPanel'
 import { HudTooltip } from 'components/HudTooltip/HudTooltip'
@@ -12,7 +11,7 @@ import { RadiationWarning } from 'components/RadiationWarning/RadiationWarning'
 import { ScanResult } from 'components/ScanResult/ScanResult'
 import { ShipStats } from 'components/ShipStats/ShipStats'
 import { HudProgressBar } from 'components/HudProgressBar/HudProgressBar'
-import { StationBuildMenu } from 'components/StationBuildMenu/StationBuildMenu'
+import { StationBuildGrid } from 'components/StationBuildGrid/StationBuildGrid'
 import { MATERIAL_STORAGE_COST } from 'data/materials'
 import {
   useBuildSection,
@@ -1542,21 +1541,29 @@ export const TacticalBackground = () => {
       </HudPanel>
       <div
         ref={buildMenuRef}
-        style={{ position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 20, pointerEvents: buildMenuOpen ? 'auto' : 'none' }}
+        style={{
+          position: 'fixed', left: '50%', top: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 20,
+          opacity: buildMenuOpen ? 1 : 0,
+          pointerEvents: buildMenuOpen ? 'auto' : 'none',
+          transition: 'opacity 0.4s',
+          backgroundColor: '#C2C7C2',
+          borderRadius: 2,
+          padding: '28px 32px',
+        }}
       >
-        <HudCard visible={buildMenuOpen} interactive={buildMenuOpen} size="large" minWidth={800}>
-          <StationBuildMenu
-            sections={station.sections}
-            storage={station.storage}
-            isPending={buildSection.isPending}
-            onBuild={(type: SectionType) => {
-              setBuildMenuOpen(false)
-              buildBarObjRef.current?.start(type)
-              stationSceneRef.current?.showBuildHighlight(type)
-              buildSection.mutate(type)
-            }}
-          />
-        </HudCard>
+        <StationBuildGrid
+          sections={station.sections}
+          storage={station.storage}
+          isPending={buildSection.isPending}
+          onBuild={(type: SectionType) => {
+            setBuildMenuOpen(false)
+            buildBarObjRef.current?.start(type)
+            stationSceneRef.current?.showBuildHighlight(type)
+            buildSection.mutate(type)
+          }}
+        />
       </div>
       <HudPanel ref={dockedListRef}>
         <div

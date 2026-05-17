@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-05-17
+
+- StationBuildGrid: all modules now always visible in list and grid; modules with unmet blueprint dependency render as striped "Unavailable" placeholders instead of being hidden
+- StationBuildGrid: unavailable list items hide thumbnail and module name (only "Unavailable" status + stripes show); unavailable grid cells no longer show the module name
+- StationBuildGrid: remove per-module color map; all grid highlights (corners, BUILD preview, dot border, selected scanline) use a single primary blue (#6699bb); remove top colored band from operational grid cells
+- StationBuildGrid: available modules whose costs aren't met now render in their grid position as a greyed-out disabled cell (full grayscale image, dark tint, faded name) instead of an empty notch
+- StationBuildGrid: buildable modules (available + affordable) always render the BUILD cell in the grid; clicking the cell triggers onBuild directly. Hover-to-preview state removed (no longer needed)
+- StationBuildGrid: grid cell click now expands the corresponding list panel (selects the module) instead of building directly; the build button in the list panel handles the actual build and stays disabled until affordable
+- StationBuildGrid: list items render with a disabled visual (grayscale thumbnail, muted text, "○ Insufficient resources" status) when available but the player can't afford the build
+- StationBuildGrid: dependency lines are now hidden until the parent module is operational; lines use the shared primary blue (#6699bb), solid when the child is also built and dashed when not
+- ModuleListItem: scope click-to-expand to the header row only (instead of the whole card) so clicks inside the expanded details no longer auto-collapse — kept original Box+Collapse pattern
+- StationBuildGrid: progressive reveal flow — modules only appear in the list and grid once their blueprint dependency is operational; engineering now gates research/power/storage
+- StationBuildGrid: dependency tree now command → engineering → research → {power, storage}
+- StationBuildGrid: new layout — command (top-left), engineering (right of command), then research/power/storage stack vertically to the right of engineering once engineering is built
+- StationBuildGrid: grid auto-sizes to revealed modules (no fixed COLS/ROWS); empty cells render only at positions of revealed-but-unbuilt modules
+- StationBuildGrid: hovering a module list item previews the module in its empty grid slot; selection still shows preview as fallback
+- ModuleListItem: added onHover prop to drive grid preview from list hover
+
 ## 2026-05-16
 
 - Rename station menu "Details" button to "Manage"
