@@ -44,7 +44,7 @@ export const station: Station = {
   ],
   sections: [
     { type: 'command', status: 'operational' },
-    { type: 'engineering', status: 'available' },
+    { type: 'engineering', status: 'locked' },
     { type: 'research', status: 'locked' },
     { type: 'power', status: 'locked' },
     { type: 'storage', status: 'locked' }

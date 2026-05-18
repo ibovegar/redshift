@@ -57,7 +57,7 @@ const palette: PaletteOptions = {
     selected: '#19385b',
     disabledBackground: '#3b444f'
   },
-  hud: hudColors,
+  hud: hudColors
 }
 
 const components: Components<Theme> = {
@@ -73,7 +73,7 @@ const components: Components<Theme> = {
         'hud-data': 'p',
         'hud-body': 'p',
         'hud-mono': 'p',
-        'hud-alarm': 'p',
+        'hud-alarm': 'p'
       }
     }
   },
@@ -130,6 +130,6 @@ export const ThemeDark = createTheme({
     h6: { fontSize: '1rem' },
     subtitle1: { fontSize: '0.85rem' },
     subtitle2: { fontSize: '0.7rem' },
-    ...hudTypographyVariants,
+    ...hudTypographyVariants
   }
 })

@@ -91,6 +91,8 @@ export const TacticalBackground = () => {
   const sectionBuildBarRef = useRef<HTMLDivElement>(null)
   const buildBarObjRef = useRef<BuildBarController | null>(null)
   const [buildMenuOpen, setBuildMenuOpen] = useState(false)
+  const [buildMenuInitialSection, setBuildMenuInitialSection] = useState<SectionType>('command')
+  const zoomIntoStationRef = useRef<(() => void) | undefined>(undefined)
   const stationSceneRef = useRef<Station | null>(null)
   const hoveredSectionTypeRef = useRef<SectionType | null>(null)
   const [detailsMode, setDetailsMode] = useState(false)
@@ -501,6 +503,14 @@ export const TacticalBackground = () => {
       hideStationMenu()
       station.deselect()
       onUndockRef.current?.()
+    }
+
+    zoomIntoStationRef.current = () => {
+      if (detailZoom.isZoomed) return
+      detailZoom.zoomTo(station)
+      setDetailsMode(true)
+      hideStationMenu()
+      hoveredSectionTypeRef.current = null
     }
 
     markDepletedRef.current = () => {
@@ -1530,12 +1540,14 @@ export const TacticalBackground = () => {
         <HudMenu
           items={[
             { label: 'Manage', id: 'station-details-btn' },
-            ...station.sections
-              .filter((s) => s.status === 'operational')
-              .map((s) => ({
-                label: SECTION_NAMES[s.type],
-                onClick: () => { setBuildMenuOpen(true) }
-              }))
+            {
+              label: SECTION_NAMES.command,
+              onClick: () => {
+                zoomIntoStationRef.current?.()
+                setBuildMenuInitialSection('command')
+                setBuildMenuOpen(true)
+              }
+            },
           ]}
         />
       </HudPanel>
@@ -1550,10 +1562,12 @@ export const TacticalBackground = () => {
           transition: 'opacity 0.4s',
           backgroundColor: '#C2C7C2',
           borderRadius: 2,
-          padding: '28px 32px',
+          padding: '28px 20px 20px',
         }}
       >
         <StationBuildGrid
+          key={buildMenuInitialSection}
+          initialSection={buildMenuInitialSection}
           sections={station.sections}
           storage={station.storage}
           isPending={buildSection.isPending}

@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-05-18
+
+- Remove StationBuildMenu component (StationBuildMenu, SectionCard, LockedOverlay, ReqRow) — fully replaced by StationBuildGrid
+
+- StationBuildGrid: refactor — split monolithic component into InfoPanel, StationGrid, SectionHeader, and shared utils; removed dead code in GridCell (locked variant) and ModuleListItem (unused unavailable/locked props)
+- StationBuildGrid: research station always shown in module list as unavailable (engineering blueprint not met); full resource list (all materials, dimmed when 0) shown in info panel instead of ship storage only
+
+- StationBuildGrid: info panel always visible, defaults to command module; shows ship storage inventory below module details
+- TacticalBackground: clicking a module name in the station menu now zooms into the station, opens the build screen, and pre-selects that module; command module always shown in station menu
+- StationBuildGrid: replace module photos in list item thumbnails with SVG icons from public/icons/modules/
+- StationBuildGrid: replace center dot in empty grid cells with MUI Add (+) icon
+- StationBuildGrid: hide unavailable modules from the module list entirely; widen the diagonal stripe pattern in unavailable grid cells (14px stripes, slightly darker)
+
 ## 2026-05-17
 
 - StationBuildGrid: all modules now always visible in list and grid; modules with unmet blueprint dependency render as striped "Unavailable" placeholders instead of being hidden

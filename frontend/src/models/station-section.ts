@@ -58,3 +58,11 @@ export const SECTION_IMAGES: Record<SectionType, string> = {
   storage: '/images/modules/storage.jpg',
   power: '/images/modules/power_1.jpg'
 }
+
+export const SECTION_ICONS: Record<SectionType, string> = {
+  command: '/icons/modules/module-1.svg',
+  engineering: '/icons/modules/module-2.svg',
+  research: '/icons/modules/module-3.svg',
+  power: '/icons/modules/module-4.svg',
+  storage: '/icons/modules/module-5.svg',
+}
