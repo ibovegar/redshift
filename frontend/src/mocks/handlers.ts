@@ -1,6 +1,7 @@
+import { BLUEPRINTS, getBlueprint, getModuleBlueprint } from 'models/blueprint'
 import type { Spacecraft, Station } from 'models'
 import type { CargoItem } from 'models/spacecraft'
-import { SECTION_COSTS } from 'models/station-section'
+import { SECTION_BLUEPRINT, SECTION_COSTS } from 'models/station-section'
 import type { SectionType } from 'models/station-section'
 import { HttpResponse, http } from 'msw'
 import { spacecrafts, station, user } from './data'
@@ -10,8 +11,35 @@ const url = import.meta.env.VITE_API_URL
 const db = {
   user: { ...user },
   spacecrafts: [...spacecrafts] as Spacecraft[],
-  station: { ...station, storage: [...station.storage] } as Station
+  station: { ...station, storage: [...station.storage], researchedBlueprints: [...station.researchedBlueprints] } as Station
 }
+
+const finalizeResearch = () => {
+  const task = db.station.researchInProgress
+  if (!task) return
+  if (Date.parse(task.completesAt) <= Date.now()) {
+    if (!db.station.researchedBlueprints.includes(task.blueprintId)) {
+      db.station.researchedBlueprints.push(task.blueprintId)
+    }
+    db.station.researchInProgress = null
+  }
+}
+
+const deductCosts = (costs: Partial<Record<string, number>>) => {
+  for (const [material, amount] of Object.entries(costs)) {
+    const item = db.station.storage.find((s) => s.material === material)!
+    item.amount -= amount ?? 0
+    if (item.amount <= 0) {
+      db.station.storage = db.station.storage.filter((s) => s.material !== material)
+    }
+  }
+}
+
+const hasMaterials = (costs: Partial<Record<string, number>>) =>
+  Object.entries(costs).every(([material, amount]) => {
+    const item = db.station.storage.find((s) => s.material === material)
+    return !!item && item.amount >= (amount ?? 0)
+  })
 
 export const handlers = [
   // User
@@ -62,6 +90,7 @@ export const handlers = [
 
   // Station
   http.get(`${url}/station`, () => {
+    finalizeResearch()
     return HttpResponse.json(db.station)
   }),
 
@@ -80,35 +109,68 @@ export const handlers = [
   }),
 
   http.post(`${url}/station/sections/build`, async ({ request }) => {
+    finalizeResearch()
     const { type } = (await request.json()) as { type: SectionType }
     const section = db.station.sections.find((s) => s.type === type)
-    if (!section || section.status !== 'available') {
+    if (!section || section.status === 'operational') {
       return new HttpResponse(null, { status: 400 })
     }
-    const costs = SECTION_COSTS[type]
-    for (const [material, amount] of Object.entries(costs)) {
-      const item = db.station.storage.find((s) => s.material === material)
-      if (!item || item.amount < amount) {
+    const blueprintType = SECTION_BLUEPRINT[type]
+    if (blueprintType) {
+      const blueprintSection = db.station.sections.find((s) => s.type === blueprintType)
+      if (!blueprintSection || blueprintSection.status !== 'operational') {
         return new HttpResponse(null, { status: 400 })
       }
     }
-    for (const [material, amount] of Object.entries(costs)) {
-      const item = db.station.storage.find((s) => s.material === material)!
-      item.amount -= amount
-      if (item.amount <= 0) {
-        db.station.storage = db.station.storage.filter((s) => s.material !== material)
-      }
+    const moduleBlueprint = getModuleBlueprint(type)
+    if (moduleBlueprint && !db.station.researchedBlueprints.includes(moduleBlueprint.id)) {
+      return new HttpResponse(null, { status: 400 })
     }
+    const costs = SECTION_COSTS[type]
+    if (!hasMaterials(costs)) {
+      return new HttpResponse(null, { status: 400 })
+    }
+    deductCosts(costs)
     section.status = 'operational'
-    // Unlock next sections based on what was just built
-    if (type === 'research') {
-      for (const s of db.station.sections) {
-        if (s.type === 'engineering' || s.type === 'storage') s.status = 'available'
-      }
-    } else if (type === 'engineering') {
-      for (const s of db.station.sections) {
-        if (s.type === 'power') s.status = 'available'
-      }
+    return HttpResponse.json(db.station)
+  }),
+
+  // Blueprints
+  http.get(`${url}/blueprints`, () => {
+    return HttpResponse.json(BLUEPRINTS)
+  }),
+
+  // Research
+  http.post(`${url}/research/start`, async ({ request }) => {
+    finalizeResearch()
+    const { blueprintId } = (await request.json()) as { blueprintId: string }
+    if (db.station.researchInProgress) {
+      return new HttpResponse(null, { status: 409 })
+    }
+    const blueprint = getBlueprint(blueprintId)
+    if (!blueprint) {
+      return new HttpResponse(null, { status: 404 })
+    }
+    if (db.station.researchedBlueprints.includes(blueprintId)) {
+      return new HttpResponse(null, { status: 400 })
+    }
+    const researchSection = db.station.sections.find((s) => s.type === 'research')
+    if (!researchSection || researchSection.status !== 'operational') {
+      return new HttpResponse(null, { status: 400 })
+    }
+    if (blueprint.parentBlueprintId && !db.station.researchedBlueprints.includes(blueprint.parentBlueprintId)) {
+      return new HttpResponse(null, { status: 400 })
+    }
+    if (!hasMaterials(blueprint.cost)) {
+      return new HttpResponse(null, { status: 400 })
+    }
+    deductCosts(blueprint.cost)
+    const startedAt = new Date()
+    const completesAt = new Date(startedAt.getTime() + blueprint.durationMs)
+    db.station.researchInProgress = {
+      blueprintId,
+      startedAt: startedAt.toISOString(),
+      completesAt: completesAt.toISOString()
     }
     return HttpResponse.json(db.station)
   })

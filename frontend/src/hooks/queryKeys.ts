@@ -5,5 +5,6 @@ export const queryKeys = {
   upgrades: ['upgrades'] as const,
   missions: ['missions'] as const,
   store: ['store'] as const,
-  station: ['station'] as const
+  station: ['station'] as const,
+  blueprints: ['blueprints'] as const
 }

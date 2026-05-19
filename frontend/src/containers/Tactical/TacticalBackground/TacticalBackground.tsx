@@ -1563,6 +1563,10 @@ export const TacticalBackground = () => {
           backgroundColor: '#C2C7C2',
           borderRadius: 2,
           padding: '28px 20px 20px',
+          width: 1700,
+          height: 770,
+          boxSizing: 'border-box',
+          overflow: 'hidden',
         }}
       >
         <StationBuildGrid
@@ -1570,9 +1574,10 @@ export const TacticalBackground = () => {
           initialSection={buildMenuInitialSection}
           sections={station.sections}
           storage={station.storage}
+          researchedBlueprints={station.researchedBlueprints}
+          researchInProgress={station.researchInProgress}
           isPending={buildSection.isPending}
           onBuild={(type: SectionType) => {
-            setBuildMenuOpen(false)
             buildBarObjRef.current?.start(type)
             stationSceneRef.current?.showBuildHighlight(type)
             buildSection.mutate(type)

@@ -43,10 +43,10 @@ export const SECTION_COLORS: Record<SectionType, number> = {
 // Which module must be operational to unlock this one (its "blueprint" source)
 export const SECTION_BLUEPRINT: Record<SectionType, SectionType | null> = {
   command: null,
-  engineering: 'command',
-  research: 'engineering',
-  power: 'research',
-  storage: 'research'
+  research: 'command',
+  engineering: 'research',
+  power: 'engineering',
+  storage: 'engineering'
 }
 
 export const SECTION_ORDER: readonly SectionType[] = ['command', 'engineering', 'research', 'power', 'storage']

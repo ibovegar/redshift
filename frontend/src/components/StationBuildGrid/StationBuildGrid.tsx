@@ -1,23 +1,35 @@
 import { Box } from '@mui/material'
+import type { ResearchTask } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
 import type { SectionType, StationSection } from 'models/station-section'
 import { SECTION_ORDER } from 'models/station-section'
 import { useState } from 'react'
 import { InfoPanel } from './InfoPanel/InfoPanel'
 import { ModuleListItem } from './ModuleListItem/ModuleListItem'
+import { ResearchTree } from './ResearchTree/ResearchTree'
 import { SectionHeader } from './SectionHeader'
 import { StationGrid } from './StationGrid/StationGrid'
-import { statusOf } from './utils'
+import { isOperational, statusOf } from './utils'
 
 interface Props {
   sections: StationSection[]
   storage: CargoItem[]
+  researchedBlueprints: string[]
+  researchInProgress: ResearchTask | null
   onBuild: (type: SectionType) => void
   isPending: boolean
   initialSection?: SectionType
 }
 
-export const StationBuildGrid = ({ sections, storage, onBuild, isPending, initialSection = 'command' }: Props) => {
+export const StationBuildGrid = ({
+  sections,
+  storage,
+  researchedBlueprints,
+  researchInProgress,
+  onBuild,
+  isPending,
+  initialSection = 'command'
+}: Props) => {
   const [selected, setSelected] = useState<SectionType>(initialSection)
 
   const handleBuild = () => {
@@ -25,7 +37,7 @@ export const StationBuildGrid = ({ sections, storage, onBuild, isPending, initia
     onBuild(selected)
   }
 
-  const onlineTypes = SECTION_ORDER.filter((t) => statusOf(sections, t) === 'operational')
+  const onlineTypes = SECTION_ORDER.filter((t) => isOperational(sections, t))
 
   return (
     <Box sx={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
@@ -46,7 +58,22 @@ export const StationBuildGrid = ({ sections, storage, onBuild, isPending, initia
         onBuild={handleBuild}
       />
 
-      <StationGrid sections={sections} onSelect={setSelected} />
+      <Box sx={{ flex: '0 0 964px', width: 964 }}>
+        {selected === 'research' ? (
+          <ResearchTree
+            storage={storage}
+            researchedBlueprints={researchedBlueprints}
+            researchInProgress={researchInProgress}
+          />
+        ) : (
+          <StationGrid
+            sections={sections}
+            storage={storage}
+            researchedBlueprints={researchedBlueprints}
+            onBuild={onBuild}
+          />
+        )}
+      </Box>
     </Box>
   )
 }

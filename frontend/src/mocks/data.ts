@@ -39,8 +39,10 @@ export const station: Station = {
   id: 'station-1',
   name: 'Gateway Station',
   storage: [
-    { material: 'iron', amount: 50 },
-    { material: 'copper', amount: 20 }
+    { material: 'iron', amount: 100 },
+    { material: 'copper', amount: 100 },
+    { material: 'titanium', amount: 100 },
+    
   ],
   sections: [
     { type: 'command', status: 'operational' },
@@ -48,5 +50,7 @@ export const station: Station = {
     { type: 'research', status: 'locked' },
     { type: 'power', status: 'locked' },
     { type: 'storage', status: 'locked' }
-  ]
+  ],
+  researchedBlueprints: [],
+  researchInProgress: null
 }

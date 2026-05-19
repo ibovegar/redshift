@@ -4,11 +4,7 @@ refactor static assets and move to a game_data folder. Get suggestions regarding
 Performace fix (use pre created 3d models for ateroids etc.)
 Login and splash screens screen
 
-Module hierarchy:
 
-Command module -> Research -> Engineering, power, storage (requires blueprint from research)
-Research -> Tellus modules -> next ship with modules -> Next ship repeat
-Engineering -> Items are avaiable for contruction when blueprint is researched
 
 Game loop.
 This a space survival game where expansion is restricted by the amount of fuel and resources. Find new artifact to research more effecient ways of travel. Mining system is necessary to gather more resource, including fuel. When entering a new system, a checkpoint is made by creating a depot and a manufacturing facility, capable of creating it's own resources like fuel.

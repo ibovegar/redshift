@@ -2,6 +2,28 @@
 
 ## 2026-05-18
 
+- StationBuildGrid: build action now leaves the menu open so the cell turns online and the module appears in the list immediately
+- StationBuildGrid: grid cell clicks no longer change the info panel selection; only module list clicks drive the panel (grid clicks will open a build-detail modal later)
+- station-section: reorder blueprint chain — research is now the first unlock after command, then engineering, then power & storage
+- Research foundation: blueprint model (modules, ships, ship-addons) with materials cost and research duration; Station now carries researchedBlueprints + researchInProgress
+- Mock API: GET /blueprints catalogue; POST /research/start (requires operational research module, deducts materials, sets in-progress task); GET /station auto-finalizes completed research on read; module build now gated on researched blueprint
+- Hooks: useBlueprints (suspense list) and useStartResearch (mutation, invalidates station)
+- Blueprint: added parentBlueprintId to encode tree hierarchy (ships → engineering BP, addons → ship BP); /research/start gates on parent researched
+- StationBuildGrid: new ResearchTree view replaces the build grid when research module is selected — top row of module BPs (engineering, power, storage), ship BPs beneath engineering, addon BPs beneath each ship; cards show cost, duration, progress bar during research, and a Research button when available
+- TacticalBackground/StationBuildGrid: build menu has fixed dimensions (1700×770) and a fixed-width right column so the menu no longer resizes when switching between the build grid and research tree views
+- StationGrid: module cells render as Unavailable (striped) until the blueprint has been researched — engineering/power/storage no longer flip to "available" the moment research is operational
+- StationGrid: the "Available" element on a buildable cell is a clickable primary button — clicking it triggers the build mutation; after build completes the cell transitions to the online (operational) render
+- Refactor StationBuildGrid module:
+  - utils.ts: centralized state derivation — getCellState, canBuildSection, getResearchStatus, getResearchProgress, isOperational
+  - GridCell: split into focused sub-components (EmptyCell, UnavailableCell, OnlineCell, AvailableCell) and shared building blocks (SectionImage, CellLabel, CenteredOverlay); accepts a single `state` prop
+  - ResearchCard: extracted CardTitle, CostList, CardFooter, ProgressIndicator sub-components; uses utils helpers; renamed prop shape to mirror parent state
+  - ResearchTree: tree levels precomputed at module scope; auto-refetch effect removed (now lives in useStation)
+- useStation: schedules a one-shot refetch when researchInProgress.completesAt elapses, so research finalization no longer depends on the ResearchTree being mounted — fixes engineering "Available" button not appearing if the user navigated away from the research view before the timer fired
+- Typography cleanup: removed one-off fontSize/fontFamily/uppercase overrides on Typography in GridCell, ResearchCard, and ModuleListItem; now driven by hud-label, hud-tag, and hud-data variants
+- Replaced `●` character indicators with MUI icons — CheckCircle for the "Researched" badge in ResearchCard, Circle for the "Online" status in ModuleListItem
+- Blueprint catalogue: all research durations set to 3 seconds for faster iteration
+- StationBuildGrid: available grid cells with sufficient resources now show a primary "Build" button overlay
+- Mock API: /station/sections/build now accepts builds based on blueprint dependency (parent operational) rather than literal 'available' status; removed broken hardcoded cascade
 - Remove StationBuildMenu component (StationBuildMenu, SectionCard, LockedOverlay, ReqRow) — fully replaced by StationBuildGrid
 
 - StationBuildGrid: refactor — split monolithic component into InfoPanel, StationGrid, SectionHeader, and shared utils; removed dead code in GridCell (locked variant) and ModuleListItem (unused unavailable/locked props)

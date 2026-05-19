@@ -1,3 +1,4 @@
+import CircleIcon from '@mui/icons-material/Circle'
 import { Box, Typography } from '@mui/material'
 import type { SectionType } from 'models/station-section'
 import { SECTION_ICONS, SECTION_NAMES } from 'models/station-section'
@@ -39,12 +40,20 @@ export const ModuleListItem = ({ type, selected, onSelect }: ModuleListItemProps
         <Typography variant="hud-heading" sx={{ color: selected ? 'common.white' : 'hud.text' }}>
           {SECTION_NAMES[type]}
         </Typography>
-        <Typography
-          variant="hud-data"
-          sx={{ fontSize: 11, mt: 0.75, color: selected ? 'rgba(255,255,255,0.75)' : 'hud.success' }}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            mt: 0.75,
+            color: selected ? 'rgba(255,255,255,0.75)' : 'hud.success'
+          }}
         >
-          ● Online
-        </Typography>
+          <CircleIcon sx={{ fontSize: 10 }} />
+          <Typography variant="hud-data" sx={{ color: 'inherit' }}>
+            Online
+          </Typography>
+        </Box>
       </Box>
     </Box>
   </Box>

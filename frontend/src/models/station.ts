@@ -1,3 +1,4 @@
+import type { ResearchTask } from './blueprint'
 import type { CargoItem } from './spacecraft'
 import type { StationSection } from './station-section'
 
@@ -6,4 +7,6 @@ export interface Station {
   name: string
   storage: CargoItem[]
   sections: StationSection[]
+  researchedBlueprints: string[]
+  researchInProgress: ResearchTask | null
 }

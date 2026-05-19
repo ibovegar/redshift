@@ -1,5 +1,6 @@
 export * from './asteroid'
 export * from './base-stats'
+export * from './blueprint'
 export * from './entity-state'
 export * from './mission'
 export * from './product-filter'
