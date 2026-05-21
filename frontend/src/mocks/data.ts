@@ -1,4 +1,5 @@
 import type { Spacecraft, Station, UserStats } from 'models'
+import { PRE_RESEARCHED_BLUEPRINT_IDS } from 'models/blueprint'
 
 export const user: UserStats = {
   credits: 998999999,
@@ -41,8 +42,7 @@ export const station: Station = {
   storage: [
     { material: 'iron', amount: 100 },
     { material: 'copper', amount: 100 },
-    { material: 'titanium', amount: 100 },
-    
+    { material: 'titanium', amount: 100 }
   ],
   sections: [
     { type: 'command', status: 'operational' },
@@ -51,6 +51,6 @@ export const station: Station = {
     { type: 'power', status: 'locked' },
     { type: 'storage', status: 'locked' }
   ],
-  researchedBlueprints: [],
+  researchedBlueprints: [...PRE_RESEARCHED_BLUEPRINT_IDS],
   researchInProgress: null
 }

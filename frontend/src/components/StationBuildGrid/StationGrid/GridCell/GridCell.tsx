@@ -6,7 +6,7 @@ import type { SectionType } from 'models/station-section'
 import { SECTION_IMAGES, SECTION_NAMES } from 'models/station-section'
 import type { ReactNode } from 'react'
 import { hudColors } from 'ui/theme/typography'
-import type { CellState } from '../utils'
+import type { CellState } from '../../utils'
 
 export const CELL = 160
 const NOTCH = 'polygon(0 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px))'
@@ -102,15 +102,7 @@ const OnlineCell = ({ type }: { type: SectionType }) => (
   </Box>
 )
 
-const AvailableCell = ({
-  type,
-  canBuild,
-  onBuild
-}: {
-  type: SectionType
-  canBuild: boolean
-  onBuild?: () => void
-}) => (
+const AvailableCell = ({ type, canBuild, onBuild }: { type: SectionType; canBuild: boolean; onBuild?: () => void }) => (
   <Box sx={cellBaseSx}>
     <Box sx={{ position: 'absolute', inset: -8, opacity: 0.35, filter: 'blur(4px)' }}>
       <SectionImage type={type} />

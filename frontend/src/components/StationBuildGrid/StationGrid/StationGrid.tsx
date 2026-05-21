@@ -2,9 +2,9 @@ import { Box } from '@mui/material'
 import type { CargoItem } from 'models/spacecraft'
 import type { SectionType, StationSection } from 'models/station-section'
 import { SECTION_ORDER } from 'models/station-section'
-import { CELL, GridCell } from '../GridCell/GridCell'
 import { SectionHeader } from '../SectionHeader'
 import { canBuildSection, getCellState } from '../utils'
+import { CELL, GridCell } from './GridCell/GridCell'
 
 const GAP = 10
 const COLS = 5

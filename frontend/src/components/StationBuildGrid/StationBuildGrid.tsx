@@ -1,4 +1,5 @@
 import { Box } from '@mui/material'
+import { DottedBackground } from 'components/DottedBackground/DottedBackground'
 import type { ResearchTask } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
 import type { SectionType, StationSection } from 'models/station-section'
@@ -40,15 +41,15 @@ export const StationBuildGrid = ({
   const onlineTypes = SECTION_ORDER.filter((t) => isOperational(sections, t))
 
   return (
-    <Box sx={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
-      <Box sx={{ flex: '0 0 340px', maxWidth: 340 }}>
+    <Box sx={{ display: 'flex', gap: '24px', alignItems: 'flex-start', height: '100%' }}>
+      <DottedBackground sx={{ flex: '0 0 340px', maxWidth: 340, alignSelf: 'stretch' }}>
         <SectionHeader>Modules</SectionHeader>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {onlineTypes.map((type) => (
             <ModuleListItem key={type} type={type} selected={selected === type} onSelect={() => setSelected(type)} />
           ))}
         </Box>
-      </Box>
+      </DottedBackground>
 
       <InfoPanel
         type={selected}
@@ -58,10 +59,9 @@ export const StationBuildGrid = ({
         onBuild={handleBuild}
       />
 
-      <Box sx={{ flex: '0 0 964px', width: 964 }}>
+      <Box sx={{ flex: '0 0 964px', width: 964, alignSelf: 'stretch' }}>
         {selected === 'research' ? (
           <ResearchTree
-            storage={storage}
             researchedBlueprints={researchedBlueprints}
             researchInProgress={researchInProgress}
           />

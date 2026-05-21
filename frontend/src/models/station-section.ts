@@ -52,11 +52,11 @@ export const SECTION_BLUEPRINT: Record<SectionType, SectionType | null> = {
 export const SECTION_ORDER: readonly SectionType[] = ['command', 'engineering', 'research', 'power', 'storage']
 
 export const SECTION_IMAGES: Record<SectionType, string> = {
-  command: '/images/modules/command.jpg',
-  research: '/images/modules/research.jpg',
-  engineering: '/images/modules/engineering_1.jpg',
-  storage: '/images/modules/storage.jpg',
-  power: '/images/modules/power_1.jpg'
+  command: '/images/modules/command.png',
+  research: '/images/modules/research.png',
+  engineering: '/images/modules/engineering_1.png',
+  storage: '/images/modules/storage.png',
+  power: '/images/modules/power_1.png'
 }
 
 export const SECTION_ICONS: Record<SectionType, string> = {

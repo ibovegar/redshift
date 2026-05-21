@@ -1,64 +1,86 @@
 import { Box } from '@mui/material'
-import { useStartResearch } from 'hooks'
-import { BLUEPRINTS } from 'models/blueprint'
+import { BlueprintBackground } from 'components/BlueprintBackground/BlueprintBackground'
 import type { Blueprint, ResearchTask } from 'models/blueprint'
-import type { CargoItem } from 'models/spacecraft'
+import { getBlueprint, getBlueprintChildren } from 'models/blueprint'
+import { useMemo } from 'react'
+import ReactFlow, { type Node } from 'reactflow'
+import 'reactflow/dist/style.css'
 import { SectionHeader } from '../SectionHeader'
-import { ResearchCard } from './ResearchCard'
+import { BlueprintEdge } from './BlueprintEdge/BlueprintEdge'
+import { CardNode } from './CardNode/CardNode'
+import { isShipBp, LAYOUT, TRANSLATE_EXTENT } from './layout'
+import { ShipGroupNode } from './ShipGroupNode/ShipGroupNode'
 
-const ENGINEERING_BLUEPRINT_ID = 'bp-mod-engineering'
-
-const childrenOf = (parentId: string | undefined): Blueprint[] =>
-  BLUEPRINTS.filter((bp) => bp.parentBlueprintId === parentId)
-
-const moduleBlueprints = childrenOf(undefined).filter((bp) => bp.category === 'module')
-const shipBlueprints = childrenOf(ENGINEERING_BLUEPRINT_ID).filter((bp) => bp.category === 'ship')
+const nodeTypes = { card: CardNode, shipGroup: ShipGroupNode }
+const edgeTypes = { blueprint: BlueprintEdge }
 
 interface Props {
-  storage: CargoItem[]
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
 }
 
-export const ResearchTree = ({ storage, researchedBlueprints, researchInProgress }: Props) => {
-  const startResearch = useStartResearch()
-
-  const cardProps = {
-    storage,
-    researchedBlueprints,
-    researchInProgress,
-    isPending: startResearch.isPending,
-    onStart: (id: string) => startResearch.mutate(id)
-  }
+export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props) => {
+  const nodes: Node[] = useMemo(
+    () =>
+      LAYOUT.nodes.map((n) => {
+        const blueprint = getBlueprint(n.id) as Blueprint
+        const onCardClick = () => {
+          /* modal hook-up coming later */
+        }
+        if (isShipBp(blueprint)) {
+          const addons = getBlueprintChildren(blueprint.id)
+          return {
+            id: n.id,
+            type: 'shipGroup',
+            position: { x: n.x, y: n.y },
+            data: { ship: blueprint, addons, researchedBlueprints, researchInProgress, onCardClick }
+          }
+        }
+        return {
+          id: n.id,
+          type: 'card',
+          position: { x: n.x, y: n.y },
+          data: { blueprint, researchedBlueprints, researchInProgress, onCardClick }
+        }
+      }),
+    [researchedBlueprints, researchInProgress]
+  )
 
   return (
-    <Box sx={{ flex: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <SectionHeader>Research Tree</SectionHeader>
-
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <Row>
-          {moduleBlueprints.map((bp) => (
-            <ResearchCard key={bp.id} blueprint={bp} {...cardProps} />
-          ))}
-        </Row>
-
-        {shipBlueprints.map((ship) => (
-          <Box key={ship.id} sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Row>
-              <ResearchCard blueprint={ship} {...cardProps} />
-            </Row>
-            <Row wrap>
-              {childrenOf(ship.id).map((addon) => (
-                <ResearchCard key={addon.id} blueprint={addon} {...cardProps} />
-              ))}
-            </Row>
-          </Box>
-        ))}
-      </Box>
+      <BlueprintBackground
+        sx={{
+          width: '100%',
+          flex: 1,
+          minHeight: 0,
+          position: 'relative',
+          borderRadius: 0.5,
+          overflow: 'hidden'
+        }}
+      >
+        <ReactFlow
+          nodes={nodes}
+          edges={LAYOUT.edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          nodeOrigin={[0, 0]}
+          fitView
+          fitViewOptions={{ padding: 0.05, maxZoom: 1 }}
+          translateExtent={TRANSLATE_EXTENT}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          panOnDrag
+          panOnScroll={false}
+          zoomOnScroll={false}
+          zoomOnPinch={false}
+          zoomOnDoubleClick={false}
+          preventScrolling={false}
+          proOptions={{ hideAttribution: true }}
+          defaultEdgeOptions={{ type: 'blueprint' }}
+        />
+      </BlueprintBackground>
     </Box>
   )
 }
-
-const Row = ({ children, wrap }: { children: React.ReactNode; wrap?: boolean }) => (
-  <Box sx={{ display: 'flex', gap: 2, flexWrap: wrap ? 'wrap' : 'nowrap' }}>{children}</Box>
-)

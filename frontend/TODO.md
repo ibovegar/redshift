@@ -1,4 +1,5 @@
 Feat:
+Major refactor, move from compoents/container pattern to modules instead.
 remove travel line panning when travelling.
 refactor static assets and move to a game_data folder. Get suggestions regarding structuring.
 Performace fix (use pre created 3d models for ateroids etc.)

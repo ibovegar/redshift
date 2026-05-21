@@ -11,6 +11,10 @@ export interface Blueprint {
   targetId: string
   cost: Partial<Record<AsteroidMaterial, number>>
   durationMs: number
+  /**
+   * Dependency edge: this blueprint can only be researched once parentBlueprintId is researched.
+   * The whole research tree is defined by these edges — see the ASCII diagram above BLUEPRINTS.
+   */
   parentBlueprintId?: string
 }
 
@@ -20,7 +24,43 @@ export interface ResearchTask {
   completesAt: string
 }
 
+/**
+ * Research tree (encoded via parentBlueprintId on each entry below):
+ *
+ *   bp-mod-command
+ *     └── bp-mod-research
+ *           ├── bp-mod-engineering
+ *           │     └── bp-ship-tellrx5
+ *           │           ├── bp-addon-engine-mk1
+ *           │           ├── bp-addon-deflector-mk1
+ *           │           ├── bp-addon-plating-mk1
+ *           │           ├── bp-addon-stabilizer-mk1
+ *           │           └── bp-addon-weapons-mk1
+ *           ├── bp-mod-power
+ *           └── bp-mod-storage
+ *
+ * Command and Research are pre-researched on a fresh station (see mocks/data.ts).
+ */
 export const BLUEPRINTS: Blueprint[] = [
+  {
+    id: 'bp-mod-command',
+    category: 'module',
+    name: 'Command Module',
+    description: 'Foundational schematics for the station command hub. The basis for all further research.',
+    targetId: 'command',
+    cost: {},
+    durationMs: 0
+  },
+  {
+    id: 'bp-mod-research',
+    category: 'module',
+    name: 'Research Module',
+    description: 'Schematics for the research module. Unlocks all subsequent blueprint research.',
+    targetId: 'research',
+    cost: {},
+    durationMs: 0,
+    parentBlueprintId: 'bp-mod-command'
+  },
   {
     id: 'bp-mod-engineering',
     category: 'module',
@@ -28,7 +68,8 @@ export const BLUEPRINTS: Blueprint[] = [
     description: 'Schematics for the Engineering Bay module. Required to construct the engineering section.',
     targetId: 'engineering',
     cost: { iron: 15, copper: 5 },
-    durationMs: 3_000
+    durationMs: 3_000,
+    parentBlueprintId: 'bp-mod-research'
   },
   {
     id: 'bp-mod-power',
@@ -37,7 +78,8 @@ export const BLUEPRINTS: Blueprint[] = [
     description: 'Schematics for the Power Core module. Required to construct the power section.',
     targetId: 'power',
     cost: { copper: 10, uranium: 2 },
-    durationMs: 3_000
+    durationMs: 3_000,
+    parentBlueprintId: 'bp-mod-research'
   },
   {
     id: 'bp-mod-storage',
@@ -46,7 +88,8 @@ export const BLUEPRINTS: Blueprint[] = [
     description: 'Schematics for the Storage module. Required to construct the storage section.',
     targetId: 'storage',
     cost: { iron: 10, carbon: 5 },
-    durationMs: 3_000
+    durationMs: 3_000,
+    parentBlueprintId: 'bp-mod-research'
   },
   {
     id: 'bp-ship-tellrx5',
@@ -110,7 +153,14 @@ export const BLUEPRINTS: Blueprint[] = [
   }
 ]
 
+export const PRE_RESEARCHED_BLUEPRINT_IDS = ['bp-mod-command', 'bp-mod-research']
+
 export const getBlueprint = (id: string): Blueprint | undefined => BLUEPRINTS.find((bp) => bp.id === id)
 
 export const getModuleBlueprint = (type: SectionType): Blueprint | undefined =>
   BLUEPRINTS.find((bp) => bp.category === 'module' && bp.targetId === type)
+
+export const getBlueprintChildren = (parentId: string | undefined): Blueprint[] =>
+  BLUEPRINTS.filter((bp) => bp.parentBlueprintId === parentId)
+
+export const getBlueprintRoots = (): Blueprint[] => getBlueprintChildren(undefined)
