@@ -42,7 +42,13 @@ export const station: Station = {
   storage: [
     { material: 'iron', amount: 100 },
     { material: 'copper', amount: 100 },
-    { material: 'titanium', amount: 100 }
+    { material: 'titanium', amount: 100 },
+    { material: 'silicates', amount: 100 },
+    { material: 'water_ice', amount: 100 },
+    { material: 'gold', amount: 100 },
+    { material: 'uranium', amount: 100 },
+    { material: 'helium3', amount: 100 },
+    { material: 'antimatter', amount: 100 }
   ],
   sections: [
     { type: 'command', status: 'operational' },

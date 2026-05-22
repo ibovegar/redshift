@@ -9,8 +9,7 @@ export const CARD_WIDTH = 80
 export const CARD_HEIGHT = 80
 const STATUS_INDICATOR_SIZE = 14
 
-const CARD_HOVER_BORDER_COLOR = 'rgba(220, 200, 110, 0.85)'
-const CARD_BG_COLOR = 'rgba(15, 28, 42, 0.55)'
+const CARD_BG_COLOR = 'rgba(22, 42, 63, 0.55)'
 
 // Per-category color retained for the connecting lines / external references; cards themselves
 // no longer carry a category fill — the EVE-style status corner is the only color signal on a card.
@@ -40,7 +39,7 @@ interface Props {
 }
 
 export const ResearchCard = ({ blueprint, status, onClick }: Props) => {
-  const isLocked = status === 'locked'
+  const isResearched = status === 'researched'
   const image = getBlueprintImage(blueprint)
 
   return (
@@ -50,31 +49,26 @@ export const ResearchCard = ({ blueprint, status, onClick }: Props) => {
         width: CARD_WIDTH,
         height: CARD_HEIGHT,
         cursor: 'pointer',
-        opacity: isLocked ? 0.55 : 1,
         position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: CARD_BG_COLOR,
-        overflow: 'hidden',
-        transition: 'border-color 0.15s, filter 0.15s',
-        '&:hover': { borderColor: CARD_HOVER_BORDER_COLOR, filter: 'brightness(1.1)' }
+        bgcolor: CARD_BG_COLOR
       }}
     >
-      <CardThumbnail image={image} />
+      <CardThumbnail image={image} dim={!isResearched} />
       <StatusCorner status={status} />
     </Box>
   )
 }
 
-const CardThumbnail = ({ image }: { image: string | null }) => (
+const CardThumbnail = ({ image, dim }: { image: string | null; dim: boolean }) => (
   <Box
     sx={{
       width: '100%',
       height: '100%',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      filter: dim ? 'blur(1.5px)' : 'none',
+      opacity: dim ? 0.4 : 1
     }}
   >
     {image ? (

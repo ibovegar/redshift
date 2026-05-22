@@ -18,9 +18,8 @@ export interface ShipGroupNodeData {
 // The ship group renders as TWO sibling frames inside one ReactFlow node: a small frame for the
 // ship card on the left, and a wider frame for the upgrade grid on the right. Total width still
 // matches SHIP_FRAME_WIDTH so the tree layout placement is unchanged.
-const BOX_GAP = 4
 const SHIP_BOX_WIDTH = CARD_FRAME_WIDTH
-const UPGRADES_BOX_WIDTH = SHIP_FRAME_WIDTH - SHIP_BOX_WIDTH - BOX_GAP
+const UPGRADES_BOX_WIDTH = SHIP_FRAME_WIDTH - SHIP_BOX_WIDTH
 
 const HIDDEN_HANDLE_STYLE = { opacity: 0, pointerEvents: 'none' as const }
 const SHIP_HANDLE_TOP = `${getBoxCenterY(SHIP_FRAME_HEIGHT)}px`
@@ -28,6 +27,9 @@ const SHIP_HANDLE_TOP = `${getBoxCenterY(SHIP_FRAME_HEIGHT)}px`
 export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
   const { ship, addons, researchedBlueprints, researchInProgress, onCardClick } = data
   const shipStatus = getResearchStatus(ship, researchedBlueprints, researchInProgress)
+  // Upgrades only appear once the ship itself has been researched — until then we only render
+  // the ship card on the left, and the right-hand slot in the node bbox stays empty.
+  const shipResearched = researchedBlueprints.includes(ship.id)
   return (
     <>
       <Handle
@@ -35,22 +37,24 @@ export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
         position={Position.Left}
         style={{ ...HIDDEN_HANDLE_STYLE, top: SHIP_HANDLE_TOP, transform: 'translate(-50%, -50%)' }}
       />
-      <Box sx={{ display: 'flex', gap: `${BOX_GAP}px`, alignItems: 'center', height: SHIP_FRAME_HEIGHT }}>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <NodeFrame label={ship.name} width={SHIP_BOX_WIDTH} height={CARD_FRAME_HEIGHT}>
           <ResearchCard blueprint={ship} status={shipStatus} onClick={() => onCardClick(ship)} />
         </NodeFrame>
-        <NodeFrame label="Upgrades" width={UPGRADES_BOX_WIDTH} height={SHIP_FRAME_HEIGHT}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 80px)', columnGap: 1.5, rowGap: 1.5 }}>
-            {addons.map((addon) => (
-              <ResearchCard
-                key={addon.id}
-                blueprint={addon}
-                status={getResearchStatus(addon, researchedBlueprints, researchInProgress)}
-                onClick={() => onCardClick(addon)}
-              />
-            ))}
-          </Box>
-        </NodeFrame>
+        {shipResearched && (
+          <NodeFrame label="Upgrades" width={UPGRADES_BOX_WIDTH} height={SHIP_FRAME_HEIGHT}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 80px)', columnGap: 1, rowGap: 1 }}>
+              {addons.map((addon) => (
+                <ResearchCard
+                  key={addon.id}
+                  blueprint={addon}
+                  status={getResearchStatus(addon, researchedBlueprints, researchInProgress)}
+                  onClick={() => onCardClick(addon)}
+                />
+              ))}
+            </Box>
+          </NodeFrame>
+        )}
       </Box>
       <Handle
         type="source"
