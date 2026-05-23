@@ -141,37 +141,35 @@ export const handlers = [
   }),
 
   // Research
+  // Placeholder behavior until the proper Research-button + modal flow lands: clicking a research
+  // card completes the research INSTANTLY if affordable. The research-module-operational gate is
+  // skipped so the tree can be exercised without first building the section in StationGrid.
   http.post(`${url}/research/start`, async ({ request }) => {
     finalizeResearch()
     const { blueprintId } = (await request.json()) as { blueprintId: string }
-    if (db.station.researchInProgress) {
-      return new HttpResponse(null, { status: 409 })
-    }
     const blueprint = getBlueprint(blueprintId)
     if (!blueprint) {
-      return new HttpResponse(null, { status: 404 })
+      return HttpResponse.text(`Unknown blueprint id: ${blueprintId}`, { status: 404 })
     }
     if (db.station.researchedBlueprints.includes(blueprintId)) {
-      return new HttpResponse(null, { status: 400 })
-    }
-    const researchSection = db.station.sections.find((s) => s.type === 'research')
-    if (!researchSection || researchSection.status !== 'operational') {
-      return new HttpResponse(null, { status: 400 })
+      return HttpResponse.text(`Already researched: ${blueprintId}`, { status: 400 })
     }
     if (blueprint.parentBlueprintId && !db.station.researchedBlueprints.includes(blueprint.parentBlueprintId)) {
-      return new HttpResponse(null, { status: 400 })
+      return HttpResponse.text(`Parent blueprint ${blueprint.parentBlueprintId} not yet researched`, { status: 400 })
     }
     if (!hasMaterials(blueprint.cost)) {
-      return new HttpResponse(null, { status: 400 })
+      const missing = Object.entries(blueprint.cost)
+        .map(([m, need]) => {
+          const have = db.station.storage.find((s) => s.material === m)?.amount ?? 0
+          return have < (need ?? 0) ? `${m} (have ${have}, need ${need})` : null
+        })
+        .filter(Boolean)
+        .join(', ')
+      return HttpResponse.text(`Insufficient materials: ${missing}`, { status: 400 })
     }
     deductCosts(blueprint.cost)
-    const startedAt = new Date()
-    const completesAt = new Date(startedAt.getTime() + blueprint.durationMs)
-    db.station.researchInProgress = {
-      blueprintId,
-      startedAt: startedAt.toISOString(),
-      completesAt: completesAt.toISOString()
-    }
+    db.station.researchedBlueprints.push(blueprintId)
+    db.station.researchInProgress = null
     return HttpResponse.json(db.station)
   })
 ]

@@ -40,15 +40,16 @@ export const station: Station = {
   id: 'station-1',
   name: 'Gateway Station',
   storage: [
-    { material: 'iron', amount: 100 },
-    { material: 'copper', amount: 100 },
-    { material: 'titanium', amount: 100 },
-    { material: 'silicates', amount: 100 },
-    { material: 'water_ice', amount: 100 },
-    { material: 'gold', amount: 100 },
-    { material: 'uranium', amount: 100 },
-    { material: 'helium3', amount: 100 },
-    { material: 'antimatter', amount: 100 }
+    { material: 'iron', amount: 1000 },
+    { material: 'copper', amount: 1000 },
+    { material: 'carbon', amount: 1000 },
+    { material: 'titanium', amount: 1000 },
+    { material: 'silicates', amount: 1000 },
+    { material: 'water_ice', amount: 1000 },
+    { material: 'gold', amount: 1000 },
+    { material: 'uranium', amount: 1000 },
+    { material: 'helium3', amount: 1000 },
+    { material: 'antimatter', amount: 1000 }
   ],
   sections: [
     { type: 'command', status: 'operational' },

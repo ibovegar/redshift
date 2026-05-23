@@ -43,7 +43,7 @@ export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
         </NodeFrame>
         {shipResearched && (
           <NodeFrame label="Upgrades" width={UPGRADES_BOX_WIDTH} height={SHIP_FRAME_HEIGHT}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 80px)', columnGap: 1, rowGap: 1 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 80px)', columnGap: 1 }}>
               {addons.map((addon) => (
                 <ResearchCard
                   key={addon.id}

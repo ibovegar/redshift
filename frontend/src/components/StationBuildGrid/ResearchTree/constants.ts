@@ -18,8 +18,10 @@ export const EDGE_COLOR = '#8ebdd8'
 export const CARD_FRAME_WIDTH = CARD_WIDTH
 export const CARD_FRAME_HEIGHT = CARD_HEIGHT + FRAME_LABEL_HEIGHT
 
-// Ship group: ship card on the left + 3×2 addon grid on the right, each in its own frame.
-// Width  = ship card (80) + gap (4) + 3 × addon (80) + 2 × inter-card gap (12) = 348
-// Height = 2 × addon (80) + inter-row gap (12) = 172
-export const SHIP_FRAME_WIDTH = 348
-export const SHIP_FRAME_HEIGHT = 172
+// Ship group: ship card on the left + single-row 5×1 addon grid on the right, each in its own
+// frame. Total height matches the card frame (single row of cards), so the ship's bbox doesn't
+// grow vertically when it's researched — keeps the tree compact.
+// Width  = ship card (80) + 5 × addon (80) + 4 × inter-card gap (8) = 512
+// Height = single addon row (80) + label space (16) = CARD_FRAME_HEIGHT (96)
+export const SHIP_FRAME_WIDTH = 512
+export const SHIP_FRAME_HEIGHT = CARD_FRAME_HEIGHT

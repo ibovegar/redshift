@@ -11,6 +11,11 @@ const STATUS_INDICATOR_SIZE = 14
 
 const CARD_BG_COLOR = 'rgba(22, 42, 63, 0.55)'
 
+// 45° zebra stripes overlaid on cards that haven't been researched yet. Sits above the dimmed
+// thumbnail but under the status corner, so the "not yet built" hatching is clearly visible.
+const UNRESEARCHED_STRIPES =
+  'repeating-linear-gradient(45deg, rgba(140, 175, 210, 0.18) 0, rgba(140, 175, 210, 0.18) 4px, transparent 4px, transparent 10px)'
+
 // Per-category color retained for the connecting lines / external references; cards themselves
 // no longer carry a category fill — the EVE-style status corner is the only color signal on a card.
 export const CATEGORY_COLORS: Record<BlueprintCategory, { base: string; active: string }> = {
@@ -44,7 +49,14 @@ export const ResearchCard = ({ blueprint, status, onClick }: Props) => {
 
   return (
     <Box
-      onClick={onClick}
+      onClick={(e) => {
+        // Stop the click from bubbling up to ReactFlow's `onNodeClick`. Otherwise the same click
+        // would fire `handleCardClick` twice — once for THIS specific blueprint (from here), and
+        // once for the parent ReactFlow node's blueprint (which for an addon inside ShipGroupNode
+        // would mistakenly try to research the SHIP instead of the addon).
+        e.stopPropagation()
+        onClick()
+      }}
       sx={{
         width: CARD_WIDTH,
         height: CARD_HEIGHT,
@@ -54,6 +66,16 @@ export const ResearchCard = ({ blueprint, status, onClick }: Props) => {
       }}
     >
       <CardThumbnail image={image} dim={!isResearched} />
+      {!isResearched && (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: UNRESEARCHED_STRIPES,
+            pointerEvents: 'none'
+          }}
+        />
+      )}
       <StatusCorner status={status} />
     </Box>
   )
@@ -62,13 +84,12 @@ export const ResearchCard = ({ blueprint, status, onClick }: Props) => {
 const CardThumbnail = ({ image, dim }: { image: string | null; dim: boolean }) => (
   <Box
     sx={{
-      width: '100%',
-      height: '100%',
+      position: 'absolute',
+      inset: 0,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      filter: dim ? 'blur(1.5px)' : 'none',
-      opacity: dim ? 0.4 : 1
+      opacity: dim ? 0.35 : 1
     }}
   >
     {image ? (
