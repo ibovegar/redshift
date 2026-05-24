@@ -34,6 +34,18 @@ const STATUS_INDICATOR_COLORS: Record<ResearchStatus, string | null> = {
 
 const getBlueprintImage = (bp: Blueprint): string | null => {
   if (bp.category === 'module') return SECTION_IMAGES[bp.targetId as SectionType] ?? null
+  // Ships use `public/images/spacecraft_lg/<targetId>.png`. The targetId is intentionally kept
+  // in sync with the image filename in `models/blueprint.ts`.
+  if (bp.category === 'ship') return `/images/spacecraft_lg/${bp.targetId}.png`
+  // Ship-addon targetIds are `<addonType>-<shipTargetId>` (e.g. `engine-tellrx5`); the matching
+  // image filename is `<shipTargetId>_<addonType>.png` (e.g. `tellrx5_engine.png`).
+  if (bp.category === 'ship-addon') {
+    const dash = bp.targetId.indexOf('-')
+    if (dash === -1) return null
+    const type = bp.targetId.slice(0, dash)
+    const shipTargetId = bp.targetId.slice(dash + 1)
+    return `/images/upgrade_lg/${shipTargetId}_${type}.png`
+  }
   return null
 }
 

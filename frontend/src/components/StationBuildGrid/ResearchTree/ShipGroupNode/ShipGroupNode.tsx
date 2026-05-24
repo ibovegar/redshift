@@ -5,7 +5,7 @@ import { getResearchStatus } from '../../utils'
 import { CARD_FRAME_HEIGHT, CARD_FRAME_WIDTH, SHIP_FRAME_HEIGHT, SHIP_FRAME_WIDTH } from '../constants'
 import { getBoxCenterY } from '../layout'
 import { NodeFrame } from '../NodeFrame/NodeFrame'
-import { ResearchCard } from '../ResearchCard/ResearchCard'
+import { CARD_WIDTH, ResearchCard } from '../ResearchCard/ResearchCard'
 
 export interface ShipGroupNodeData {
   ship: Blueprint
@@ -37,23 +37,34 @@ export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
         position={Position.Left}
         style={{ ...HIDDEN_HANDLE_STYLE, top: SHIP_HANDLE_TOP, transform: 'translate(-50%, -50%)' }}
       />
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', columnGap: 1 }}>
         <NodeFrame label={ship.name} width={SHIP_BOX_WIDTH} height={CARD_FRAME_HEIGHT}>
           <ResearchCard blueprint={ship} status={shipStatus} onClick={() => onCardClick(ship)} />
         </NodeFrame>
         {shipResearched && (
-          <NodeFrame label="Upgrades" width={UPGRADES_BOX_WIDTH} height={SHIP_FRAME_HEIGHT}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 80px)', columnGap: 1 }}>
-              {addons.map((addon) => (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(5, ${CARD_WIDTH}px)`,
+              columnGap: 1,
+              width: UPGRADES_BOX_WIDTH
+            }}
+          >
+            {addons.map((addon) => (
+              <NodeFrame
+                key={addon.id}
+                label={addon.name}
+                width={CARD_WIDTH}
+                height={CARD_FRAME_HEIGHT}
+              >
                 <ResearchCard
-                  key={addon.id}
                   blueprint={addon}
                   status={getResearchStatus(addon, researchedBlueprints, researchInProgress)}
                   onClick={() => onCardClick(addon)}
                 />
-              ))}
-            </Box>
-          </NodeFrame>
+              </NodeFrame>
+            ))}
+          </Box>
         )}
       </Box>
       <Handle

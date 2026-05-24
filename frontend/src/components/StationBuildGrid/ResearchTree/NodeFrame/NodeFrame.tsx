@@ -1,15 +1,17 @@
 import { Box, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
-import { FRAME_LABEL_COLOR } from '../constants'
+import { FRAME_BORDER_COLOR, FRAME_LABEL_COLOR } from '../constants'
 
 interface NodeFrameProps {
   label: string
   width: number
   height: number
+  /** When true, draws a 1px border around the frame's content box (the area below the label). */
+  bordered?: boolean
   children: ReactNode
 }
 
-export const NodeFrame = ({ label, width, height, children }: NodeFrameProps) => {
+export const NodeFrame = ({ label, width, height, bordered, children }: NodeFrameProps) => {
   return (
     <Box sx={{ position: 'relative', width, height }}>
       <Typography
@@ -31,7 +33,8 @@ export const NodeFrame = ({ label, width, height, children }: NodeFrameProps) =>
           bottom: 0,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          border: bordered ? `1px solid ${FRAME_BORDER_COLOR}` : undefined
         }}
       >
         {children}

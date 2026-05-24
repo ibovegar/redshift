@@ -30,32 +30,57 @@ export interface ResearchTask {
  *   bp-mod-command
  *     └── bp-mod-research
  *           ├── bp-mod-engineering
- *           │     ├── bp-ship-tellrx5  (Tellus RX 5 — support)
- *           │     │     └── 5 × bp-addon-{engine|deflector|plating|stabilizer|weapons}-tellrx5
- *           │     ├── bp-ship-wraith   (Wraith — scout)
- *           │     │     └── 5 × bp-addon-…-wraith
- *           │     ├── bp-ship-sting    (Sting — interceptor)
- *           │     │     └── 5 × bp-addon-…-sting
- *           │     ├── bp-ship-talon    (Talon — fighter)
- *           │     │     └── 5 × bp-addon-…-talon
- *           │     └── bp-ship-maul     (Maul — bomber)
- *           │           └── 5 × bp-addon-…-maul
+ *           │     ├── bp-ship-tellrx5   (Tellus RX 5 — support)    → engine, stabilizer, weapons
+ *           │     ├── bp-ship-cygf35    (Cygnus F-35 — fighter)    → deflector, stabilizer, weapons
+ *           │     ├── bp-ship-drax22    (Drax 22 — interceptor)    → engine, stabilizer, weapons
+ *           │     ├── bp-ship-hamm2     (Hammerhead 2 — scout)     → deflector, stabilizer, weapons
+ *           │     └── bp-ship-vanguard  (Vanguard — bomber)        → engine, plating, stabilizer, weapons
  *           ├── bp-mod-power
  *           └── bp-mod-storage
  *
+ * Ship and addon targetIds are kept in sync with the image filenames in
+ * `public/images/spacecraft_lg/<targetId>.png` and `public/images/upgrade_lg/<shipTargetId>_<addon>.png`
+ * so ResearchCard can derive the right image path directly from the blueprint.
+ *
  * Command and Research are pre-researched on a fresh station (see mocks/data.ts).
  */
-// Each ship gets the same five MK1 upgrade slots — engine, deflector, plating, stabilizer,
-// weapons. This helper expands a ship's spec into a 6-entry slice (ship + its 5 addons) so the
-// BLUEPRINTS array below stays readable when we list 5 ships.
+type ShipAddonType = 'engine' | 'deflector' | 'plating' | 'stabilizer' | 'weapons'
+
+const ADDON_INFO: Record<
+  ShipAddonType,
+  { name: string; description: string; cost: Partial<Record<AsteroidMaterial, number>> }
+> = {
+  engine: { name: 'Engine MK1', description: 'Schematics for a basic engine upgrade.', cost: { copper: 8, titanium: 4 } },
+  deflector: {
+    name: 'Deflector MK1',
+    description: 'Schematics for a basic deflector array.',
+    cost: { titanium: 6, silicates: 3 }
+  },
+  plating: {
+    name: 'Plating MK1',
+    description: 'Schematics for reinforced hull plating.',
+    cost: { iron: 12, titanium: 6 }
+  },
+  stabilizer: {
+    name: 'Stabilizer MK1',
+    description: 'Schematics for a flight stabilizer system.',
+    cost: { copper: 5, gold: 2 }
+  },
+  weapons: { name: 'Weapons MK1', description: 'Schematics for a basic weapons system.', cost: { iron: 10, antimatter: 1 } }
+}
+
 interface ShipFamilySpec {
   shipId: string
   targetId: string
   name: string
   description: string
   cost: Partial<Record<AsteroidMaterial, number>>
+  addons: ShipAddonType[]
 }
 
+// Expands a ship's spec into ship blueprint + N addon blueprints, where each addon is one of the
+// 5 known MK1 upgrade types. The addons array per ship is intentionally NOT a fixed set of 5 —
+// each ship only gets the upgrades that have a corresponding image in public/images/upgrade_lg/.
 const buildShipFamily = (s: ShipFamilySpec): Blueprint[] => [
   {
     id: s.shipId,
@@ -67,56 +92,18 @@ const buildShipFamily = (s: ShipFamilySpec): Blueprint[] => [
     durationMs: 3_000,
     parentBlueprintId: 'bp-mod-engineering'
   },
-  {
-    id: `bp-addon-engine-${s.targetId}`,
-    category: 'ship-addon',
-    name: 'Engine MK1',
-    description: 'Schematics for a basic engine upgrade.',
-    targetId: `engine-${s.targetId}`,
-    cost: { copper: 8, titanium: 4 },
-    durationMs: 3_000,
-    parentBlueprintId: s.shipId
-  },
-  {
-    id: `bp-addon-deflector-${s.targetId}`,
-    category: 'ship-addon',
-    name: 'Deflector MK1',
-    description: 'Schematics for a basic deflector array.',
-    targetId: `deflector-${s.targetId}`,
-    cost: { titanium: 6, silicates: 3 },
-    durationMs: 3_000,
-    parentBlueprintId: s.shipId
-  },
-  {
-    id: `bp-addon-plating-${s.targetId}`,
-    category: 'ship-addon',
-    name: 'Plating MK1',
-    description: 'Schematics for reinforced hull plating.',
-    targetId: `plating-${s.targetId}`,
-    cost: { iron: 12, titanium: 6 },
-    durationMs: 3_000,
-    parentBlueprintId: s.shipId
-  },
-  {
-    id: `bp-addon-stabilizer-${s.targetId}`,
-    category: 'ship-addon',
-    name: 'Stabilizer MK1',
-    description: 'Schematics for a flight stabilizer system.',
-    targetId: `stabilizer-${s.targetId}`,
-    cost: { copper: 5, gold: 2 },
-    durationMs: 3_000,
-    parentBlueprintId: s.shipId
-  },
-  {
-    id: `bp-addon-weapons-${s.targetId}`,
-    category: 'ship-addon',
-    name: 'Weapons MK1',
-    description: 'Schematics for a basic weapons system.',
-    targetId: `weapons-${s.targetId}`,
-    cost: { iron: 10, antimatter: 1 },
-    durationMs: 3_000,
-    parentBlueprintId: s.shipId
-  }
+  ...s.addons.map(
+    (type): Blueprint => ({
+      id: `bp-addon-${type}-${s.targetId}`,
+      category: 'ship-addon',
+      name: ADDON_INFO[type].name,
+      description: ADDON_INFO[type].description,
+      targetId: `${type}-${s.targetId}`,
+      cost: ADDON_INFO[type].cost,
+      durationMs: 3_000,
+      parentBlueprintId: s.shipId
+    })
+  )
 ]
 
 export const BLUEPRINTS: Blueprint[] = [
@@ -169,93 +156,45 @@ export const BLUEPRINTS: Blueprint[] = [
     durationMs: 3_000,
     parentBlueprintId: 'bp-mod-research'
   },
-  {
-    id: 'bp-ship-tellrx5',
-    category: 'ship',
+  ...buildShipFamily({
+    shipId: 'bp-ship-tellrx5',
+    targetId: 'tellrx5',
     name: 'Tellus RX 5',
     description: 'Manufacturing blueprints for the Tellus RX 5 support spacecraft.',
-    targetId: 'tellrx5',
     cost: { iron: 50, titanium: 20, silicates: 10 },
-    durationMs: 3_000,
-    parentBlueprintId: 'bp-mod-engineering'
-  },
-  {
-    id: 'bp-addon-engine-mk1',
-    category: 'ship-addon',
-    name: 'Engine MK1',
-    description: 'Schematics for a basic engine upgrade.',
-    targetId: 'engine-mk1',
-    cost: { copper: 8, titanium: 4 },
-    durationMs: 3_000,
-    parentBlueprintId: 'bp-ship-tellrx5'
-  },
-  {
-    id: 'bp-addon-deflector-mk1',
-    category: 'ship-addon',
-    name: 'Deflector MK1',
-    description: 'Schematics for a basic deflector array.',
-    targetId: 'deflector-mk1',
-    cost: { titanium: 6, silicates: 3 },
-    durationMs: 3_000,
-    parentBlueprintId: 'bp-ship-tellrx5'
-  },
-  {
-    id: 'bp-addon-plating-mk1',
-    category: 'ship-addon',
-    name: 'Plating MK1',
-    description: 'Schematics for reinforced hull plating.',
-    targetId: 'plating-mk1',
-    cost: { iron: 12, titanium: 6 },
-    durationMs: 3_000,
-    parentBlueprintId: 'bp-ship-tellrx5'
-  },
-  {
-    id: 'bp-addon-stabilizer-mk1',
-    category: 'ship-addon',
-    name: 'Stabilizer MK1',
-    description: 'Schematics for a flight stabilizer system.',
-    targetId: 'stabilizer-mk1',
-    cost: { copper: 5, gold: 2 },
-    durationMs: 3_000,
-    parentBlueprintId: 'bp-ship-tellrx5'
-  },
-  {
-    id: 'bp-addon-weapons-mk1',
-    category: 'ship-addon',
-    name: 'Weapons MK1',
-    description: 'Schematics for a basic weapons system.',
-    targetId: 'weapons-mk1',
-    cost: { iron: 10, antimatter: 1 },
-    durationMs: 3_000,
-    parentBlueprintId: 'bp-ship-tellrx5'
-  },
-  ...buildShipFamily({
-    shipId: 'bp-ship-wraith',
-    targetId: 'wraith',
-    name: 'Wraith',
-    description: 'Stealthy long-range reconnaissance scout. Low signature, high sensor range.',
-    cost: { iron: 30, silicates: 15, gold: 2 }
+    addons: ['engine', 'stabilizer', 'weapons']
   }),
   ...buildShipFamily({
-    shipId: 'bp-ship-sting',
-    targetId: 'sting',
-    name: 'Sting',
+    shipId: 'bp-ship-cygf35',
+    targetId: 'cygf35',
+    name: 'Cygnus F-35',
+    description: 'High-precision strike fighter. Balanced firepower, armor, and agility.',
+    cost: { iron: 60, titanium: 25, silicates: 12 },
+    addons: ['deflector', 'stabilizer', 'weapons']
+  }),
+  ...buildShipFamily({
+    shipId: 'bp-ship-drax22',
+    targetId: 'drax22',
+    name: 'Drax 22',
     description: 'Light interceptor optimized for speed and quick engagements.',
-    cost: { iron: 35, titanium: 10, copper: 8 }
+    cost: { iron: 35, titanium: 10, copper: 8 },
+    addons: ['engine', 'stabilizer', 'weapons']
   }),
   ...buildShipFamily({
-    shipId: 'bp-ship-talon',
-    targetId: 'talon',
-    name: 'Talon',
-    description: 'Mainline strike fighter — balanced firepower, armor, and agility.',
-    cost: { iron: 60, titanium: 25, silicates: 12 }
+    shipId: 'bp-ship-hamm2',
+    targetId: 'hamm2',
+    name: 'Hammerhead 2',
+    description: 'Stealthy long-range reconnaissance scout. Low signature, high sensor range.',
+    cost: { iron: 30, silicates: 15, gold: 2 },
+    addons: ['deflector', 'stabilizer', 'weapons']
   }),
   ...buildShipFamily({
-    shipId: 'bp-ship-maul',
-    targetId: 'maul',
-    name: 'Maul',
+    shipId: 'bp-ship-vanguard',
+    targetId: 'vanguard',
+    name: 'Vanguard',
     description: 'Heavy bomber. Slow but carries devastating ordnance payloads.',
-    cost: { iron: 90, titanium: 40, antimatter: 3 }
+    cost: { iron: 90, titanium: 40, antimatter: 3 },
+    addons: ['engine', 'plating', 'stabilizer', 'weapons']
   })
 ]
 
