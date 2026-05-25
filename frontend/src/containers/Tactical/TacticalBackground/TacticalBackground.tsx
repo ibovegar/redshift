@@ -1,16 +1,17 @@
 import { Typography } from '@mui/material'
+import { hudColors } from 'ui/theme/typography'
 import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
 import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
 import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
 import { HudButton } from 'components/HudButton/HudButton'
 import { HudMenu } from 'components/HudMenu/HudMenu'
 import { HudPanel } from 'components/HudPanel/HudPanel'
+import { HudProgressBar } from 'components/HudProgressBar/HudProgressBar'
 import { HudTooltip } from 'components/HudTooltip/HudTooltip'
 import { LoadingScreen } from 'components/LoadingScreen/LoadingScreen'
 import { RadiationWarning } from 'components/RadiationWarning/RadiationWarning'
 import { ScanResult } from 'components/ScanResult/ScanResult'
 import { ShipStats } from 'components/ShipStats/ShipStats'
-import { HudProgressBar } from 'components/HudProgressBar/HudProgressBar'
 import { StationBuildGrid } from 'components/StationBuildGrid/StationBuildGrid'
 import { MATERIAL_STORAGE_COST } from 'data/materials'
 import {
@@ -25,9 +26,9 @@ import {
   useUpdateSpacecraftStatus,
   useUser
 } from 'hooks'
-import { SECTION_NAMES } from 'models/station-section'
-import type { SectionType } from 'models/station-section'
 import type { Asteroid } from 'models/asteroid'
+import type { SectionType } from 'models/station-section'
+import { SECTION_NAMES } from 'models/station-section'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
@@ -92,6 +93,9 @@ export const TacticalBackground = () => {
   const buildBarObjRef = useRef<BuildBarController | null>(null)
   const [buildMenuOpen, setBuildMenuOpen] = useState(false)
   const [buildMenuInitialSection, setBuildMenuInitialSection] = useState<SectionType>('command')
+  // When a build completes and the menu reopens, this flag drives a one-shot fade-in on the
+  // newly-online cell inside StationGrid. Cleared after the animation has had time to play.
+  const [justBuiltSection, setJustBuiltSection] = useState<SectionType | null>(null)
   const zoomIntoStationRef = useRef<(() => void) | undefined>(undefined)
   const stationSceneRef = useRef<Station | null>(null)
   const hoveredSectionTypeRef = useRef<SectionType | null>(null)
@@ -371,7 +375,7 @@ export const TacticalBackground = () => {
     // Scan zoom state (nudge toward docked asteroid during scan)
     const scanZoom = new CameraZoom(0.015, 0.3)
     // Mining zoom state (aggressive zoom toward mined asteroid)
-    const miningZoom = new CameraZoom(0.03, 0.92, 2, 4)
+    const miningZoom = new CameraZoom(0.03, 0.98, 2, 4)
 
     // Reusable plane for travel cursor raycasting
     const travelPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 3.5)
@@ -549,7 +553,10 @@ export const TacticalBackground = () => {
       isDraggingShip = false
     }
     const handleClick = (e: MouseEvent) => {
-      if (suppressNextClick) { suppressNextClick = false; return }
+      if (suppressNextClick) {
+        suppressNextClick = false
+        return
+      }
       if (miningZoomRef.current) return
       // Check if click is on menu
       if (menuRef.current?.contains(e.target as Node)) return
@@ -666,9 +673,12 @@ export const TacticalBackground = () => {
         }
         return
       }
-      // In station details view: clicking the station shows the build screen, clicking outside exits
+      // In station details view: clicking the station shows the build screen, clicking outside exits.
+      // If the click hit a specific section, preselect it in the build menu's module list.
       if (detailZoom.isZoomed && detailZoom.activeTarget === station) {
-        if (station.raycast(raycaster) || station.raycastSections(raycaster)) {
+        const hitSection = station.raycastSections(raycaster)
+        if (hitSection || station.raycast(raycaster)) {
+          if (hitSection) setBuildMenuInitialSection(hitSection)
           setBuildMenuOpen(true)
           return
         }
@@ -824,11 +834,21 @@ export const TacticalBackground = () => {
       if (container) container.style.cursor = cursor
       lastCursor = cursor
     }
+    // Scroll-down while zoomed into the station exits station manage mode (and the build menu
+    // via `exitDetails`). Wheel events inside the build menu itself are ignored so the user can
+    // scroll through long lists (e.g. EngineeringBuild) without accidentally zooming out.
+    function handleWheel(e: WheelEvent) {
+      if (buildMenuRef.current?.contains(e.target as Node)) return
+      if (e.deltaY > 0 && detailZoom.isZoomed && detailZoom.activeTarget === station) {
+        exitDetails()
+      }
+    }
     window.addEventListener('mousedown', handleMouseDown)
     window.addEventListener('mouseup', handleMouseUp)
     window.addEventListener('click', handleClick)
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('wheel', handleWheel, { passive: true })
 
     // Animation loop
     let frameId: number
@@ -1090,7 +1110,13 @@ export const TacticalBackground = () => {
           const rightX = sx + 160
           const flipped = rightX + menuWidth > window.innerWidth - 8
           const menuX = flipped ? sx - 100 - menuWidth : rightX
-          const menuY = sy - 120
+          // Center the menu vertically near the station, but clamp so the top half doesn't
+          // overflow the viewport when the menu grows (extra buttons per operational module
+          // make this taller than the original 2-item layout). `translateY(-50%)` below means
+          // half the menu sits above `menuY`, so we floor it at `menuHeight/2 + margin`.
+          const menuHeight = el.offsetHeight
+          const menuYDesired = sy - 120
+          const menuY = Math.min(window.innerHeight - menuHeight / 2 - 8, Math.max(menuHeight / 2 + 8, menuYDesired))
           el.style.left = `${menuX}px`
           el.style.top = `${menuY}px`
           el.style.flexDirection = flipped ? 'row-reverse' : 'row'
@@ -1123,7 +1149,6 @@ export const TacticalBackground = () => {
             const dlSkew = 0.5
             dl.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${dlRy}deg) skewY(${dlSkew}deg) translateY(-50%)`
           }
-
         } else {
           if (stationLineRef.current) stationLineRef.current.setAttribute('opacity', '0')
           if (dockedLineRef.current) dockedLineRef.current.setAttribute('opacity', '0')
@@ -1467,6 +1492,7 @@ export const TacticalBackground = () => {
       window.removeEventListener('mousedown', handleMouseDown)
       window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('click', handleClick)
+      window.removeEventListener('wheel', handleWheel)
       window.removeEventListener('keydown', handleKeyDown)
       cancelAnimationFrame(frameId)
       container.removeChild(renderer.domElement)
@@ -1540,35 +1566,54 @@ export const TacticalBackground = () => {
         <HudMenu
           items={[
             { label: 'Manage', id: 'station-details-btn' },
-            {
-              label: SECTION_NAMES.command,
-              onClick: () => {
-                zoomIntoStationRef.current?.()
-                setBuildMenuInitialSection('command')
-                setBuildMenuOpen(true)
-              }
-            },
+            // One button per built (operational) module — clicking opens the build menu jumped
+            // straight to that module's submenu. New modules show up here as soon as their
+            // section flips to `operational`.
+            ...station.sections
+              .filter((s) => s.status === 'operational')
+              .map((s) => ({
+                label: SECTION_NAMES[s.type],
+                id: `station-section-${s.type}`,
+                onClick: () => {
+                  zoomIntoStationRef.current?.()
+                  setBuildMenuInitialSection(s.type)
+                  setBuildMenuOpen(true)
+                }
+              }))
           ]}
         />
       </HudPanel>
       <div
         ref={buildMenuRef}
         style={{
-          position: 'fixed', left: '50%', top: '50%',
+          position: 'fixed',
+          left: '50%',
+          top: '50%',
           transform: 'translate(-50%, -50%)',
           zIndex: 20,
           opacity: buildMenuOpen ? 1 : 0,
           pointerEvents: buildMenuOpen ? 'auto' : 'none',
           transition: 'opacity 0.4s',
-          backgroundColor: '#C2C7C2',
+          background: hudColors.menuGradient,
           borderRadius: 2,
           padding: '28px 20px 20px',
           width: 1700,
           height: 770,
-          boxSizing: 'border-box',
-          overflow: 'hidden',
+          boxSizing: 'border-box'
         }}
       >
+        <div
+          style={{
+            position: 'absolute',
+            top: -20,
+            right: 16,
+            zIndex: 2
+          }}
+        >
+          <HudButton variant="secondary" onClick={() => setBuildMenuOpen(false)}>
+            Close
+          </HudButton>
+        </div>
         <StationBuildGrid
           key={buildMenuInitialSection}
           initialSection={buildMenuInitialSection}
@@ -1577,10 +1622,17 @@ export const TacticalBackground = () => {
           researchedBlueprints={station.researchedBlueprints}
           researchInProgress={station.researchInProgress}
           isPending={buildSection.isPending}
+          justBuilt={justBuiltSection}
           onBuild={(type: SectionType) => {
             buildBarObjRef.current?.start(type)
             stationSceneRef.current?.showBuildHighlight(type)
-            buildSection.mutate(type)
+            buildSection.mutate(type, {
+              onSuccess: () => {
+                // Fade-in beat on the newly-operational cell; menu stays open the whole time.
+                setJustBuiltSection(type)
+                setTimeout(() => setJustBuiltSection(null), 1300)
+              }
+            })
           }}
         />
       </div>

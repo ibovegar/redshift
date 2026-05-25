@@ -1,5 +1,6 @@
 export { queryKeys } from './queryKeys'
 export { useBlueprints, useStartResearch } from './useBlueprints'
+export { useCardExpandAnimation } from './useCardExpandAnimation'
 export {
   useSpacecraft,
   useSpacecrafts,

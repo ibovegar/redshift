@@ -1,13 +1,16 @@
 import { Box } from '@mui/material'
 import { BlueprintBackground } from 'components/BlueprintBackground/BlueprintBackground'
+import { ExpandModal } from 'components/ExpandModal/ExpandModal'
 import { useStartResearch } from 'hooks/useBlueprints'
+import { useCardExpandAnimation } from 'hooks/useCardExpandAnimation'
 import type { Blueprint, ResearchTask } from 'models/blueprint'
 import { getBlueprint, getBlueprintChildren } from 'models/blueprint'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactFlow, { type Node, type ReactFlowInstance } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { SectionHeader } from '../SectionHeader'
 import { getResearchStatus } from '../utils'
+import { BlueprintDetail } from './BlueprintDetail/BlueprintDetail'
 import { BlueprintEdge } from './BlueprintEdge/BlueprintEdge'
 import { CardNode } from './CardNode/CardNode'
 import { CARD_FRAME_HEIGHT, CARD_FRAME_WIDTH, SHIP_FRAME_HEIGHT, SHIP_FRAME_WIDTH } from './constants'
@@ -33,6 +36,8 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props
   const prevResearchedRef = useRef<string[]>(researchedBlueprints)
   const prevLayoutRef = useRef<ReturnType<typeof buildLayout> | null>(null)
   const startResearch = useStartResearch()
+  const [selectedBlueprint, setSelectedBlueprint] = useState<Blueprint | null>(null)
+  const expand = useCardExpandAnimation(() => setSelectedBlueprint(null))
 
   // Layout is rebuilt every time the researched set changes: hidden subtrees take up no space, so
   // the visible nodes pack into the tightest left-to-right tree possible. Ships expand from a
@@ -44,21 +49,28 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props
   // unconstrained so it works at every zoom; the `setCenter` animation on each research keeps
   // the camera framed on the new content.
 
-  // Placeholder click handler until the proper detail modal + Research button lands. For now,
-  // clicking an available card immediately fires the startResearch mutation; the backend deducts
-  // materials and rejects if there aren't enough. The `isPending` guard prevents a second click
-  // from firing while the first mutation is still in flight (otherwise the React Query cache
-  // hasn't updated yet, status looks `available` from a stale read, and the backend then
-  // (correctly) rejects the second mutation with "Already researched").
+  // Click any card → expand modal animates out from the card to ~50% width center-top, showing
+  // the BlueprintDetail. The actual `startResearch` mutation is fired from the "Start Research"
+  // button inside the modal (see handleResearchSelected below), not from the card click itself.
   const handleCardClick = useCallback(
-    (blueprint: Blueprint) => {
-      if (researchInProgress || startResearch.isPending) return
-      const status = getResearchStatus(blueprint, researchedBlueprints, researchInProgress)
-      if (status !== 'available') return
-      startResearch.mutate(blueprint.id)
+    (blueprint: Blueprint, element: HTMLElement) => {
+      setSelectedBlueprint(blueprint)
+      expand.open(element)
     },
-    [researchedBlueprints, researchInProgress, startResearch]
+    [expand.open]
   )
+
+  // `isPending` guard prevents a second click from firing while the first mutation is still in
+  // flight — otherwise the React Query cache hasn't updated yet, status looks `available` from a
+  // stale read, and the backend then (correctly) rejects the second mutation with "Already
+  // researched".
+  const handleResearchSelected = useCallback(() => {
+    if (!selectedBlueprint || researchInProgress || startResearch.isPending) return
+    const status = getResearchStatus(selectedBlueprint, researchedBlueprints, researchInProgress)
+    if (status !== 'available') return
+    startResearch.mutate(selectedBlueprint.id)
+    expand.close()
+  }, [selectedBlueprint, researchedBlueprints, researchInProgress, startResearch, expand.close])
 
   const nodes: Node[] = useMemo(
     () =>
@@ -205,9 +217,9 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props
           // ReactFlow's documented way to handle node clicks. Fires even with
           // `elementsSelectable={false}` and `nodesDraggable={false}`, so we don't have to fight
           // with pointer-event interception on the custom node content.
-          onNodeClick={(_, node) => {
+          onNodeClick={(event, node) => {
             const bp = getBlueprint(node.id)
-            if (bp) handleCardClick(bp)
+            if (bp) handleCardClick(bp, event.currentTarget as HTMLElement)
           }}
           // Soft pan constraint via onMoveEnd: pan/zoom is fully free during the drag, but on
           // release we check whether the viewport's center is still inside the tree's bbox; if
@@ -241,6 +253,23 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props
           defaultEdgeOptions={{ type: 'blueprint' }}
         />
       </BlueprintBackground>
+      {expand.isOpen && selectedBlueprint && (
+        <ExpandModal
+          isClosing={expand.isClosing}
+          animationStyle={expand.animationStyle}
+          modalRef={expand.modalRef}
+          onAnimationEnd={expand.onAnimationEnd}
+          onClose={expand.close}
+          showBackdrop
+        >
+          <BlueprintDetail
+            blueprint={selectedBlueprint}
+            status={getResearchStatus(selectedBlueprint, researchedBlueprints, researchInProgress)}
+            onResearch={handleResearchSelected}
+            onClose={expand.close}
+          />
+        </ExpandModal>
+      )}
     </Box>
   )
 }

@@ -1,8 +1,8 @@
-import type * as THREE from 'three'
 import type { SectionType } from 'models/station-section'
+import type * as THREE from 'three'
 import type { Station } from './station'
 
-const BUILD_DURATION_MS = 12000
+export const BUILD_DURATION_MS = 2000
 const BAR_OFFSET_Y = 48
 
 /**

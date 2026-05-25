@@ -141,9 +141,10 @@ export const handlers = [
   }),
 
   // Research
-  // Placeholder behavior until the proper Research-button + modal flow lands: clicking a research
-  // card completes the research INSTANTLY if affordable. The research-module-operational gate is
-  // skipped so the tree can be exercised without first building the section in StationGrid.
+  // Starts a research task: deducts materials and sets `researchInProgress` with start/complete
+  // timestamps derived from the blueprint's `durationMs`. The task is finalized on any subsequent
+  // read (`finalizeResearch()` is called at the top of GET /station etc.) once the wall clock
+  // passes `completesAt`. Queue capacity is 1 so we reject if another task is already active.
   http.post(`${url}/research/start`, async ({ request }) => {
     finalizeResearch()
     const { blueprintId } = (await request.json()) as { blueprintId: string }
@@ -153,6 +154,12 @@ export const handlers = [
     }
     if (db.station.researchedBlueprints.includes(blueprintId)) {
       return HttpResponse.text(`Already researched: ${blueprintId}`, { status: 400 })
+    }
+    if (db.station.researchInProgress) {
+      return HttpResponse.text(
+        `Research already in progress: ${db.station.researchInProgress.blueprintId}`,
+        { status: 400 }
+      )
     }
     if (blueprint.parentBlueprintId && !db.station.researchedBlueprints.includes(blueprint.parentBlueprintId)) {
       return HttpResponse.text(`Parent blueprint ${blueprint.parentBlueprintId} not yet researched`, { status: 400 })
@@ -168,8 +175,12 @@ export const handlers = [
       return HttpResponse.text(`Insufficient materials: ${missing}`, { status: 400 })
     }
     deductCosts(blueprint.cost)
-    db.station.researchedBlueprints.push(blueprintId)
-    db.station.researchInProgress = null
+    const now = Date.now()
+    db.station.researchInProgress = {
+      blueprintId,
+      startedAt: new Date(now).toISOString(),
+      completesAt: new Date(now + blueprint.durationMs).toISOString()
+    }
     return HttpResponse.json(db.station)
   })
 ]

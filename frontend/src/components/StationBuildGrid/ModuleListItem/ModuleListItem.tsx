@@ -13,10 +13,10 @@ export const ModuleListItem = ({ type, selected, onSelect }: ModuleListItemProps
   <Box
     onClick={onSelect}
     sx={{
-      bgcolor: selected ? 'hud.cardBgActive' : 'hud.cardBg',
+      bgcolor: selected ? 'hud.listActive' : 'hud.listRest',
       clipPath: 'polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px))',
       cursor: 'pointer',
-      '&:hover': !selected ? { bgcolor: 'hud.cardBgHover' } : undefined
+      '&:hover': !selected ? { bgcolor: 'hud.listHover' } : undefined
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', py: 2 }}>
@@ -30,14 +30,14 @@ export const ModuleListItem = ({ type, selected, onSelect }: ModuleListItemProps
             height: 48,
             objectFit: 'contain',
             display: 'block',
-            opacity: selected ? 1 : 0.7,
-            filter: selected ? 'invert(1)' : 'none'
+            opacity: selected ? 1 : 0.65,
+            filter: 'invert(1)'
           }}
         />
       </Box>
 
       <Box sx={{ flex: 1, px: 1.5, py: 2.5, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <Typography variant="hud-heading" sx={{ color: selected ? 'common.white' : 'hud.text' }}>
+        <Typography variant="hud-heading" sx={{ color: 'common.white' }}>
           {SECTION_NAMES[type]}
         </Typography>
         <Box
@@ -46,7 +46,7 @@ export const ModuleListItem = ({ type, selected, onSelect }: ModuleListItemProps
             alignItems: 'center',
             gap: 0.5,
             mt: 0.75,
-            color: selected ? 'rgba(255,255,255,0.75)' : 'hud.success'
+            color: 'hud.success'
           }}
         >
           <CircleIcon sx={{ fontSize: 10 }} />

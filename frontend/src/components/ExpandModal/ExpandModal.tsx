@@ -1,6 +1,8 @@
+import { Portal } from '@mui/material'
 import { keyframes, styled } from '@mui/material/styles'
 import type React from 'react'
 import type { ReactNode } from 'react'
+import { hudColors } from 'ui/theme/typography'
 
 const expandOpen = keyframes`
   from {
@@ -27,20 +29,29 @@ const expandClose = keyframes`
   }
 `
 
-const Backdrop = styled('div')<{ showBackdrop: boolean }>(({ showBackdrop }) => ({
+const Backdrop = styled('div')<{ showBackdrop: boolean; isClosing: boolean }>(({ showBackdrop, isClosing }) => ({
   position: 'fixed',
   inset: 0,
   zIndex: 1300,
   display: 'flex',
-  alignItems: 'flex-start',
+  alignItems: 'center',
   justifyContent: 'center',
-  backgroundColor: showBackdrop ? 'rgba(0, 0, 0, 0.6)' : 'transparent'
+  // While opening / open: show the dim layer. The moment `isClosing` flips to true the bgcolor
+  // animates back to transparent — so the backdrop fades out simultaneously with the modal
+  // scale/translate animation, instead of disappearing at the end via the unmount.
+  backgroundColor: showBackdrop && !isClosing ? hudColors.overlayBlack : 'transparent',
+  transition: 'background-color 0.3s cubic-bezier(0.2, 0, 0, 1)'
 }))
 
-const ModalContent = styled('div')<{ isClosing: boolean }>(({ isClosing }) => ({
+// Modal chrome is baked in here so content components (BlueprintDetail / ModuleDetail / future
+// uses) drop in without re-declaring the gradient + border + colour. Visually the panel reads
+// as the same surface as the build menu beneath it.
+const ModalContent = styled('div')<{ isClosing: boolean; modalWidth: string }>(({ isClosing, modalWidth }) => ({
   position: 'relative',
-  width: '50%',
-  marginTop: 'max(48px, 10vh)',
+  width: modalWidth,
+  background: hudColors.menuGradient,
+  border: `1px solid ${hudColors.borderStrong}`,
+  color: hudColors.textBright,
   transformOrigin: 'top left',
   animationDuration: '0.3s',
   animationTimingFunction: 'cubic-bezier(0.2, 0, 0, 1)',
@@ -53,6 +64,8 @@ interface ExpandModalProps {
   children: ReactNode
   isClosing: boolean
   showBackdrop?: boolean
+  /** CSS width value applied to the modal panel. Defaults to '30%'. */
+  width?: string
   animationStyle: React.CSSProperties | undefined
   modalRef: (node: HTMLDivElement | null) => void
   onAnimationEnd: (e: React.AnimationEvent) => void
@@ -60,19 +73,31 @@ interface ExpandModalProps {
 }
 
 export const ExpandModal = (props: ExpandModalProps) => {
-  const { children, isClosing, showBackdrop = false, animationStyle, modalRef, onAnimationEnd, onClose } = props
+  const {
+    children,
+    isClosing,
+    showBackdrop = false,
+    width = '30%',
+    animationStyle,
+    modalRef,
+    onAnimationEnd,
+    onClose
+  } = props
 
   return (
-    <Backdrop showBackdrop={showBackdrop} onClick={onClose}>
-      <ModalContent
-        ref={modalRef}
-        isClosing={isClosing}
-        style={animationStyle}
-        onAnimationEnd={onAnimationEnd}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {children}
-      </ModalContent>
-    </Backdrop>
+    <Portal>
+      <Backdrop showBackdrop={showBackdrop} isClosing={isClosing} onClick={onClose}>
+        <ModalContent
+          ref={modalRef}
+          isClosing={isClosing}
+          modalWidth={width}
+          style={animationStyle}
+          onAnimationEnd={onAnimationEnd}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {children}
+        </ModalContent>
+      </Backdrop>
+    </Portal>
   )
 }

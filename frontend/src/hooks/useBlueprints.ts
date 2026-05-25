@@ -12,12 +12,19 @@ export const useStartResearch = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (blueprintId: string) => blueprintApi.startResearch(blueprintId),
-    // The mock backend now returns the updated Station synchronously, so we set it into the cache
-    // directly for an immediate UI update. Also invalidate to keep things consistent with any
-    // background queries (e.g. a future server-driven flow that does long-running research).
+    // Backend now returns a station with `researchInProgress` set (start/complete timestamps);
+    // it doesn't finalize until a subsequent read. Write the new station into cache for an
+    // immediate UI update, then schedule a refetch right after the task's `completesAt` so the
+    // UI picks up the freshly-added researchedBlueprints entry without polling.
     onSuccess: (station) => {
       queryClient.setQueryData(queryKeys.station, station)
-      queryClient.invalidateQueries({ queryKey: queryKeys.station })
+      const task = station.researchInProgress
+      if (task) {
+        const delay = Math.max(0, Date.parse(task.completesAt) - Date.now())
+        setTimeout(() => queryClient.invalidateQueries({ queryKey: queryKeys.station }), delay + 50)
+      } else {
+        queryClient.invalidateQueries({ queryKey: queryKeys.station })
+      }
     },
     onError: (error) => {
       // Surface mutation failures (insufficient materials, parent not researched, etc.) so we can

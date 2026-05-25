@@ -12,7 +12,7 @@ export interface ShipGroupNodeData {
   addons: Blueprint[]
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
-  onCardClick: (blueprint: Blueprint) => void
+  onCardClick: (blueprint: Blueprint, element: HTMLElement) => void
 }
 
 // The ship group renders as TWO sibling frames inside one ReactFlow node: a small frame for the
@@ -39,7 +39,12 @@ export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
       />
       <Box sx={{ display: 'flex', alignItems: 'center', columnGap: 1 }}>
         <NodeFrame label={ship.name} width={SHIP_BOX_WIDTH} height={CARD_FRAME_HEIGHT}>
-          <ResearchCard blueprint={ship} status={shipStatus} onClick={() => onCardClick(ship)} />
+          <ResearchCard
+            blueprint={ship}
+            status={shipStatus}
+            task={researchInProgress}
+            onClick={(el) => onCardClick(ship, el)}
+          />
         </NodeFrame>
         {shipResearched && (
           <Box
@@ -60,7 +65,8 @@ export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
                 <ResearchCard
                   blueprint={addon}
                   status={getResearchStatus(addon, researchedBlueprints, researchInProgress)}
-                  onClick={() => onCardClick(addon)}
+                  task={researchInProgress}
+                  onClick={(el) => onCardClick(addon, el)}
                 />
               </NodeFrame>
             ))}

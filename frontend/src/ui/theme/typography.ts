@@ -18,10 +18,53 @@ export const hudColors = {
   success: '#66bb6a', // operational, cost met
   error: '#cc6655', // cost unmet
 
-  // Light card surfaces (module list items)
+  // Light card surfaces (module list items, pre-dark-menu era)
   cardBg: '#A4ABA9', // resting
   cardBgActive: '#707D7E', // selected
-  cardBgHover: '#909898' // hover
+  cardBgHover: '#909898', // hover
+
+  // === Dark build-menu palette ===
+  // Surfaces (blue-navy, translucent)
+  surface: 'rgba(22, 42, 63, 0.55)', // sub-cards, cost cells, hero thumbnail, ResearchCard
+  surfaceDeep: 'rgba(0, 6, 12, 0.55)', // station-grid cell base
+  // List-item tint scale — also reused for unavailable cell bg + zebra stripes (close enough
+  // that a single low-alpha-white token works for all three).
+  listRest: 'rgba(180, 200, 220, 0.05)',
+  listHover: 'rgba(180, 200, 220, 0.1)',
+  listActive: 'rgba(180, 200, 220, 0.18)',
+
+  // Bright (blue-tinted neutral) text scale on dark surfaces — 3 levels covers everything.
+  textBright: 'rgba(220, 235, 250, 0.95)', // primary body / titles
+  textBrightSoft: 'rgba(220, 235, 250, 0.65)', // descriptions, labels, secondary text
+  textBrightDim: 'rgba(220, 235, 250, 0.35)', // idle / disabled / placeholder
+
+  // Borders on dark — 3 levels
+  borderStrong: 'rgba(150, 175, 200, 0.35)', // outer panel border
+  borderSubtle: 'rgba(150, 175, 200, 0.2)', // sub-card / divider / buildable card
+  borderFaint: 'rgba(180, 200, 220, 0.08)', // DottedBackground + stat-row underline
+
+  // Semantic status colors used in modal badges and ResearchCard status corner
+  statusResearched: '#4caf50',
+  statusInProgress: '#26c6da',
+  statusAvailable: '#ffb74d',
+  statusLocked: '#5a6675',
+
+  // HUD progress bar — accent fill + bluish % label (both distinct from the bright text scale).
+  progressBar: '#4488ff',
+  progressLabel: 'rgba(170, 204, 255, 0.85)',
+
+  // Black-tinted overlay (single token covers modal backdrop, progress-bar track, dark cell underlays)
+  overlayBlack: 'rgba(0, 0, 0, 0.55)',
+
+  // Cyan glow used by the GridCell `moduleReveal` keyframe — kept here so the colour palette
+  // stays in one place even though the values land inside a CSS keyframes template string.
+  glowCyanStrong: 'rgba(68, 200, 255, 0.7)',
+  glowCyanSoft: 'rgba(68, 200, 255, 0.3)',
+
+  // The build-menu wrapper background — also used by ExpandModal so detail panels read as the
+  // same surface as the menu beneath. Exported as a full CSS gradient string so consumers can
+  // drop it into `background` directly.
+  menuGradient: 'linear-gradient(135deg, rgba(24, 38, 55, 0.98) 0%, rgba(14, 22, 32, 0.98) 100%)'
 } as const
 
 export type HudTypographyVariant =

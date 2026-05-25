@@ -1,15 +1,17 @@
 import ImageIcon from '@mui/icons-material/Image'
-import { Box } from '@mui/material'
-import type { Blueprint, BlueprintCategory } from 'models/blueprint'
+import { Box, LinearProgress } from '@mui/material'
+import type { Blueprint, BlueprintCategory, ResearchTask } from 'models/blueprint'
 import type { SectionType } from 'models/station-section'
 import { SECTION_IMAGES } from 'models/station-section'
-import type { ResearchStatus } from '../../utils'
+import { useEffect, useState } from 'react'
+import { hudColors } from 'ui/theme/typography'
+import { getResearchProgress, type ResearchStatus } from '../../utils'
 
 export const CARD_WIDTH = 80
 export const CARD_HEIGHT = 80
 const STATUS_INDICATOR_SIZE = 14
 
-const CARD_BG_COLOR = 'rgba(22, 42, 63, 0.55)'
+const CARD_BG_COLOR = hudColors.surface
 
 // 45° zebra stripes overlaid on cards that haven't been researched yet. Sits above the dimmed
 // thumbnail but under the status corner, so the "not yet built" hatching is clearly visible.
@@ -24,15 +26,16 @@ export const CATEGORY_COLORS: Record<BlueprintCategory, { base: string; active: 
   'ship-addon': { base: '#6fa07a', active: '#4f7a59' }
 }
 
-// EVE-style status corner colors — small triangle in the top-left of each tile.
+// EVE-style status corner colors — small triangle in the top-left of each tile. Mirrors the
+// modal status badge palette through the same theme tokens.
 const STATUS_INDICATOR_COLORS: Record<ResearchStatus, string | null> = {
-  researched: '#4caf50',
-  'in-progress': '#26c6da',
-  available: '#ffb74d',
-  locked: '#5a6675'
+  researched: hudColors.statusResearched,
+  'in-progress': hudColors.statusInProgress,
+  available: hudColors.statusAvailable,
+  locked: hudColors.statusLocked
 }
 
-const getBlueprintImage = (bp: Blueprint): string | null => {
+export const getBlueprintImage = (bp: Blueprint): string | null => {
   if (bp.category === 'module') return SECTION_IMAGES[bp.targetId as SectionType] ?? null
   // Ships use `public/images/spacecraft_lg/<targetId>.png`. The targetId is intentionally kept
   // in sync with the image filename in `models/blueprint.ts`.
@@ -52,12 +55,19 @@ const getBlueprintImage = (bp: Blueprint): string | null => {
 interface Props {
   blueprint: Blueprint
   status: ResearchStatus
-  onClick: () => void
+  /** When provided, the card renders a thin progress bar at the bottom edge if this task targets
+   *  the same blueprint as `blueprint.id`. Pulled from the same `researchInProgress` value that
+   *  the InfoPanel uses, so the tree and the side panel stay in sync. */
+  task?: ResearchTask | null
+  onClick: (element: HTMLElement) => void
 }
 
-export const ResearchCard = ({ blueprint, status, onClick }: Props) => {
+export const ResearchCard = ({ blueprint, status, task, onClick }: Props) => {
   const isResearched = status === 'researched'
   const image = getBlueprintImage(blueprint)
+  const isInProgress = status === 'in-progress' && !!task && task.blueprintId === blueprint.id
+  useCardProgressTick(isInProgress)
+  const progress = isInProgress && task ? getResearchProgress(task) : 0
 
   return (
     <Box
@@ -67,7 +77,7 @@ export const ResearchCard = ({ blueprint, status, onClick }: Props) => {
         // once for the parent ReactFlow node's blueprint (which for an addon inside ShipGroupNode
         // would mistakenly try to research the SHIP instead of the addon).
         e.stopPropagation()
-        onClick()
+        onClick(e.currentTarget as HTMLElement)
       }}
       sx={{
         width: CARD_WIDTH,
@@ -89,8 +99,39 @@ export const ResearchCard = ({ blueprint, status, onClick }: Props) => {
         />
       )}
       <StatusCorner status={status} />
+      {isInProgress && (
+        <LinearProgress
+          variant="determinate"
+          value={progress * 100}
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 3,
+            borderRadius: 0,
+            backgroundColor: 'hud.overlayBlack',
+            pointerEvents: 'none',
+            '& .MuiLinearProgress-bar': {
+              backgroundColor: 'hud.progressBar',
+              transition: 'transform 0.2s linear'
+            }
+          }}
+        />
+      )}
     </Box>
   )
+}
+
+// Re-render at 200ms cadence while the card has an active task so the bar moves smoothly off
+// `getResearchProgress`. Only one card is in-progress at a time, so the tick cost is negligible.
+const useCardProgressTick = (active: boolean) => {
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    if (!active) return
+    const id = setInterval(() => setTick((n) => n + 1), 200)
+    return () => clearInterval(id)
+  }, [active])
 }
 
 const CardThumbnail = ({ image, dim }: { image: string | null; dim: boolean }) => (
