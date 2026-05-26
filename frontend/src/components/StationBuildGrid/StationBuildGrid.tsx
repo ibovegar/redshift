@@ -75,7 +75,12 @@ export const StationBuildGrid = ({
         onBuild={handleBuild}
       />
 
-      <Box sx={{ flex: '0 0 964px', width: 964, alignSelf: 'stretch' }}>
+      {/* Right column shares the same dotted backdrop as the module list (left), so the build
+          surface, engineering bay, and research tree all sit on a consistent stippled background. */}
+      <DottedBackground
+        dotColor={hudColors.borderFaint}
+        sx={{ flex: '0 0 964px', width: 964, alignSelf: 'stretch' }}
+      >
         {selected === 'research' ? (
           <ResearchTree
             researchedBlueprints={researchedBlueprints}
@@ -93,7 +98,7 @@ export const StationBuildGrid = ({
             onBuild={onBuild}
           />
         )}
-      </Box>
+      </DottedBackground>
     </Box>
   )
 }

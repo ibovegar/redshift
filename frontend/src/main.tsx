@@ -23,7 +23,10 @@ const app = (
     <BrowserRouter>
       <ThemeProvider theme={ThemeDark}>
         <CssBaseline />
-        <Suspense fallback={<div>Loading...</div>}>
+        {/* Empty Suspense fallback — the LoadingScreen inside App takes over rendering as
+            soon as App mounts. A visible `<div>Loading...</div>` here used to flash before
+            the real LoadingScreen replaced it. The black body bg covers the gap. */}
+        <Suspense fallback={null}>
           <App />
         </Suspense>
       </ThemeProvider>

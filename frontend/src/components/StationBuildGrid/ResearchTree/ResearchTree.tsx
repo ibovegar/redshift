@@ -1,5 +1,4 @@
 import { Box } from '@mui/material'
-import { BlueprintBackground } from 'components/BlueprintBackground/BlueprintBackground'
 import { ExpandModal } from 'components/ExpandModal/ExpandModal'
 import { useStartResearch } from 'hooks/useBlueprints'
 import { useCardExpandAnimation } from 'hooks/useCardExpandAnimation'
@@ -193,7 +192,7 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <SectionHeader>Research Tree</SectionHeader>
-      <BlueprintBackground
+      <Box
         sx={{
           width: '100%',
           flex: 1,
@@ -252,7 +251,7 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props
           proOptions={{ hideAttribution: true }}
           defaultEdgeOptions={{ type: 'blueprint' }}
         />
-      </BlueprintBackground>
+      </Box>
       {expand.isOpen && selectedBlueprint && (
         <ExpandModal
           isClosing={expand.isClosing}

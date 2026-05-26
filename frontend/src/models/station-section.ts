@@ -24,12 +24,20 @@ export const SECTION_NAMES: Record<SectionType, string> = {
   power: 'Power Core'
 }
 
+// Descriptions are written to wrap to ~3 lines at the InfoPanel width (≈280px content) so the
+// layout doesn't jitter when the user switches between modules. Pair with a `minHeight` on the
+// description Typography for an exact lock.
 export const SECTION_DESCRIPTIONS: Record<SectionType, string> = {
-  command: 'Central hub responsible for constructing all other station modules. Required before any expansion can begin.',
-  research: 'Dedicated research facility for developing blueprints for ships, ship addons, and advanced station modules. Does not produce materials.',
-  engineering: 'Manufacture equipment and perform advanced ship repairs.',
-  storage: 'Expanded cargo storage for resources and equipment.',
-  power: 'Provides additional power capacity for all station modules.'
+  command:
+    'Central hub responsible for constructing every other station module. Coordinates docking, logistics, and the overall station systems.',
+  research:
+    'Dedicated research facility for developing blueprints — ships, ship addons, and advanced station modules. Does not produce raw materials.',
+  engineering:
+    'Heavy fabrication bay for manufacturing ships and ship upgrades. Performs structural repairs on docked spacecraft using bulk materials.',
+  storage:
+    'Expanded cargo bay holding refined ores and processed materials. Total capacity grows with each additional storage module attached.',
+  power:
+    'Reactor module providing additional power capacity to the station. Required by manufacturing and other high-draw modules to stay online.'
 }
 
 export const SECTION_COLORS: Record<SectionType, number> = {

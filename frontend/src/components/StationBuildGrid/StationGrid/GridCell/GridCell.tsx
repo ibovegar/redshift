@@ -30,15 +30,14 @@ interface GridCellProps {
   onBuild?: (element: HTMLElement) => void
 }
 
-// Multi-stage "materialise" reveal: cell starts small + over-bright (looks like a flash), pops
-// past full size with a cyan halo (drop-shadow, since the cell has a clipPath and box-shadow
-// would be clipped away), then settles. EVE-style "module came online" beat. Glow values come
-// from `hudColors` so the palette stays centralised even inside the keyframe template.
+// "Materialise" reveal — no scale, just a brightness flash with a cyan drop-shadow halo as the
+// cell fades in. Drop-shadow (not box-shadow) so the halo respects the cell's clipPath notch.
+// Glow values come from `hudColors` so the palette stays centralised even inside the keyframe.
 const moduleReveal = keyframes`
-  0%   { opacity: 0; transform: scale(0.6); filter: brightness(2.8) saturate(1.4) drop-shadow(0 0 0 transparent); }
-  45%  { opacity: 1; transform: scale(1.08); filter: brightness(1.6) saturate(1.2) drop-shadow(0 0 16px ${hudColors.glowCyanStrong}); }
-  75%  { transform: scale(0.98); filter: brightness(1.1) drop-shadow(0 0 6px ${hudColors.glowCyanSoft}); }
-  100% { opacity: 1; transform: scale(1); filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  0%   { opacity: 0; filter: brightness(2.8) saturate(1.4) drop-shadow(0 0 0 transparent); }
+//   45%  { opacity: 1; filter: brightness(1.6) saturate(1.2) drop-shadow(0 0 16px ${hudColors.glowCyanStrong}); }
+//   75%  { filter: brightness(1.1) drop-shadow(0 0 6px ${hudColors.glowCyanSoft}); }
+  100% { opacity: 1; filter: brightness(1) drop-shadow(0 0 0 transparent); }
 `
 
 export const GridCell = ({ type, state, canBuild, justBuilt, onBuild }: GridCellProps) => {
@@ -54,16 +53,19 @@ export const GridCell = ({ type, state, canBuild, justBuilt, onBuild }: GridCell
 }
 
 const EmptyCell = () => (
-  <Box sx={{ width: CELL, height: CELL, position: 'relative', bgcolor: 'hud.listRest', clipPath: NOTCH }}>
-    <svg aria-hidden="true" width={CELL} height={CELL} style={{ position: 'absolute', inset: 0, display: 'block' }}>
-      <polygon
-        points={`0.5,0.5 ${CELL - 0.5},0.5 ${CELL - 0.5},${CELL - 0.5} 14,${CELL - 0.5} 0.5,${CELL - 14}`}
-        fill="none"
-        stroke={hudColors.textBorder}
-        strokeWidth="1"
-        strokeDasharray="6 4"
-      />
-    </svg>
+  <Box
+    sx={{
+      width: CELL,
+      height: CELL,
+      position: 'relative',
+      // Same alpha as listRest, but shifted toward the progressLabel blue hue (170, 204, 255)
+      // so the empty slot reads as a faint blue tint instead of the blue-grey from listRest.
+      // Visibility unchanged — only the hue moves.
+      bgcolor: 'rgba(170, 204, 255, 0.05)',
+      clipPath: NOTCH,
+      opacity: 0.4
+    }}
+  >
     <AddIcon
       sx={{
         position: 'absolute',
@@ -81,7 +83,11 @@ const UnavailableCell = () => (
   <Box
     sx={{
       ...cellBaseSx,
-      bgcolor: 'hud.listRest',
+      // Pre-composited solid equivalent of `listRest` (rgba(180,200,220,0.05)) painted over the
+      // menu gradient — same tint the cell had before, but fully opaque so the dotted backdrop
+      // no longer bleeds through. Stripes still use `listRest` so the unavailable look-and-feel
+      // is preserved.
+      bgcolor: '#1f2c3e',
       backgroundImage: `repeating-linear-gradient(45deg, transparent 0 10px, ${hudColors.listRest} 10px 20px)`
     }}
   >
@@ -97,6 +103,10 @@ const OnlineCell = ({ type, justBuilt }: { type: SectionType; justBuilt?: boolea
   <Box
     sx={{
       ...cellBaseSx,
+      // Online cells sit on the dotted menu backdrop. The default surfaceDeep is too dark
+      // around the image edges and makes the cell read as a dark patch — this lighter,
+      // lower-alpha override blends the cell into the surrounding navy gradient.
+      bgcolor: 'rgba(10, 18, 28, 0.6)',
       ...(justBuilt && { animation: `${moduleReveal} 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) 0.2s both` })
     }}
   >
@@ -113,7 +123,11 @@ const AvailableCell = ({
   type,
   canBuild,
   onBuild
-}: { type: SectionType; canBuild: boolean; onBuild?: (element: HTMLElement) => void }) => (
+}: {
+  type: SectionType
+  canBuild: boolean
+  onBuild?: (element: HTMLElement) => void
+}) => (
   <Box sx={cellBaseSx}>
     <Box sx={{ position: 'absolute', inset: -8, opacity: 0.35, filter: 'blur(4px)' }}>
       <SectionImage type={type} />

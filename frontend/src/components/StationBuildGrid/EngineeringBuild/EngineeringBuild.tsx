@@ -68,9 +68,7 @@ const BuildableCard = ({ blueprint }: { blueprint: Blueprint }) => {
         alignItems: 'center',
         gap: 1.5,
         p: 1.5,
-        bgcolor: 'hud.surface',
-        border: '1px solid',
-        borderColor: 'hud.borderSubtle'
+        bgcolor: 'hud.surface'
       }}
     >
       <Box
