@@ -17,6 +17,7 @@ import { isOperational, statusOf } from './utils'
 interface Props {
   sections: StationSection[]
   storage: CargoItem[]
+  storageCapacity: number
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
   onBuild: (type: SectionType) => void
@@ -29,6 +30,7 @@ interface Props {
 export const StationBuildGrid = ({
   sections,
   storage,
+  storageCapacity,
   researchedBlueprints,
   researchInProgress,
   onBuild,
@@ -43,7 +45,10 @@ export const StationBuildGrid = ({
     onBuild(selected)
   }
 
-  const onlineTypes = SECTION_ORDER.filter((t) => isOperational(sections, t))
+  // Storage Extension is a buildable capacity upgrade — it lives in the StationGrid + research
+  // tree but is hidden from the operational module list since the static Storage entry already
+  // owns the capacity display.
+  const onlineTypes = SECTION_ORDER.filter((t) => t !== 'storage-extension' && isOperational(sections, t))
 
   return (
     <Box sx={{ display: 'flex', gap: '24px', alignItems: 'flex-start', height: '100%' }}>
@@ -69,6 +74,7 @@ export const StationBuildGrid = ({
         type={selected}
         status={statusOf(sections, selected)}
         storage={storage}
+        storageCapacity={storageCapacity}
         researchedBlueprints={researchedBlueprints}
         researchInProgress={researchInProgress}
         isPending={isPending}

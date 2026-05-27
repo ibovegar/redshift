@@ -132,6 +132,12 @@ export const handlers = [
     }
     deductCosts(costs)
     section.status = 'operational'
+    // Building a Storage Extension grows the station's overall cargo capacity — the always-
+    // visible Storage entry in the module list reads `storageCapacity` and reflects the bump.
+    // The base `storage` section is static (pre-built abstraction) and doesn't move capacity.
+    if (type === 'storage-extension') {
+      db.station.storageCapacity += 500
+    }
     return HttpResponse.json(db.station)
   }),
 

@@ -19,7 +19,8 @@ const MODULE_POS: Record<SectionType, { col: number; row: number }> = {
   research: { col: 1, row: 0 },
   engineering: { col: 2, row: 0 },
   power: { col: 2, row: 1 },
-  storage: { col: 2, row: 2 }
+  storage: { col: 0, row: 1 },
+  'storage-extension': { col: 2, row: 2 }
 }
 
 interface Props {

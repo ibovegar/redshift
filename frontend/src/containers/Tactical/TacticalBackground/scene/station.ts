@@ -22,7 +22,8 @@ const MODULE_TO_SECTION: Record<string, SectionType> = {
   Espirit_Refueller: 'research',
   CrewAirlock: 'engineering',
   Human_Lander_System: 'engineering',
-  Logistics_Vehicle: 'storage'
+  // Cargo pod is gated on building the Storage Extension upgrade, not the static storage entry.
+  Logistics_Vehicle: 'storage-extension'
 }
 
 const FADE_DURATION_MS = 1200

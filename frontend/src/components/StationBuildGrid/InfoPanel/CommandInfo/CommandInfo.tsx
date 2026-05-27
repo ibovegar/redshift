@@ -1,26 +1,14 @@
-import { Box, Divider, Stack, Typography } from '@mui/material'
-import { ExpandModal } from 'components/ExpandModal/ExpandModal'
-import { HudButton } from 'components/HudButton/HudButton'
+import { Box, Divider, Typography } from '@mui/material'
 import { HudList, type HudListItem } from 'components/HudList/HudList'
 import { InProgressBlock } from 'components/InProgressBlock/InProgressBlock'
-import { MATERIAL_ICONS, MATERIAL_NAMES } from 'data/materials'
-import { useCardExpandAnimation } from 'hooks/useCardExpandAnimation'
-import type { AsteroidMaterial } from 'models/asteroid'
 import { BLUEPRINTS } from 'models/blueprint'
-import type { CargoItem } from 'models/spacecraft'
 import { SECTION_DESCRIPTIONS, SECTION_NAMES } from 'models/station-section'
 import { SectionHeader } from '../../SectionHeader'
-import { heldAmount } from '../../utils'
 import { CONDITION_LABEL, type InfoPanelProps, STATUS_COLOR, STATUS_LABEL } from '../types'
 
-const ALL_MATERIALS = Object.keys(MATERIAL_NAMES) as AsteroidMaterial[]
-const PREVIEW_COUNT = 4
-
-export const CommandInfo = ({ type, status, storage, researchedBlueprints }: InfoPanelProps) => {
-  // Modal animates open from the "View all" button so the full resource list reads as the same
-  // surface as the panel, just expanded.
-  const expand = useCardExpandAnimation()
-
+export const CommandInfo = ({ type, status, researchedBlueprints }: InfoPanelProps) => {
+  // Most counts here are synthetic for now (crew, fleet). The research total reflects the real
+  // store so it ticks up as the user researches blueprints from the tree.
   const items: HudListItem[] = [
     { label: 'Status', value: STATUS_LABEL[status], valueColor: STATUS_COLOR[status] },
     { label: 'Condition', value: CONDITION_LABEL[status] },
@@ -38,59 +26,10 @@ export const CommandInfo = ({ type, status, storage, researchedBlueprints }: Inf
       <Divider sx={{ borderColor: 'hud.borderSubtle' }} />
       <HudList items={items} />
 
-      <SectionHeader sx={{ mt: 6 }}>Resources</SectionHeader>
-      <ResourceList storage={storage} materials={ALL_MATERIALS.slice(0, PREVIEW_COUNT)} />
-      <Box sx={{ mt: 1.5, display: 'flex', justifyContent: 'flex-end' }}>
-        <HudButton variant="secondary" onClick={(e) => expand.open(e.currentTarget as HTMLElement)}>
-          View all
-        </HudButton>
-      </Box>
-
       <Box sx={{ mt: 'auto' }}>
         {/* No command-task tracking yet — passing null renders the Idle state. */}
         <InProgressBlock task={null} />
       </Box>
-
-      {expand.isOpen && (
-        <ExpandModal
-          isClosing={expand.isClosing}
-          animationStyle={expand.animationStyle}
-          modalRef={expand.modalRef}
-          onAnimationEnd={expand.onAnimationEnd}
-          onClose={expand.close}
-          showBackdrop
-        >
-          <Box sx={{ p: 4 }}>
-            <SectionHeader>Resources</SectionHeader>
-            <ResourceList storage={storage} materials={ALL_MATERIALS} />
-          </Box>
-        </ExpandModal>
-      )}
     </Box>
   )
 }
-
-const ResourceList = ({ storage, materials }: { storage: CargoItem[]; materials: AsteroidMaterial[] }) => (
-  <Stack sx={{ mt: 0 }}>
-    {materials.map((material) => {
-      const amount = heldAmount(storage, material)
-      const empty = amount === 0
-      return (
-        <Box key={material} sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <Box
-            component="img"
-            src={MATERIAL_ICONS[material]}
-            alt={material}
-            sx={{ width: 36, height: 36, objectFit: 'contain', flexShrink: 0 }}
-          />
-          <Typography variant="hud-data" sx={{ flex: 1, color: 'common.white' }}>
-            {MATERIAL_NAMES[material]}
-          </Typography>
-          <Typography variant="hud-data" sx={{ color: empty ? 'hud.textBrightDim' : 'common.white' }}>
-            {amount}
-          </Typography>
-        </Box>
-      )
-    })}
-  </Stack>
-)

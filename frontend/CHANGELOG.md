@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-05-27
+
+- Storage rework: split the storage concept into two SectionTypes. `storage` is now the static "Storage Hub" — pre-researched + pre-built, owns the always-visible module-list entry that displays the running `storageCapacity`. Renamed `bp-mod-storage` to "Storage Hub" with matching description. The Hub itself has no 3D mesh attached
+- New `storage-extension` SectionType ("Storage Extension"): buildable capacity upgrade with its own blueprint `bp-mod-storage-extension` (parent `bp-mod-storage`), default status `locked`, its own cell in StationGrid (`MODULE_POS`), and full set of SECTION_* entries. Filtered out of the operational module list in `StationBuildGrid` so it doesn't appear alongside the static Storage Hub
+- Station 3D scene: `Logistics_Vehicle` mesh remapped from `'storage'` to `'storage-extension'` so the cargo-pod model only appears once the extension is built. The whole-model visibility gate added in a previous turn was removed — per-section `applySections` handles it
+- Mock backend: `/sections/build` for `storage-extension` bumps `station.storageCapacity` by 500 (previously the bump was tied to `storage` builds, which no longer trigger one since the Hub is pre-built)
+- Station model: new `storageCapacity: number` field on `Station` (default 1000 in mock data). Threaded through `InfoPanelProps` → `StationBuildGrid` → `StorageInfo` so the panel reads the live value instead of a hardcoded constant. The Used / Load rows in StorageInfo now reflect the dynamic capacity
+- StorageInfo: gained the preview-resource-list + "View all" ExpandModal pattern (was previously on CommandInfo). Shows first 4 materials with a modal expanding to the full list
+- CommandInfo: dropped the resource list, "View all" button, and ExpandModal — command panel is description + stats + InProgressBlock only now
+- ResearchInfo / EngineeringInfo / PowerInfo / StorageInfo / CommandInfo: every detail view now ends with `<InProgressBlock>` pinned to the bottom via `mt: 'auto'` inside a stretched flex-column outer Box. The two non-research views just pass `task={null}` so the block renders an Idle state, ready to wire up to per-module task fields later
+- InProgressBlock extracted into a top-level reusable component (`components/InProgressBlock/`) taking a generic `{ startedAt, completesAt }` task plus optional name and image — no knowledge of `ResearchTask`/`Blueprint`. Embeds its own 200ms progress ticker
+- HudList: new reusable label/value list at the top of `/components` — symmetric padding rows with a single divider centred between adjacent rows. All five InfoPanel sub-views compose it via an items array
+- InfoPanel split into per-module folders (`CommandInfo` / `EngineeringInfo` / `PowerInfo` / `StorageInfo` / `ResearchInfo`) with shared `types.ts` (`InfoPanelProps`, `STATUS_LABEL`, `STATUS_COLOR`, `CONDITION_LABEL`). Top-level `InfoPanel.tsx` is just a dispatcher switch on `props.type`; `ModuleInfo` (the old non-operational build view) was removed since the StationGrid cell modal already handles the build flow
+
 ## 2026-05-26
 
 - InfoPanel split into per-module folders (`CommandInfo`, `EngineeringInfo`, `PowerInfo`, `StorageInfo`, `ResearchInfo`) under `InfoPanel/`. Shared `Props` / `STATUS_LABEL` / `STATUS_COLOR` / `CONDITION_LABEL` live in `InfoPanel/types.ts`. The top-level `InfoPanel.tsx` is now just a dispatcher `switch` on section type — `ModuleInfo` (the old non-operational build-cost view) was removed; the station-grid cell modal already handles the build flow, so the panel only renders per-module operational details now. Research module starts as `available` on a fresh station instead of pre-built

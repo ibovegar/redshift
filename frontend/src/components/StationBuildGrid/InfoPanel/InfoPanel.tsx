@@ -19,5 +19,9 @@ export const InfoPanel = (props: InfoPanelProps) => {
       return <StorageInfo {...props} />
     case 'research':
       return <ResearchInfo {...props} />
+    case 'storage-extension':
+      // Storage Extension is filtered out of the module list, so the dispatcher never lands
+      // here in practice — null guards against any future ad-hoc selection.
+      return null
   }
 }

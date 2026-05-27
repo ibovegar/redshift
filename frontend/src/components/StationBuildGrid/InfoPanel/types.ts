@@ -9,6 +9,7 @@ export interface InfoPanelProps {
   type: SectionType
   status: SectionStatus
   storage: CargoItem[]
+  storageCapacity: number
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
   isPending: boolean

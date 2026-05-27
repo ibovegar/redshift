@@ -39,6 +39,7 @@ export const spacecrafts: Spacecraft[] = [
 export const station: Station = {
   id: 'station-1',
   name: 'Gateway Station',
+  storageCapacity: 1000,
   storage: [
     { material: 'iron', amount: 1000 },
     { material: 'copper', amount: 1000 },
@@ -56,7 +57,10 @@ export const station: Station = {
     { type: 'engineering', status: 'locked' },
     { type: 'research', status: 'available' },
     { type: 'power', status: 'locked' },
-    { type: 'storage', status: 'locked' }
+    { type: 'storage', status: 'operational' },
+    // Buildable storage-capacity upgrade — locked initially; becomes available once its
+    // blueprint is researched and unlocks the cargo-pod mesh in the scene when built.
+    { type: 'storage-extension', status: 'locked' }
   ],
   researchedBlueprints: [...PRE_RESEARCHED_BLUEPRINT_IDS],
   researchInProgress: null

@@ -11,8 +11,6 @@ export const CARD_WIDTH = 80
 export const CARD_HEIGHT = 80
 const STATUS_INDICATOR_SIZE = 14
 
-const CARD_BG_COLOR = hudColors.surface
-
 // 45° zebra stripes overlaid on cards that haven't been researched yet. Sits above the dimmed
 // thumbnail but under the status corner, so the "not yet built" hatching is clearly visible.
 const UNRESEARCHED_STRIPES =
@@ -83,8 +81,7 @@ export const ResearchCard = ({ blueprint, status, task, onClick }: Props) => {
         width: CARD_WIDTH,
         height: CARD_HEIGHT,
         cursor: 'pointer',
-        position: 'relative',
-        bgcolor: CARD_BG_COLOR
+        position: 'relative'
       }}
     >
       <CardThumbnail image={image} dim={!isResearched} />

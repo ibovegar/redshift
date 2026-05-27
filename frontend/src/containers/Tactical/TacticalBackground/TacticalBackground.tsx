@@ -1619,6 +1619,7 @@ export const TacticalBackground = () => {
           initialSection={buildMenuInitialSection}
           sections={station.sections}
           storage={station.storage}
+          storageCapacity={station.storageCapacity}
           researchedBlueprints={station.researchedBlueprints}
           researchInProgress={station.researchInProgress}
           isPending={buildSection.isPending}

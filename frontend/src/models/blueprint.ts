@@ -149,12 +149,24 @@ export const BLUEPRINTS: Blueprint[] = [
   {
     id: 'bp-mod-storage',
     category: 'module',
-    name: 'Storage Module',
-    description: 'Schematics for the Storage module. Required to construct the storage section.',
+    name: 'Storage Hub',
+    description: 'Schematics for the Storage Hub. Required to construct the storage hub section.',
     targetId: 'storage',
     cost: { iron: 10, carbon: 5 },
     durationMs: 3_000,
     parentBlueprintId: 'bp-mod-research'
+  },
+  {
+    // Buildable upgrade — each one researched + constructed grows the station's storage
+    // capacity and reveals the cargo-pod mesh in the 3D scene.
+    id: 'bp-mod-storage-extension',
+    category: 'module',
+    name: 'Storage Extension',
+    description: 'Schematics for a cargo-pod extension that grows the station storage capacity.',
+    targetId: 'storage-extension',
+    cost: { iron: 15, carbon: 8 },
+    durationMs: 3_000,
+    parentBlueprintId: 'bp-mod-storage'
   },
   ...buildShipFamily({
     shipId: 'bp-ship-tellrx5',
@@ -198,7 +210,9 @@ export const BLUEPRINTS: Blueprint[] = [
   })
 ]
 
-export const PRE_RESEARCHED_BLUEPRINT_IDS = ['bp-mod-command', 'bp-mod-research']
+// Storage is treated like command — pre-researched + pre-built so the station has cargo
+// capacity from the start. The Storage entry in the module list is therefore always visible.
+export const PRE_RESEARCHED_BLUEPRINT_IDS = ['bp-mod-command', 'bp-mod-research', 'bp-mod-storage']
 
 export const getBlueprint = (id: string): Blueprint | undefined => BLUEPRINTS.find((bp) => bp.id === id)
 
