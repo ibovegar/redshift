@@ -16,9 +16,17 @@ export default defineConfig({
     target: 'esnext',
     rollupOptions: {
       output: {
-        manualChunks: {
-          three: ['three'],
-          vendor: ['react', 'react-dom', '@mui/material', '@tanstack/react-query']
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('/three/')) return 'three'
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/@mui/material/') ||
+            id.includes('/@tanstack/react-query/')
+          ) {
+            return 'vendor'
+          }
         }
       }
     }

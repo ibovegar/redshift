@@ -1,8 +1,7 @@
-import { ErrorBoundary } from 'components'
-import { Layout } from 'components/Layout/Layout'
 import { useStation } from 'hooks'
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router'
+import { ErrorBoundary, Layout } from '~/components'
 
 const Tactical = lazy(() => import('containers/Tactical/Tactical').then((m) => ({ default: m.Tactical })))
 const Wiki = lazy(() => import('wiki/Wiki').then((m) => ({ default: m.Wiki })))

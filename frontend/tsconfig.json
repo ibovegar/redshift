@@ -19,6 +19,9 @@
     "noImplicitReturns": false,
     "noImplicitAny": false,
     "baseUrl": "src",
+    "paths": {
+      "~/*": ["*"]
+    },
     "strictPropertyInitialization": false,
     "ignoreDeprecations": "6.0"
   },

@@ -1,17 +1,4 @@
 import { Typography } from '@mui/material'
-import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
-import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
-import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
-import { HudButton } from 'components/HudButton/HudButton'
-import { HudMenu } from 'components/HudMenu/HudMenu'
-import { HudPanel } from 'components/HudPanel/HudPanel'
-import { HudProgressBar } from 'components/HudProgressBar/HudProgressBar'
-import { HudTooltip } from 'components/HudTooltip/HudTooltip'
-import { LoadingScreen } from 'components/LoadingScreen/LoadingScreen'
-import { RadiationWarning } from 'components/RadiationWarning/RadiationWarning'
-import { ScanResult } from 'components/ScanResult/ScanResult'
-import { ShipStats } from 'components/ShipStats/ShipStats'
-import { StationBuildGrid } from 'components/StationBuildGrid/StationBuildGrid'
 import { MATERIAL_STORAGE_COST } from 'data/materials'
 import {
   useBuildSection,
@@ -32,6 +19,22 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { hudColors } from 'ui/theme/typography'
+import {
+  type CollectedResource,
+  ConnectorLines,
+  DrillOverlay,
+  FullscreenLayer,
+  HudButton,
+  HudMenu,
+  HudPanel,
+  HudProgressBar,
+  HudTooltip,
+  LoadingScreen,
+  RadiationWarning,
+  ScanResult,
+  ShipStats,
+  StationBuildGrid
+} from '~/components'
 import { AsteroidBelts, BELT_SPEED } from './scene/asteroid-belts'
 import { AsteroidHighlight } from './scene/asteroid-highlight'
 import { BuildBarController } from './scene/build-bar'
