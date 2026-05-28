@@ -18,23 +18,24 @@ interface Props {
   image?: string | null
 }
 
-// Tick state used to drive the progress bar — the bar value is time-dependent so the component
-// needs to re-render at a steady rate while a task is active. 200ms keeps the bar smooth
-// without burning frames.
-const useProgressTick = (active: boolean) => {
-  const [, setTick] = useState(0)
-  useEffect(() => {
-    if (!active) return
-    const id = setInterval(() => setTick((n) => n + 1), 200)
-    return () => clearInterval(id)
-  }, [active])
-}
-
 const computeProgress = (task: InProgressTask, now: number = Date.now()): number => {
   const start = Date.parse(task.startedAt)
   const end = Date.parse(task.completesAt)
   if (end <= start) return 1
   return Math.min(1, Math.max(0, (now - start) / (end - start)))
+}
+
+// Live 0–100 progress for a time-based task. Re-renders on a 200ms tick while a task is active
+// (the value is wall-clock derived) — smooth enough without burning frames. Returns 0 when idle.
+// Exported so any view (e.g. a build card in the grid) can render its own progress UI off it.
+export const useTaskProgress = (task: InProgressTask | null): number => {
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    if (!task) return
+    const id = setInterval(() => setTick((n) => n + 1), 200)
+    return () => clearInterval(id)
+  }, [task])
+  return task ? Math.round(computeProgress(task) * 100) : 0
 }
 
 const Container = ({ children }: PropsWithChildren) => (
@@ -54,7 +55,7 @@ const Container = ({ children }: PropsWithChildren) => (
 )
 
 export const InProgressBlock = ({ task, name, image }: Props) => {
-  useProgressTick(!!task)
+  const pct = useTaskProgress(task)
   if (!task) {
     return (
       <Container>
@@ -64,7 +65,6 @@ export const InProgressBlock = ({ task, name, image }: Props) => {
       </Container>
     )
   }
-  const pct = Math.round(computeProgress(task) * 100)
   return (
     <Container>
       <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1.5 }}>

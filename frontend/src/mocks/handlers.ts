@@ -1,17 +1,25 @@
-import { BLUEPRINTS, getBlueprint, getModuleBlueprint } from 'models/blueprint'
 import type { Spacecraft, Station } from 'models'
+import { BLUEPRINTS, getBlueprint, getModuleBlueprint } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
-import { SECTION_BLUEPRINT, SECTION_COSTS } from 'models/station-section'
 import type { SectionType } from 'models/station-section'
+import { SECTION_BLUEPRINT, SECTION_COSTS } from 'models/station-section'
 import { HttpResponse, http } from 'msw'
 import { spacecrafts, station, user } from './data'
 
 const url = import.meta.env.VITE_API_URL
 
+// Fixed build time for every Engineering Bay construction — 5s for now. Builds derive their
+// start/complete timestamps from this the same way research derives them from `blueprint.durationMs`.
+const BUILD_DURATION_MS = 5_000
+
 const db = {
   user: { ...user },
   spacecrafts: [...spacecrafts] as Spacecraft[],
-  station: { ...station, storage: [...station.storage], researchedBlueprints: [...station.researchedBlueprints] } as Station
+  station: {
+    ...station,
+    storage: [...station.storage],
+    researchedBlueprints: [...station.researchedBlueprints]
+  } as Station
 }
 
 const finalizeResearch = () => {
@@ -25,9 +33,26 @@ const finalizeResearch = () => {
   }
 }
 
+// Completes the active section build once the wall clock passes its completesAt: flips the section
+// to operational (and bumps storage capacity for a storage extension), then clears the slot.
+// Mirrors finalizeResearch — called at the top of any read so progress resolves without polling.
+const finalizeBuild = () => {
+  const task = db.station.buildInProgress
+  if (!task) return
+  if (Date.parse(task.completesAt) <= Date.now()) {
+    const section = db.station.sections.find((s) => s.type === task.sectionType)
+    if (section) section.status = 'operational'
+    if (task.sectionType === 'storage-extension') {
+      db.station.storageCapacity += 500
+    }
+    db.station.buildInProgress = null
+  }
+}
+
 const deductCosts = (costs: Partial<Record<string, number>>) => {
   for (const [material, amount] of Object.entries(costs)) {
-    const item = db.station.storage.find((s) => s.material === material)!
+    const item = db.station.storage.find((s) => s.material === material)
+    if (!item) continue
     item.amount -= amount ?? 0
     if (item.amount <= 0) {
       db.station.storage = db.station.storage.filter((s) => s.material !== material)
@@ -91,6 +116,7 @@ export const handlers = [
   // Station
   http.get(`${url}/station`, () => {
     finalizeResearch()
+    finalizeBuild()
     return HttpResponse.json(db.station)
   }),
 
@@ -108,11 +134,19 @@ export const handlers = [
     return HttpResponse.json(db.station)
   }),
 
+  // Starts a section build: deducts materials and sets `buildInProgress` with start/complete
+  // timestamps derived from BUILD_DURATION_MS (5s for now), the same way research derives them
+  // from `blueprint.durationMs`. The section flips to operational on a later read via
+  // finalizeBuild() once the wall clock passes `completesAt`. Queue capacity is 1.
   http.post(`${url}/station/sections/build`, async ({ request }) => {
     finalizeResearch()
+    finalizeBuild()
     const { type } = (await request.json()) as { type: SectionType }
     const section = db.station.sections.find((s) => s.type === type)
     if (!section || section.status === 'operational') {
+      return new HttpResponse(null, { status: 400 })
+    }
+    if (db.station.buildInProgress) {
       return new HttpResponse(null, { status: 400 })
     }
     const blueprintType = SECTION_BLUEPRINT[type]
@@ -131,12 +165,14 @@ export const handlers = [
       return new HttpResponse(null, { status: 400 })
     }
     deductCosts(costs)
-    section.status = 'operational'
-    // Building a Storage Extension grows the station's overall cargo capacity — the always-
-    // visible Storage entry in the module list reads `storageCapacity` and reflects the bump.
-    // The base `storage` section is static (pre-built abstraction) and doesn't move capacity.
-    if (type === 'storage-extension') {
-      db.station.storageCapacity += 500
+    // Material deduction + storageCapacity bump happen up-front and on finalize respectively:
+    // costs are charged now (so they can't be double-spent), the capacity bump lands when the
+    // build completes (finalizeBuild), and the section flips to operational at the same time.
+    const now = Date.now()
+    db.station.buildInProgress = {
+      sectionType: type,
+      startedAt: new Date(now).toISOString(),
+      completesAt: new Date(now + BUILD_DURATION_MS).toISOString()
     }
     return HttpResponse.json(db.station)
   }),
@@ -162,10 +198,9 @@ export const handlers = [
       return HttpResponse.text(`Already researched: ${blueprintId}`, { status: 400 })
     }
     if (db.station.researchInProgress) {
-      return HttpResponse.text(
-        `Research already in progress: ${db.station.researchInProgress.blueprintId}`,
-        { status: 400 }
-      )
+      return HttpResponse.text(`Research already in progress: ${db.station.researchInProgress.blueprintId}`, {
+        status: 400
+      })
     }
     if (blueprint.parentBlueprintId && !db.station.researchedBlueprints.includes(blueprint.parentBlueprintId)) {
       return HttpResponse.text(`Parent blueprint ${blueprint.parentBlueprintId} not yet researched`, { status: 400 })

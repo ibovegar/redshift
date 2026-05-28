@@ -1,4 +1,4 @@
-import type { ResearchTask } from 'models/blueprint'
+import type { BuildTask, ResearchTask } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
 import type { SectionStatus, SectionType } from 'models/station-section'
 
@@ -12,6 +12,7 @@ export interface InfoPanelProps {
   storageCapacity: number
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
+  buildInProgress: BuildTask | null
   isPending: boolean
   onBuild: () => void
 }

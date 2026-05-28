@@ -17,7 +17,8 @@ export const ArcGauge = ({ value, label, color }: ArcGaugeProps) => {
   return (
     <Stack sx={{ alignItems: 'center', gap: 0.5 }}>
       <Box sx={{ position: 'relative', width: 96, height: 58 }}>
-        <svg width="96" height="58" viewBox="0 0 96 58" style={{ overflow: 'visible' }}>
+        <svg width="96" height="58" viewBox="0 0 96 58" style={{ overflow: 'visible' }} role="img" aria-label={label}>
+          <title>{`${label}: ${value}`}</title>
           <path
             d={`M 6 54 A ${radius} ${radius} 0 0 1 90 54`}
             fill="none"

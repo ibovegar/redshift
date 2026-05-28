@@ -16,7 +16,7 @@ export const DarkBar = ({ value, color = '#1e88e5' }: DarkBarProps) => (
         width: `${Math.min(100, Math.max(0, value))}%`,
         bgcolor: color,
         boxShadow: `0 0 6px ${color}80`,
-        transition: 'width 0.3s ease',
+        transition: 'width 0.3s ease'
       }}
     />
   </Box>

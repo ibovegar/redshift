@@ -1,14 +1,16 @@
 import AddIcon from '@mui/icons-material/Add'
-import { Box, Typography } from '@mui/material'
+import { Box, LinearProgress, Typography } from '@mui/material'
 import { keyframes, type SxProps, type Theme } from '@mui/material/styles'
 import { HudButton } from 'components/HudButton/HudButton'
+import { useTaskProgress } from 'components/InProgressBlock/InProgressBlock'
+import type { BuildTask } from 'models/blueprint'
 import type { SectionType } from 'models/station-section'
 import { SECTION_IMAGES, SECTION_NAMES } from 'models/station-section'
 import type { ReactNode } from 'react'
 import { hudColors } from 'ui/theme/typography'
 import type { CellState } from '../../utils'
 
-export const CELL = 160
+export const CELL = 168
 const NOTCH = 'polygon(0 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px))'
 
 const cellBaseSx: SxProps<Theme> = {
@@ -24,24 +26,29 @@ interface GridCellProps {
   type?: SectionType
   state?: CellState
   canBuild?: boolean
+  /** Active build task when THIS cell's section is under construction, else null. Drives the
+   *  in-cell progress bar and takes precedence over the available/build affordance. */
+  buildTask?: BuildTask | null
   /** Triggers the one-shot fade-in animation on the online cell — used right after a build
    *  completes so the new module fades in instead of popping in when the menu reopens. */
   justBuilt?: boolean
   onBuild?: (element: HTMLElement) => void
 }
 
-// "Materialise" reveal — no scale, just a brightness flash with a cyan drop-shadow halo as the
-// cell fades in. Drop-shadow (not box-shadow) so the halo respects the cell's clipPath notch.
-// Glow values come from `hudColors` so the palette stays centralised even inside the keyframe.
+// Blur the Available card's image uses while idle — also the start point of the build-complete
+// reveal, so a finished module appears to "focus" into place from the same blur.
+const CARD_BLUR_PX = 4
+
+// Build-complete reveal: unblur from CARD_BLUR_PX down to crisp over 2s when a module finishes.
 const moduleReveal = keyframes`
-  0%   { opacity: 0; filter: brightness(2.8) saturate(1.4) drop-shadow(0 0 0 transparent); }
-//   45%  { opacity: 1; filter: brightness(1.6) saturate(1.2) drop-shadow(0 0 16px ${hudColors.glowCyanStrong}); }
-//   75%  { filter: brightness(1.1) drop-shadow(0 0 6px ${hudColors.glowCyanSoft}); }
-  100% { opacity: 1; filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  from { filter: blur(${CARD_BLUR_PX}px); }
+  to   { filter: blur(0px); }
 `
 
-export const GridCell = ({ type, state, canBuild, justBuilt, onBuild }: GridCellProps) => {
+export const GridCell = ({ type, state, canBuild, buildTask, justBuilt, onBuild }: GridCellProps) => {
   if (!type) return <EmptyCell />
+  // A build in progress on this section overrides the available/build affordance — show progress.
+  if (buildTask) return <BuildingCell type={type} task={buildTask} />
   switch (state) {
     case 'online':
       return <OnlineCell type={type} justBuilt={justBuilt} />
@@ -58,9 +65,6 @@ const EmptyCell = () => (
       width: CELL,
       height: CELL,
       position: 'relative',
-      // Same alpha as listRest, but shifted toward the progressLabel blue hue (170, 204, 255)
-      // so the empty slot reads as a faint blue tint instead of the blue-grey from listRest.
-      // Visibility unchanged — only the hue moves.
       bgcolor: 'rgba(170, 204, 255, 0.05)',
       clipPath: NOTCH,
       opacity: 0.4
@@ -72,7 +76,7 @@ const EmptyCell = () => (
         top: '50%',
         left: '50%',
         transform: 'translate(-50%,-50%)',
-        fontSize: 24,
+        fontSize: 20,
         color: 'hud.textBrightDim'
       }}
     />
@@ -83,10 +87,6 @@ const UnavailableCell = () => (
   <Box
     sx={{
       ...cellBaseSx,
-      // Pre-composited solid equivalent of `listRest` (rgba(180,200,220,0.05)) painted over the
-      // menu gradient — same tint the cell had before, but fully opaque so the dotted backdrop
-      // no longer bleeds through. Stripes still use `listRest` so the unavailable look-and-feel
-      // is preserved.
       bgcolor: '#1f2c3e',
       backgroundImage: `repeating-linear-gradient(45deg, transparent 0 10px, ${hudColors.listRest} 10px 20px)`
     }}
@@ -103,11 +103,7 @@ const OnlineCell = ({ type, justBuilt }: { type: SectionType; justBuilt?: boolea
   <Box
     sx={{
       ...cellBaseSx,
-      // Online cells sit on the dotted menu backdrop. The default surfaceDeep is too dark
-      // around the image edges and makes the cell read as a dark patch — this lighter,
-      // lower-alpha override blends the cell into the surrounding navy gradient.
-      bgcolor: 'rgba(10, 18, 28, 0.6)',
-      ...(justBuilt && { animation: `${moduleReveal} 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) 0.2s both` })
+      ...(justBuilt && { animation: `${moduleReveal} 0.5s ease-out both` })
     }}
   >
     <Box sx={{ position: 'absolute', inset: 0, filter: 'brightness(0.88)' }}>
@@ -119,6 +115,46 @@ const OnlineCell = ({ type, justBuilt }: { type: SectionType; justBuilt?: boolea
   </Box>
 )
 
+const BuildingCell = ({ type, task }: { type: SectionType; task: BuildTask }) => {
+  const pct = useTaskProgress(task)
+  return (
+    <Box sx={cellBaseSx}>
+      <Box sx={{ position: 'absolute', inset: -8, opacity: 0.3, filter: 'blur(4px)' }}>
+        <SectionImage type={type} />
+      </Box>
+      <CenteredOverlay>
+        <Box sx={{ width: '78%', display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+          <Typography
+            variant="hud-tag"
+            sx={{ fontSize: 10, letterSpacing: 1, color: 'hud.statusInProgress', textAlign: 'center' }}
+          >
+            Building
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={pct}
+            sx={{
+              height: 3,
+              borderRadius: 0,
+              backgroundColor: 'hud.overlayBlack',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: 'hud.progressBar',
+                transition: 'transform 0.2s linear'
+              }
+            }}
+          />
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 10, color: 'hud.progressLabel', textAlign: 'center' }}>
+            {pct}%
+          </Typography>
+        </Box>
+      </CenteredOverlay>
+      <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, pt: 2, pb: 2 }}>
+        <CellLabel color="common.white">{SECTION_NAMES[type]}</CellLabel>
+      </Box>
+    </Box>
+  )
+}
+
 const AvailableCell = ({
   type,
   canBuild,
@@ -129,7 +165,7 @@ const AvailableCell = ({
   onBuild?: (element: HTMLElement) => void
 }) => (
   <Box sx={cellBaseSx}>
-    <Box sx={{ position: 'absolute', inset: -8, opacity: 0.35, filter: 'blur(4px)' }}>
+    <Box sx={{ position: 'absolute', inset: -8, opacity: 0.35, filter: `blur(${CARD_BLUR_PX}px)` }}>
       <SectionImage type={type} />
     </Box>
     <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, pt: 2, pb: 2 }}>

@@ -26,7 +26,7 @@ export const SciFiPanel = ({ title, children, accent = false }: SciFiPanelProps)
         height: 10,
         borderTop: '2px solid #42a5f5',
         borderLeft: '2px solid #42a5f5',
-        pointerEvents: 'none',
+        pointerEvents: 'none'
       },
       '&::after': {
         content: '""',
@@ -37,15 +37,15 @@ export const SciFiPanel = ({ title, children, accent = false }: SciFiPanelProps)
         height: 10,
         borderBottom: '2px solid #42a5f5',
         borderRight: '2px solid #42a5f5',
-        pointerEvents: 'none',
-      },
+        pointerEvents: 'none'
+      }
     }}
   >
     <Box
       sx={{
         pb: 1,
         mb: 1.5,
-        borderBottom: `1px solid ${accent ? 'rgba(255,255,255,0.15)' : 'rgba(33,150,243,0.35)'}`,
+        borderBottom: `1px solid ${accent ? 'rgba(255,255,255,0.15)' : 'rgba(33,150,243,0.35)'}`
       }}
     >
       <Typography

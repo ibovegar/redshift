@@ -1,6 +1,6 @@
-import { getModuleBlueprint } from 'models/blueprint'
-import type { Blueprint, ResearchTask } from 'models/blueprint'
 import type { AsteroidMaterial } from 'models/asteroid'
+import type { Blueprint, ResearchTask } from 'models/blueprint'
+import { getModuleBlueprint } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
 import type { SectionStatus, SectionType, StationSection } from 'models/station-section'
 import { SECTION_BLUEPRINT, SECTION_COSTS } from 'models/station-section'

@@ -31,8 +31,6 @@ export const EngineeringInfo = ({ type, status, researchedBlueprints }: InfoPane
       </Typography>
       <Divider sx={{ borderColor: 'hud.borderSubtle' }} />
       <HudList items={items} />
-      {/* No build mutation wired yet — passing null renders the Idle state. Hook this up to a
-          ship-build task field on Station once the backend supports it. */}
       <Box sx={{ mt: 'auto' }}>
         <InProgressBlock task={null} />
       </Box>

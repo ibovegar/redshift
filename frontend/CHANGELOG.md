@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-28
+
+- Station module build progression: building a station section (Command/Research/Power/Engineering/Storage Extension) in the Station Layout grid is no longer instant — it now runs a timed construction (fixed at 5s for now, `BUILD_DURATION_MS` in `mocks/handlers.ts`), modelled the same way as research durations. `POST /station/sections/build` deducts cost and sets `Station.buildInProgress` (`BuildTask` keyed by `sectionType`, with start/complete timestamps) instead of flipping the section operational immediately; `finalizeBuild()` completes it on a later read once the wall clock passes `completesAt` (flips the section operational + applies the storage-extension capacity bump). Queue capacity is 1
+- GridCell: the section under construction shows a live progress bar + % readout (a `Building` state) in its cell; while a build runs, other cells' Build buttons are suppressed (the backend rejects concurrent builds anyway)
+- `useBuildSection` now writes the returned station into cache for an immediate progress bar and schedules a refetch just after `completesAt` (mirrors `useStartResearch`); `useStation`'s safety-net refetch watches whichever of research/build completes first
+- The newly-built cell reveal now fires when the build actually completes (detected via `buildInProgress` returning to null in `TacticalBackground`) rather than on mutation success, and plays a 2s unblur — the module focuses in from the Available card's blur (`CARD_BLUR_PX`) down to crisp. The `justBuilt` flag is held for 2.1s so the animation isn't cut short
+- CommandInfo `InProgressBlock`: the Command (hub) view now surfaces the active section build (name + image + progress), matching the in-grid cell bar
+- InProgressBlock: extracted a reusable `useTaskProgress(task)` hook (200ms tick + wall-clock %), used by both the block and the grid cell's progress bar
+
 ## 2026-05-27
 
 - Storage rework: split the storage concept into two SectionTypes. `storage` is now the static "Storage Hub" — pre-researched + pre-built, owns the always-visible module-list entry that displays the running `storageCapacity`. Renamed `bp-mod-storage` to "Storage Hub" with matching description. The Hub itself has no 3D mesh attached

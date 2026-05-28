@@ -13,6 +13,8 @@ export const RadiationActive = () => (
     }}
   >
     <Typography variant="hud-alarm">RADIATION ACTIVE</Typography>
-    <Typography variant="hud-alarm" sx={{ fontSize: 14 }}>SEEK SPACEDOCK IMMEDIATELY</Typography>
+    <Typography variant="hud-alarm" sx={{ fontSize: 14 }}>
+      SEEK SPACEDOCK IMMEDIATELY
+    </Typography>
   </WarningBanner>
 )

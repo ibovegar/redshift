@@ -1,5 +1,5 @@
-import { SECTION_COLORS } from 'models/station-section'
 import type { SectionType, StationSection } from 'models/station-section'
+import { SECTION_COLORS } from 'models/station-section'
 import * as THREE from 'three'
 import type { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { EmissiveHighlight } from './emissive-highlight'
@@ -264,11 +264,11 @@ export class Station {
   showSectionHighlight(type: SectionType | null) {
     if (!this.hoverOverlay) return
     const groups = type ? this.sectionGroups.get(type) : undefined
-    if (!groups) {
+    if (!type || !groups) {
       this.hoverOverlay.hide()
       return
     }
-    this.hoverOverlay.setColor(SECTION_COLORS[type!])
+    this.hoverOverlay.setColor(SECTION_COLORS[type])
     this.hoverOverlay.show(groups)
   }
 
@@ -321,7 +321,9 @@ export class Station {
     const tmp = new THREE.Box3()
     for (const mesh of meshes) {
       if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox()
-      tmp.copy(mesh.geometry.boundingBox!).applyMatrix4(mesh.matrixWorld)
+      const boundingBox = mesh.geometry.boundingBox
+      if (!boundingBox) continue
+      tmp.copy(boundingBox).applyMatrix4(mesh.matrixWorld)
       box.union(tmp)
     }
     return box

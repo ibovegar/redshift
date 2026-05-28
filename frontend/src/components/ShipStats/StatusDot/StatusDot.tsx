@@ -19,7 +19,7 @@ export const StatusDot = ({ color }: StatusDotProps) => (
       bgcolor: color,
       boxShadow: `0 0 6px ${color}`,
       flexShrink: 0,
-      animation: `${pulse} 2s ease-in-out infinite`,
+      animation: `${pulse} 2s ease-in-out infinite`
     }}
   />
 )

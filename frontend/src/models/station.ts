@@ -1,4 +1,4 @@
-import type { ResearchTask } from './blueprint'
+import type { BuildTask, ResearchTask } from './blueprint'
 import type { CargoItem } from './spacecraft'
 import type { StationSection } from './station-section'
 
@@ -15,4 +15,6 @@ export interface Station {
   sections: StationSection[]
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
+  /** Active ship/upgrade construction in the Engineering Bay, or null when the bay is idle. */
+  buildInProgress: BuildTask | null
 }

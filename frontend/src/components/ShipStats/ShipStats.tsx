@@ -16,13 +16,13 @@ import { Value } from './Value/Value'
 const STATUS_COLORS: Record<string, string> = {
   docked: '#81c784',
   deployed: '#64b5f6',
-  'in-transit': '#ffb74d',
+  'in-transit': '#ffb74d'
 }
 
 const STATUS_LABELS: Record<string, string> = {
   docked: 'DOCKED',
   deployed: 'DEPLOYED',
-  'in-transit': 'IN TRANSIT',
+  'in-transit': 'IN TRANSIT'
 }
 
 const UPGRADE_SLOTS = ['Engine', 'Plating', 'Deflector', 'Weapons', 'Stabilizer']
@@ -35,10 +35,7 @@ interface ShipStatsProps {
 export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraft }, ref) => {
   if (!spacecraft) return null
 
-  const cargoUsed = spacecraft.cargo.reduce(
-    (sum, item) => sum + item.amount * MATERIAL_STORAGE_COST[item.material],
-    0,
-  )
+  const cargoUsed = spacecraft.cargo.reduce((sum, item) => sum + item.amount * MATERIAL_STORAGE_COST[item.material], 0)
   const cargoPercent = Math.round((cargoUsed / spacecraft.cargoCapacity) * 100)
   const fuelPercent = Math.round((spacecraft.fuel / spacecraft.maxFuel) * 100)
   const statusColor = STATUS_COLORS[spacecraft.status] ?? '#fff'
@@ -46,10 +43,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
   const upgradeCount = spacecraft.attachedUpgrades.length
 
   return (
-    <Box
-      ref={ref}
-      sx={{ position: 'relative', width: '100%', height: '100%', pointerEvents: 'none' }}
-    >
+    <Box ref={ref} sx={{ position: 'relative', width: '100%', height: '100%', pointerEvents: 'none' }}>
       {/* LEFT COLUMN */}
       <Stack
         spacing={2}
@@ -58,16 +52,13 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
           right: 'calc(100% - var(--ship-x) + var(--ship-gap))',
           top: 'var(--ship-y)',
           transform: 'translateY(-50%)',
-          width: 300,
+          width: 300
         }}
       >
         <SciFiPanel title="VESSEL IDENTITY">
           <Stack spacing={2}>
             <Box>
-              <Typography
-                variant="hud-title"
-                sx={{ color: '#fff', fontFamily: 'monospace', lineHeight: 1.2 }}
-              >
+              <Typography variant="hud-title" sx={{ color: '#fff', fontFamily: 'monospace', lineHeight: 1.2 }}>
                 {spacecraft.name}
               </Typography>
               <Typography
@@ -81,7 +72,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
               {[
                 { label: 'Registry', value: spacecraft.spacecraftRegistry.toUpperCase() },
                 { label: 'Manufactured', value: String(spacecraft.manufactured) },
-                { label: 'Manufacturer', value: spacecraft.manufacturer },
+                { label: 'Manufacturer', value: spacecraft.manufacturer }
               ].map(({ label, value }) => (
                 <Stack key={label} direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
                   <Label>{label}</Label>
@@ -117,7 +108,9 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
           <Stack spacing={1.2}>
             <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
               <Label>Installed</Label>
-              <Value>{upgradeCount} / {UPGRADE_SLOTS.length}</Value>
+              <Value>
+                {upgradeCount} / {UPGRADE_SLOTS.length}
+              </Value>
             </Stack>
             {UPGRADE_SLOTS.map((slot, i) => {
               const filled = i < upgradeCount
@@ -131,7 +124,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
                       bgcolor: filled ? '#42a5f5' : 'transparent',
                       border: `1px solid ${filled ? '#42a5f5' : 'rgba(255,255,255,0.2)'}`,
                       boxShadow: filled ? '0 0 6px #42a5f580' : 'none',
-                      flexShrink: 0,
+                      flexShrink: 0
                     }}
                   />
                   <Label>{slot.toUpperCase()}</Label>
@@ -157,7 +150,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
           left: 'calc(var(--ship-x) + var(--ship-gap))',
           top: 'var(--ship-y)',
           transform: 'translateY(-50%)',
-          width: 300,
+          width: 300
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', pointerEvents: 'auto' }}>
@@ -177,7 +170,9 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
             <Stack spacing={0.6}>
               <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
                 <Label>Fuel Reserves</Label>
-                <Value>{spacecraft.fuel} / {spacecraft.maxFuel}</Value>
+                <Value>
+                  {spacecraft.fuel} / {spacecraft.maxFuel}
+                </Value>
               </Stack>
               <DarkBar
                 value={fuelPercent}
@@ -196,7 +191,9 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
             <Stack spacing={0.6}>
               <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
                 <Label>Capacity</Label>
-                <Value>{cargoUsed} / {spacecraft.cargoCapacity}</Value>
+                <Value>
+                  {cargoUsed} / {spacecraft.cargoCapacity}
+                </Value>
               </Stack>
               <DarkBar
                 value={cargoPercent}
@@ -218,10 +215,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
                         loading="lazy"
                         sx={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }}
                       />
-                      <Typography
-                        variant="hud-body"
-                        sx={{ color: 'rgba(255,255,255,0.8)', flex: 1, fontWeight: 700 }}
-                      >
+                      <Typography variant="hud-body" sx={{ color: 'rgba(255,255,255,0.8)', flex: 1, fontWeight: 700 }}>
                         {MATERIAL_NAMES[item.material]}
                       </Typography>
                       <Typography variant="hud-data" sx={{ color }}>
@@ -250,7 +244,7 @@ export const ShipStats = forwardRef<HTMLDivElement, ShipStatsProps>(({ spacecraf
             {[
               { label: 'Height', value: `${spacecraft.height} m` },
               { label: 'Length', value: `${spacecraft.length} m` },
-              { label: 'Price', value: `${spacecraft.price.toLocaleString()} cr` },
+              { label: 'Price', value: `${spacecraft.price.toLocaleString()} cr` }
             ].map(({ label, value }) => (
               <Stack key={label} direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
                 <Label>{label}</Label>

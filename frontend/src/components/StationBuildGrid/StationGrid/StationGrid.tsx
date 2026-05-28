@@ -1,6 +1,8 @@
 import { Box } from '@mui/material'
+import { DottedBackground } from 'components/DottedBackground/DottedBackground'
 import { ExpandModal } from 'components/ExpandModal/ExpandModal'
 import { useCardExpandAnimation } from 'hooks/useCardExpandAnimation'
+import type { BuildTask } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
 import type { SectionType, StationSection } from 'models/station-section'
 import { SECTION_ORDER } from 'models/station-section'
@@ -27,6 +29,7 @@ interface Props {
   sections: StationSection[]
   storage: CargoItem[]
   researchedBlueprints: string[]
+  buildInProgress: BuildTask | null
   isPending: boolean
   justBuilt?: SectionType | null
   onBuild: (type: SectionType) => void
@@ -45,7 +48,15 @@ const buildEmptySlots = () => {
 
 const EMPTY_SLOTS = buildEmptySlots()
 
-export const StationGrid = ({ sections, storage, researchedBlueprints, isPending, justBuilt, onBuild }: Props) => {
+export const StationGrid = ({
+  sections,
+  storage,
+  researchedBlueprints,
+  buildInProgress,
+  isPending,
+  justBuilt,
+  onBuild
+}: Props) => {
   const [selectedType, setSelectedType] = useState<SectionType | null>(null)
   const expand = useCardExpandAnimation(() => setSelectedType(null))
 
@@ -66,59 +77,64 @@ export const StationGrid = ({ sections, storage, researchedBlueprints, isPending
   return (
     <Box sx={{ flexShrink: 0 }}>
       <SectionHeader>Station Layout</SectionHeader>
-
-      <Box
-        sx={{
-          position: 'relative',
-          display: 'grid',
-          gridTemplateColumns: `repeat(${COLS}, ${CELL}px)`,
-          gridTemplateRows: `repeat(${ROWS}, ${CELL}px)`,
-          gap: `${GAP}px`
-        }}
-      >
-        {SECTION_ORDER.map((type) => {
-          const { col, row } = MODULE_POS[type]
-          const state = getCellState(sections, researchedBlueprints, type)
-          const buildable = canBuildSection(sections, storage, researchedBlueprints, type)
-
-          return (
-            <Box key={type} sx={{ gridColumn: col + 1, gridRow: row + 1 }}>
-              <GridCell
-                type={type}
-                state={state}
-                canBuild={buildable}
-                justBuilt={justBuilt === type}
-                onBuild={(element) => handleAvailableClick(type, element)}
-              />
-            </Box>
-          )
-        })}
-
-        {EMPTY_SLOTS.map(({ col, row }) => (
-          <Box key={`empty-${col}-${row}`} sx={{ gridColumn: col + 1, gridRow: row + 1 }}>
-            <GridCell />
-          </Box>
-        ))}
-      </Box>
-
-      {expand.isOpen && selectedType && (
-        <ExpandModal
-          isClosing={expand.isClosing}
-          animationStyle={expand.animationStyle}
-          modalRef={expand.modalRef}
-          onAnimationEnd={expand.onAnimationEnd}
-          onClose={expand.close}
-          showBackdrop
+      <DottedBackground>
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'grid',
+            gridTemplateColumns: `repeat(${COLS}, ${CELL}px)`,
+            gridTemplateRows: `repeat(${ROWS}, ${CELL}px)`,
+            gap: `${GAP}px`
+          }}
         >
-          <ModuleDetail
-            type={selectedType}
-            storage={storage}
-            isPending={isPending}
-            onBuild={handleConfirmBuild}
+          {SECTION_ORDER.map((type) => {
+            const { col, row } = MODULE_POS[type]
+            const state = getCellState(sections, researchedBlueprints, type)
+            // Queue capacity is 1: while any build runs, other cells can't start one (the backend
+            // rejects it anyway), so suppress their Build button.
+            const buildable = !buildInProgress && canBuildSection(sections, storage, researchedBlueprints, type)
+            const buildTask = buildInProgress?.sectionType === type ? buildInProgress : null
+
+            return (
+              <Box key={type} sx={{ gridColumn: col + 1, gridRow: row + 1 }}>
+                <GridCell
+                  type={type}
+                  state={state}
+                  canBuild={buildable}
+                  buildTask={buildTask}
+                  justBuilt={justBuilt === type}
+                  onBuild={(element) => handleAvailableClick(type, element)}
+                />
+              </Box>
+            )
+          })}
+
+          {EMPTY_SLOTS.map(({ col, row }) => (
+            <Box key={`empty-${col}-${row}`} sx={{ gridColumn: col + 1, gridRow: row + 1 }}>
+              <GridCell />
+            </Box>
+          ))}
+        </Box>
+
+        {expand.isOpen && selectedType && (
+          <ExpandModal
+            isClosing={expand.isClosing}
+            animationStyle={expand.animationStyle}
+            modalRef={expand.modalRef}
+            onAnimationEnd={expand.onAnimationEnd}
             onClose={expand.close}
-          />
-        </ExpandModal>
-      )}
+            showBackdrop
+          >
+            <ModuleDetail
+              type={selectedType}
+              storage={storage}
+              isPending={isPending}
+              onBuild={handleConfirmBuild}
+              onClose={expand.close}
+            />
+          </ExpandModal>
+        )}
+      </DottedBackground>
     </Box>
   )
 }

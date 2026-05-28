@@ -1,5 +1,4 @@
 import { Typography } from '@mui/material'
-import { hudColors } from 'ui/theme/typography'
 import { ConnectorLines } from 'components/ConnectorLines/ConnectorLines'
 import { type CollectedResource, DrillOverlay } from 'components/DrillOverlay/DrillOverlay'
 import { FullscreenLayer } from 'components/FullscreenLayer/FullscreenLayer'
@@ -32,6 +31,7 @@ import { SECTION_NAMES } from 'models/station-section'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { hudColors } from 'ui/theme/typography'
 import { AsteroidBelts, BELT_SPEED } from './scene/asteroid-belts'
 import { AsteroidHighlight } from './scene/asteroid-highlight'
 import { BuildBarController } from './scene/build-bar'
@@ -121,6 +121,7 @@ export const TacticalBackground = () => {
   const maxFuelRef = useRef(spacecraft.maxFuel)
   const fuelConsumptionRef = useRef(spacecraft.fuelConsumption)
   const initialDockedRef = useRef(spacecraft.status === 'docked')
+  const attachedUpgradesRef = useRef(spacecraft.attachedUpgrades)
   const fuelBarObjRef = useRef<FuelBarController | null>(null)
   const miningZoomRef = useRef(false)
   const miningMeshRef = useRef<THREE.InstancedMesh | null>(null)
@@ -227,6 +228,22 @@ export const TacticalBackground = () => {
     stationSceneRef.current?.applySections(station.sections)
   }, [station])
 
+  // Detects a section build completing — buildInProgress goes from a section back to null — and
+  // triggers the one-shot fade-in on the freshly-online grid cell. (Builds are timed; the cell
+  // shows a progress bar while building, then this plays the reveal when it finishes.)
+  const prevBuildSectionRef = useRef<SectionType | null>(station.buildInProgress?.sectionType ?? null)
+  useEffect(() => {
+    const current = station.buildInProgress?.sectionType ?? null
+    const prev = prevBuildSectionRef.current
+    prevBuildSectionRef.current = current
+    if (prev && !current) {
+      setJustBuiltSection(prev)
+      // Hold the flag past the 2s unblur reveal so the animation isn't cut short on re-render.
+      const id = setTimeout(() => setJustBuiltSection(null), 2100)
+      return () => clearTimeout(id)
+    }
+  }, [station.buildInProgress])
+
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -287,7 +304,7 @@ export const TacticalBackground = () => {
       scale: 0.012,
       camOffset: 0.4,
       ringTilt: [0.7, -0.4, 0.2],
-      attachedUpgrades: spacecraft.attachedUpgrades
+      attachedUpgrades: attachedUpgradesRef.current
     })
     const shipHomePosition: [number, number, number] = [...ship.config.position]
     ship.addToScene(scene)
@@ -1622,18 +1639,16 @@ export const TacticalBackground = () => {
           storageCapacity={station.storageCapacity}
           researchedBlueprints={station.researchedBlueprints}
           researchInProgress={station.researchInProgress}
+          buildInProgress={station.buildInProgress}
           isPending={buildSection.isPending}
           justBuilt={justBuiltSection}
           onBuild={(type: SectionType) => {
+            // Builds are timed now: kick off the mutation (sets buildInProgress) and the 3D build
+            // highlight. The grid cell shows a live progress bar; the newly-online fade-in fires
+            // when the build actually completes — see the buildInProgress→null effect above.
             buildBarObjRef.current?.start(type)
             stationSceneRef.current?.showBuildHighlight(type)
-            buildSection.mutate(type, {
-              onSuccess: () => {
-                // Fade-in beat on the newly-operational cell; menu stays open the whole time.
-                setJustBuiltSection(type)
-                setTimeout(() => setJustBuiltSection(null), 1300)
-              }
-            })
+            buildSection.mutate(type)
           }}
         />
       </div>

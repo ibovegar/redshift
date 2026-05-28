@@ -35,7 +35,7 @@ interface Props {
   storage?: CargoItem[]
 }
 
-export const Toolbar = (props: Props) => {
+export const Toolbar = (_props: Props) => {
   return (
     <Root>
       <Left>

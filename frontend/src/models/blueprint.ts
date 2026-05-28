@@ -24,6 +24,15 @@ export interface ResearchTask {
   completesAt: string
 }
 
+// Active station-section construction. Same time-based shape as ResearchTask (start/complete
+// timestamps) so it maps straight onto InProgressBlock / the grid-cell progress bar. Keyed by
+// section type since module builds target a station section, not a blueprint id.
+export interface BuildTask {
+  sectionType: SectionType
+  startedAt: string
+  completesAt: string
+}
+
 /**
  * Research tree (encoded via parentBlueprintId on each entry below):
  *
@@ -50,7 +59,11 @@ const ADDON_INFO: Record<
   ShipAddonType,
   { name: string; description: string; cost: Partial<Record<AsteroidMaterial, number>> }
 > = {
-  engine: { name: 'Engine MK1', description: 'Schematics for a basic engine upgrade.', cost: { copper: 8, titanium: 4 } },
+  engine: {
+    name: 'Engine MK1',
+    description: 'Schematics for a basic engine upgrade.',
+    cost: { copper: 8, titanium: 4 }
+  },
   deflector: {
     name: 'Deflector MK1',
     description: 'Schematics for a basic deflector array.',
@@ -66,7 +79,11 @@ const ADDON_INFO: Record<
     description: 'Schematics for a flight stabilizer system.',
     cost: { copper: 5, gold: 2 }
   },
-  weapons: { name: 'Weapons MK1', description: 'Schematics for a basic weapons system.', cost: { iron: 10, antimatter: 1 } }
+  weapons: {
+    name: 'Weapons MK1',
+    description: 'Schematics for a basic weapons system.',
+    cost: { iron: 10, antimatter: 1 }
+  }
 }
 
 interface ShipFamilySpec {

@@ -89,7 +89,12 @@ const CostRow = ({
   held,
   required,
   met
-}: { material: AsteroidMaterial; held: number; required: number; met: boolean }) => (
+}: {
+  material: AsteroidMaterial
+  held: number
+  required: number
+  met: boolean
+}) => (
   <Box
     sx={{
       display: 'flex',

@@ -7,6 +7,7 @@ import { getBlueprint, getBlueprintChildren } from 'models/blueprint'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactFlow, { type Node, type ReactFlowInstance } from 'reactflow'
 import 'reactflow/dist/style.css'
+import { DottedBackground } from 'components/DottedBackground/DottedBackground'
 import { SectionHeader } from '../SectionHeader'
 import { getResearchStatus } from '../utils'
 import { BlueprintDetail } from './BlueprintDetail/BlueprintDetail'
@@ -173,10 +174,7 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props
         const bboxH = layout.translateExtent[1][1] - layout.translateExtent[0][1]
         const xZoom = (containerW * (1 - FIT_VIEW_OPTIONS.padding * 2)) / bboxW
         const yZoom = (containerH * (1 - FIT_VIEW_OPTIONS.padding * 2)) / bboxH
-        const fitZoom = Math.min(
-          Math.max(Math.min(xZoom, yZoom), FIT_VIEW_OPTIONS.minZoom),
-          FIT_VIEW_OPTIONS.maxZoom
-        )
+        const fitZoom = Math.min(Math.max(Math.min(xZoom, yZoom), FIT_VIEW_OPTIONS.minZoom), FIT_VIEW_OPTIONS.maxZoom)
 
         instance.setCenter(node.x + nodeW / 2, node.y + nodeH / 2, {
           zoom: fitZoom,
@@ -190,85 +188,88 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props
   }, [layout])
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
       <SectionHeader>Research Tree</SectionHeader>
-      <Box
-        sx={{
-          width: '100%',
-          flex: 1,
-          minHeight: 0,
-          position: 'relative',
-          borderRadius: 0.5,
-          overflow: 'hidden'
-        }}
-      >
-        <ReactFlow
-          nodes={nodes}
-          edges={layout.edges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          nodeOrigin={[0, 0]}
-          fitView
-          fitViewOptions={FIT_VIEW_OPTIONS}
-          onInit={(instance) => {
-            instanceRef.current = instance
+      <DottedBackground>
+        <Box
+          sx={{
+            width: '100%',
+            height: '100%',
+            flex: 1,
+            minHeight: 0,
+            position: 'relative',
+            borderRadius: 0.5,
+            overflow: 'hidden'
           }}
-          // ReactFlow's documented way to handle node clicks. Fires even with
-          // `elementsSelectable={false}` and `nodesDraggable={false}`, so we don't have to fight
-          // with pointer-event interception on the custom node content.
-          onNodeClick={(event, node) => {
-            const bp = getBlueprint(node.id)
-            if (bp) handleCardClick(bp, event.currentTarget as HTMLElement)
-          }}
-          // Soft pan constraint via onMoveEnd: pan/zoom is fully free during the drag, but on
-          // release we check whether the viewport's center is still inside the tree's bbox; if
-          // not, smoothly animate back to the nearest valid position. This avoids ReactFlow's
-          // `translateExtent` snapping behavior while still keeping the tree on-screen.
-          onMoveEnd={(_, vp) => {
-            const instance = instanceRef.current
-            const el = document.querySelector('.react-flow') as HTMLElement | null
-            if (!instance || !el) return
-            const [[minX, minY], [maxX, maxY]] = layout.translateExtent
-            const centerX = (-vp.x + el.clientWidth / 2) / vp.zoom
-            const centerY = (-vp.y + el.clientHeight / 2) / vp.zoom
-            const clampedX = Math.max(minX, Math.min(centerX, maxX))
-            const clampedY = Math.max(minY, Math.min(centerY, maxY))
-            if (clampedX !== centerX || clampedY !== centerY) {
-              instance.setCenter(clampedX, clampedY, { zoom: vp.zoom, duration: 200 })
-            }
-          }}
-          minZoom={0.3}
-          maxZoom={1.5}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          elementsSelectable={false}
-          panOnDrag
-          panOnScroll={false}
-          zoomOnScroll
-          zoomOnPinch
-          zoomOnDoubleClick
-          preventScrolling
-          proOptions={{ hideAttribution: true }}
-          defaultEdgeOptions={{ type: 'blueprint' }}
-        />
-      </Box>
-      {expand.isOpen && selectedBlueprint && (
-        <ExpandModal
-          isClosing={expand.isClosing}
-          animationStyle={expand.animationStyle}
-          modalRef={expand.modalRef}
-          onAnimationEnd={expand.onAnimationEnd}
-          onClose={expand.close}
-          showBackdrop
         >
-          <BlueprintDetail
-            blueprint={selectedBlueprint}
-            status={getResearchStatus(selectedBlueprint, researchedBlueprints, researchInProgress)}
-            onResearch={handleResearchSelected}
-            onClose={expand.close}
+          <ReactFlow
+            nodes={nodes}
+            edges={layout.edges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            nodeOrigin={[0, 0]}
+            fitView
+            fitViewOptions={FIT_VIEW_OPTIONS}
+            onInit={(instance) => {
+              instanceRef.current = instance
+            }}
+            // ReactFlow's documented way to handle node clicks. Fires even with
+            // `elementsSelectable={false}` and `nodesDraggable={false}`, so we don't have to fight
+            // with pointer-event interception on the custom node content.
+            onNodeClick={(event, node) => {
+              const bp = getBlueprint(node.id)
+              if (bp) handleCardClick(bp, event.currentTarget as HTMLElement)
+            }}
+            // Soft pan constraint via onMoveEnd: pan/zoom is fully free during the drag, but on
+            // release we check whether the viewport's center is still inside the tree's bbox; if
+            // not, smoothly animate back to the nearest valid position. This avoids ReactFlow's
+            // `translateExtent` snapping behavior while still keeping the tree on-screen.
+            onMoveEnd={(_, vp) => {
+              const instance = instanceRef.current
+              const el = document.querySelector('.react-flow') as HTMLElement | null
+              if (!instance || !el) return
+              const [[minX, minY], [maxX, maxY]] = layout.translateExtent
+              const centerX = (-vp.x + el.clientWidth / 2) / vp.zoom
+              const centerY = (-vp.y + el.clientHeight / 2) / vp.zoom
+              const clampedX = Math.max(minX, Math.min(centerX, maxX))
+              const clampedY = Math.max(minY, Math.min(centerY, maxY))
+              if (clampedX !== centerX || clampedY !== centerY) {
+                instance.setCenter(clampedX, clampedY, { zoom: vp.zoom, duration: 200 })
+              }
+            }}
+            minZoom={0.3}
+            maxZoom={1.5}
+            nodesDraggable={false}
+            nodesConnectable={false}
+            elementsSelectable={false}
+            panOnDrag
+            panOnScroll={false}
+            zoomOnScroll
+            zoomOnPinch
+            zoomOnDoubleClick
+            preventScrolling
+            proOptions={{ hideAttribution: true }}
+            defaultEdgeOptions={{ type: 'blueprint' }}
           />
-        </ExpandModal>
-      )}
+        </Box>
+        {expand.isOpen && selectedBlueprint && (
+          <ExpandModal
+            isClosing={expand.isClosing}
+            animationStyle={expand.animationStyle}
+            modalRef={expand.modalRef}
+            onAnimationEnd={expand.onAnimationEnd}
+            onClose={expand.close}
+            showBackdrop
+          >
+            <BlueprintDetail
+              blueprint={selectedBlueprint}
+              status={getResearchStatus(selectedBlueprint, researchedBlueprints, researchInProgress)}
+              onResearch={handleResearchSelected}
+              onClose={expand.close}
+            />
+          </ExpandModal>
+        )}
+      </DottedBackground>
     </Box>
   )
 }

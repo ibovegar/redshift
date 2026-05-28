@@ -1,17 +1,17 @@
 import { Box } from '@mui/material'
 import { DottedBackground } from 'components/DottedBackground/DottedBackground'
-import type { ResearchTask } from 'models/blueprint'
+import type { BuildTask, ResearchTask } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
 import type { SectionType, StationSection } from 'models/station-section'
 import { SECTION_ORDER } from 'models/station-section'
 import { useState } from 'react'
+import { hudColors } from 'ui/theme/typography'
 import { EngineeringBuild } from './EngineeringBuild/EngineeringBuild'
 import { InfoPanel } from './InfoPanel/InfoPanel'
 import { ModuleListItem } from './ModuleListItem/ModuleListItem'
 import { ResearchTree } from './ResearchTree/ResearchTree'
 import { SectionHeader } from './SectionHeader'
 import { StationGrid } from './StationGrid/StationGrid'
-import { hudColors } from 'ui/theme/typography'
 import { isOperational, statusOf } from './utils'
 
 interface Props {
@@ -20,6 +20,7 @@ interface Props {
   storageCapacity: number
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
+  buildInProgress: BuildTask | null
   onBuild: (type: SectionType) => void
   isPending: boolean
   initialSection?: SectionType
@@ -33,6 +34,7 @@ export const StationBuildGrid = ({
   storageCapacity,
   researchedBlueprints,
   researchInProgress,
+  buildInProgress,
   onBuild,
   isPending,
   initialSection = 'command',
@@ -77,34 +79,28 @@ export const StationBuildGrid = ({
         storageCapacity={storageCapacity}
         researchedBlueprints={researchedBlueprints}
         researchInProgress={researchInProgress}
+        buildInProgress={buildInProgress}
         isPending={isPending}
         onBuild={handleBuild}
       />
 
-      {/* Right column shares the same dotted backdrop as the module list (left), so the build
-          surface, engineering bay, and research tree all sit on a consistent stippled background. */}
-      <DottedBackground
-        dotColor={hudColors.borderFaint}
-        sx={{ flex: '0 0 964px', width: 964, alignSelf: 'stretch' }}
-      >
-        {selected === 'research' ? (
-          <ResearchTree
-            researchedBlueprints={researchedBlueprints}
-            researchInProgress={researchInProgress}
-          />
-        ) : selected === 'engineering' && statusOf(sections, 'engineering') === 'operational' ? (
-          <EngineeringBuild researchedBlueprints={researchedBlueprints} />
-        ) : (
-          <StationGrid
-            sections={sections}
-            storage={storage}
-            researchedBlueprints={researchedBlueprints}
-            isPending={isPending}
-            justBuilt={justBuilt}
-            onBuild={onBuild}
-          />
-        )}
-      </DottedBackground>
+      {/* Each right-column view (research tree, engineering bay, station grid) owns its own
+          dotted backdrop, so no shared wrapper here. */}
+      {selected === 'research' ? (
+        <ResearchTree researchedBlueprints={researchedBlueprints} researchInProgress={researchInProgress} />
+      ) : selected === 'engineering' && statusOf(sections, 'engineering') === 'operational' ? (
+        <EngineeringBuild researchedBlueprints={researchedBlueprints} />
+      ) : (
+        <StationGrid
+          sections={sections}
+          storage={storage}
+          researchedBlueprints={researchedBlueprints}
+          buildInProgress={buildInProgress}
+          isPending={isPending}
+          justBuilt={justBuilt}
+          onBuild={onBuild}
+        />
+      )}
     </Box>
   )
 }

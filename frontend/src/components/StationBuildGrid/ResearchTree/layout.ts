@@ -105,7 +105,7 @@ export const buildLayout = (researchedBlueprints: string[]): ComputedLayout => {
         source: bp.parentBlueprintId,
         target: bp.id,
         type: 'blueprint',
-        style: { stroke: EDGE_COLOR, strokeWidth: 2 }
+        style: { stroke: EDGE_COLOR, strokeWidth: 1.5 }
       })
     }
   }

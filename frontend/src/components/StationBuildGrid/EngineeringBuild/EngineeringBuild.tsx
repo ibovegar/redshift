@@ -57,7 +57,7 @@ const BuildableSection = ({ title, blueprints }: { title: string; blueprints: Bl
 
 const BuildableCard = ({ blueprint }: { blueprint: Blueprint }) => {
   const image = getBlueprintImage(blueprint)
-  // Placeholder build action — surfaces the request to a real mutation in a follow-up.
+  // Placeholder build action — ship/upgrade construction isn't wired yet.
   const handleBuild = () => {
     console.log('Build requested:', blueprint.id)
   }

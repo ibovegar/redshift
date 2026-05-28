@@ -56,12 +56,7 @@ export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
             }}
           >
             {addons.map((addon) => (
-              <NodeFrame
-                key={addon.id}
-                label={addon.name}
-                width={CARD_WIDTH}
-                height={CARD_FRAME_HEIGHT}
-              >
+              <NodeFrame key={addon.id} label={addon.name} width={CARD_WIDTH} height={CARD_FRAME_HEIGHT}>
                 <ResearchCard
                   blueprint={addon}
                   status={getResearchStatus(addon, researchedBlueprints, researchInProgress)}

@@ -16,7 +16,9 @@ export const startResearch = async (blueprintId: string): Promise<Station> => {
   })
   if (!response.ok) {
     const body = await response.text().catch(() => '')
-    throw new Error(`Research start failed for ${blueprintId} — ${response.status} ${response.statusText}${body ? `: ${body}` : ''}`)
+    throw new Error(
+      `Research start failed for ${blueprintId} — ${response.status} ${response.statusText}${body ? `: ${body}` : ''}`
+    )
   }
   return response.json()
 }

@@ -124,7 +124,7 @@ export function updateShipStats(
   el.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none'
 }
 
-let lastBtnDocked: unknown = undefined
+let lastBtnDocked: unknown
 let lastBtnScanning: boolean | undefined
 let lastBtnScanned: boolean | undefined
 let lastBtnStation: boolean | undefined

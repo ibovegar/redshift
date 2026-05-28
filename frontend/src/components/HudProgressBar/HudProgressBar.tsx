@@ -11,7 +11,7 @@ export const HudProgressBar = forwardRef<HTMLDivElement>(function HudProgressBar
         transform: 'translateX(-50%)',
         zIndex: 15,
         pointerEvents: 'none',
-        width: 110,
+        width: 110
       }}
     >
       <div
@@ -24,7 +24,7 @@ export const HudProgressBar = forwardRef<HTMLDivElement>(function HudProgressBar
           textShadow: '0 0 4px rgba(0,0,0,0.9)',
           fontFamily: 'monospace',
           letterSpacing: '1.5px',
-          textTransform: 'uppercase',
+          textTransform: 'uppercase'
         }}
       />
       <LinearProgress
@@ -34,8 +34,8 @@ export const HudProgressBar = forwardRef<HTMLDivElement>(function HudProgressBar
           backgroundColor: 'rgba(0,0,0,0.45)',
           '& .MuiLinearProgress-bar': {
             backgroundColor: '#4488ff',
-            transition: 'transform 0.1s linear',
-          },
+            transition: 'transform 0.1s linear'
+          }
         }}
       />
       <div
@@ -46,7 +46,7 @@ export const HudProgressBar = forwardRef<HTMLDivElement>(function HudProgressBar
           textAlign: 'center',
           marginTop: 3,
           textShadow: '0 0 4px rgba(0,0,0,0.9)',
-          fontFamily: 'monospace',
+          fontFamily: 'monospace'
         }}
       />
     </div>
