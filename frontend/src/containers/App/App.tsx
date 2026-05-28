@@ -5,6 +5,7 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router'
 
 const Tactical = lazy(() => import('containers/Tactical/Tactical').then((m) => ({ default: m.Tactical })))
+const Wiki = lazy(() => import('wiki/Wiki').then((m) => ({ default: m.Wiki })))
 
 export const App = () => {
   const { data: station } = useStation()
@@ -16,6 +17,7 @@ export const App = () => {
           <Routes>
             <Route path="/" element={<Navigate to="/tactical" replace />} />
             <Route path="/tactical" element={<Tactical />} />
+            <Route path="/wiki" element={<Wiki />} />
           </Routes>
         </Suspense>
       </ErrorBoundary>
