@@ -12,6 +12,7 @@ import { ModuleListItem } from './ModuleListItem/ModuleListItem'
 import { ResearchTree } from './ResearchTree/ResearchTree'
 import { SectionHeader } from './SectionHeader'
 import { StationGrid } from './StationGrid/StationGrid'
+import { StorageView } from './StorageView/StorageView'
 import { isOperational, statusOf } from './utils'
 
 interface Props {
@@ -88,12 +89,15 @@ export const StationBuildGrid = ({
           dotted backdrop, so no shared wrapper here. */}
       {selected === 'research' ? (
         <ResearchTree researchedBlueprints={researchedBlueprints} researchInProgress={researchInProgress} />
+      ) : selected === 'storage' ? (
+        <StorageView storage={storage} storageCapacity={storageCapacity} />
       ) : selected === 'engineering' && statusOf(sections, 'engineering') === 'operational' ? (
         <EngineeringBuild researchedBlueprints={researchedBlueprints} />
       ) : (
         <StationGrid
           sections={sections}
           storage={storage}
+          storageCapacity={storageCapacity}
           researchedBlueprints={researchedBlueprints}
           buildInProgress={buildInProgress}
           isPending={isPending}

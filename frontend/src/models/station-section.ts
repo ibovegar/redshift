@@ -7,6 +7,16 @@ import type { AsteroidMaterial } from './asteroid'
 export type SectionType = 'command' | 'research' | 'engineering' | 'storage' | 'power' | 'storage-extension'
 export type SectionStatus = 'operational' | 'available' | 'locked'
 
+// Storage capacity is measured in raw stored units (the sum of CargoItem amounts). The station
+// starts with BASE_STORAGE_CAPACITY (the "Internal Storage"); each built Storage Extension adds
+// STORAGE_EXTENSION_CAPACITY. The number of extension sections is derived from the running
+// `storageCapacity`: (storageCapacity - BASE_STORAGE_CAPACITY) / STORAGE_EXTENSION_CAPACITY.
+export const BASE_STORAGE_CAPACITY = 1000
+export const STORAGE_EXTENSION_CAPACITY = 500
+
+// Hard cap on how many Storage Extensions can be built (and shown in the Station Layout grid).
+export const MAX_STORAGE_EXTENSIONS = 3
+
 export interface StationSection {
   type: SectionType
   status: SectionStatus

@@ -6,14 +6,28 @@ import { SECTION_DESCRIPTIONS, SECTION_IMAGES, SECTION_NAMES } from 'models/stat
 import { SectionHeader } from '../../SectionHeader'
 import { CONDITION_LABEL, type InfoPanelProps, STATUS_COLOR, STATUS_LABEL } from '../types'
 
-export const CommandInfo = ({ type, status, researchedBlueprints, buildInProgress }: InfoPanelProps) => {
+export const CommandInfo = ({
+  type,
+  status,
+  storage,
+  storageCapacity,
+  researchedBlueprints,
+  buildInProgress
+}: InfoPanelProps) => {
   const buildingType = buildInProgress?.sectionType
+  const usedStorage = storage.reduce((sum, item) => sum + item.amount, 0)
+  const storagePct = storageCapacity > 0 ? Math.round((usedStorage / storageCapacity) * 100) : 0
   // Most counts here are synthetic for now (crew, fleet). The research total reflects the real
   // store so it ticks up as the user researches blueprints from the tree.
   const items: HudListItem[] = [
     { label: 'Status', value: STATUS_LABEL[status], valueColor: STATUS_COLOR[status] },
     { label: 'Condition', value: CONDITION_LABEL[status] },
     { label: 'Online Modules', value: '1 / 5' },
+    {
+      label: 'Storage',
+      value: `${usedStorage} / ${storageCapacity}`,
+      valueColor: storagePct > 90 ? 'hud.error' : 'common.white'
+    },
     { label: 'Total Research', value: `${researchedBlueprints.length} / ${BLUEPRINTS.length}` },
     { label: 'Crew', value: '12' },
     { label: 'Fleet', value: '3 docked' }

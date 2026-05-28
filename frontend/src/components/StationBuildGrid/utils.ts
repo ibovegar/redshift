@@ -48,8 +48,13 @@ export const canBuildSection = (
   storage: CargoItem[],
   researchedBlueprints: string[],
   type: SectionType
-): boolean =>
-  getCellState(sections, researchedBlueprints, type) === 'available' && canAfford(SECTION_COSTS[type], storage)
+): boolean => {
+  const state = getCellState(sections, researchedBlueprints, type)
+  // Storage Extension is repeatable, so it stays buildable even once online — reaching 'online'
+  // already implies its parent is operational and its blueprint is researched.
+  const buildable = state === 'available' || (type === 'storage-extension' && state === 'online')
+  return buildable && canAfford(SECTION_COSTS[type], storage)
+}
 
 export const getResearchStatus = (
   blueprint: Blueprint,

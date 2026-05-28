@@ -26,7 +26,7 @@ export const hudColors = {
   // === Dark build-menu palette ===
   // Surfaces (blue-navy, translucent)
   surface: 'rgba(22, 42, 63, 0.55)', // sub-cards, cost cells, hero thumbnail, ResearchCard
-  surfaceDeep: 'rgba(0, 6, 12, 0.65)', // station-grid cell base
+  surfaceDeep: '#070F18', // station-grid cell base
   // List-item tint scale — also reused for unavailable cell bg + zebra stripes (close enough
   // that a single low-alpha-white token works for all three).
   listRest: 'rgba(180, 200, 220, 0.05)',

@@ -2,7 +2,13 @@ import type { Spacecraft, Station } from 'models'
 import { BLUEPRINTS, getBlueprint, getModuleBlueprint } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
 import type { SectionType } from 'models/station-section'
-import { SECTION_BLUEPRINT, SECTION_COSTS } from 'models/station-section'
+import {
+  BASE_STORAGE_CAPACITY,
+  MAX_STORAGE_EXTENSIONS,
+  SECTION_BLUEPRINT,
+  SECTION_COSTS,
+  STORAGE_EXTENSION_CAPACITY
+} from 'models/station-section'
 import { HttpResponse, http } from 'msw'
 import { spacecrafts, station, user } from './data'
 
@@ -143,8 +149,17 @@ export const handlers = [
     finalizeBuild()
     const { type } = (await request.json()) as { type: SectionType }
     const section = db.station.sections.find((s) => s.type === type)
-    if (!section || section.status === 'operational') {
+    // Storage Extension is repeatable: each build adds another 500 units of capacity, so it stays
+    // buildable even once operational. Every other section can only be built once.
+    if (!section || (section.status === 'operational' && type !== 'storage-extension')) {
       return new HttpResponse(null, { status: 400 })
+    }
+    // Storage Extensions are repeatable but capped — reject once the cap is reached.
+    if (type === 'storage-extension') {
+      const built = Math.round((db.station.storageCapacity - BASE_STORAGE_CAPACITY) / STORAGE_EXTENSION_CAPACITY)
+      if (built >= MAX_STORAGE_EXTENSIONS) {
+        return new HttpResponse(null, { status: 400 })
+      }
     }
     if (db.station.buildInProgress) {
       return new HttpResponse(null, { status: 400 })
