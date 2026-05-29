@@ -1,8 +1,8 @@
 import { Box, Stack, Typography } from '@mui/material'
+import { FillBar } from 'components/FillBar/FillBar'
 import { NotchPanel } from 'components/NotchPanel/NotchPanel'
 import { MATERIAL_SYMBOLS } from 'data/materials'
 import type { StorageSectionData } from '../allocate'
-import { StorageBar } from '../StorageBar/StorageBar'
 
 interface Props {
   data: StorageSectionData
@@ -32,7 +32,7 @@ export const StorageSection = ({ data }: Props) => {
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 4, mt: 2.5, minHeight: 180 }}>
-        <StorageBar pct={pct} />
+        <FillBar pct={pct} />
         <Stack spacing={0} sx={{ flex: 1, minWidth: 0 }}>
           {stored.length === 0 ? (
             <Typography variant="hud-data" sx={{ color: 'hud.textBrightDim' }}>

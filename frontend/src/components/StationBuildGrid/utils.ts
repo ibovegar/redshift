@@ -43,17 +43,23 @@ export const getCellState = (
   return 'available'
 }
 
+export const isRepeatableSection = (type: SectionType): boolean => type === 'storage-extension' || type === 'power'
+
 export const canBuildSection = (
   sections: StationSection[],
   storage: CargoItem[],
   researchedBlueprints: string[],
-  type: SectionType
+  type: SectionType,
+  atMaxPower = false
 ): boolean => {
   const state = getCellState(sections, researchedBlueprints, type)
-  // Storage Extension is repeatable, so it stays buildable even once online — reaching 'online'
-  // already implies its parent is operational and its blueprint is researched.
-  const buildable = state === 'available' || (type === 'storage-extension' && state === 'online')
-  return buildable && canAfford(SECTION_COSTS[type], storage)
+  // Repeatable sections (Storage Extension, Power Core) stay buildable even once online — reaching
+  // 'online' already implies their parent is operational and their blueprint is researched.
+  const buildable = state === 'available' || (isRepeatableSection(type) && state === 'online')
+  if (!buildable || !canAfford(SECTION_COSTS[type], storage)) return false
+  // Power gate (binary): at max power only Power Cores can be built.
+  if (atMaxPower && type !== 'power') return false
+  return true
 }
 
 export const getResearchStatus = (

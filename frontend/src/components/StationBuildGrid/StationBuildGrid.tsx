@@ -2,6 +2,7 @@ import { Box } from '@mui/material'
 import { DottedBackground } from 'components/DottedBackground/DottedBackground'
 import type { BuildTask, ResearchTask } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
+import { computePower } from 'models/station'
 import type { SectionType, StationSection } from 'models/station-section'
 import { SECTION_ORDER } from 'models/station-section'
 import { useState } from 'react'
@@ -9,6 +10,7 @@ import { hudColors } from 'ui/theme/typography'
 import { EngineeringBuild } from './EngineeringBuild/EngineeringBuild'
 import { InfoPanel } from './InfoPanel/InfoPanel'
 import { ModuleListItem } from './ModuleListItem/ModuleListItem'
+import { PowerView } from './PowerView/PowerView'
 import { ResearchTree } from './ResearchTree/ResearchTree'
 import { SectionHeader } from './SectionHeader'
 import { StationGrid } from './StationGrid/StationGrid'
@@ -19,9 +21,10 @@ interface Props {
   sections: StationSection[]
   storage: CargoItem[]
   storageCapacity: number
+  powerCapacity: number
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
-  buildInProgress: BuildTask | null
+  buildInProgress: BuildTask[]
   onBuild: (type: SectionType) => void
   isPending: boolean
   initialSection?: SectionType
@@ -33,6 +36,7 @@ export const StationBuildGrid = ({
   sections,
   storage,
   storageCapacity,
+  powerCapacity,
   researchedBlueprints,
   researchInProgress,
   buildInProgress,
@@ -42,6 +46,8 @@ export const StationBuildGrid = ({
   justBuilt = null
 }: Props) => {
   const [selected, setSelected] = useState<SectionType>(initialSection)
+
+  const power = computePower({ sections, storageCapacity, powerCapacity })
 
   const handleBuild = () => {
     setSelected('command')
@@ -78,6 +84,7 @@ export const StationBuildGrid = ({
         status={statusOf(sections, selected)}
         storage={storage}
         storageCapacity={storageCapacity}
+        power={power}
         researchedBlueprints={researchedBlueprints}
         researchInProgress={researchInProgress}
         buildInProgress={buildInProgress}
@@ -88,16 +95,24 @@ export const StationBuildGrid = ({
       {/* Each right-column view (research tree, engineering bay, station grid) owns its own
           dotted backdrop, so no shared wrapper here. */}
       {selected === 'research' ? (
-        <ResearchTree researchedBlueprints={researchedBlueprints} researchInProgress={researchInProgress} />
+        <ResearchTree
+          researchedBlueprints={researchedBlueprints}
+          researchInProgress={researchInProgress}
+          atMaxPower={power.atMax}
+        />
       ) : selected === 'storage' ? (
         <StorageView storage={storage} storageCapacity={storageCapacity} />
+      ) : selected === 'power' ? (
+        <PowerView power={power} sections={sections} storageCapacity={storageCapacity} powerCapacity={powerCapacity} />
       ) : selected === 'engineering' && statusOf(sections, 'engineering') === 'operational' ? (
-        <EngineeringBuild researchedBlueprints={researchedBlueprints} />
+        <EngineeringBuild researchedBlueprints={researchedBlueprints} atMaxPower={power.atMax} />
       ) : (
         <StationGrid
           sections={sections}
           storage={storage}
           storageCapacity={storageCapacity}
+          powerCapacity={powerCapacity}
+          atMaxPower={power.atMax}
           researchedBlueprints={researchedBlueprints}
           buildInProgress={buildInProgress}
           isPending={isPending}

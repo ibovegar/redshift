@@ -17,6 +17,25 @@ export const STORAGE_EXTENSION_CAPACITY = 500
 // Hard cap on how many Storage Extensions can be built (and shown in the Station Layout grid).
 export const MAX_STORAGE_EXTENSIONS = 3
 
+// Power economy. The station has BASE_POWER capacity to start; each built Power Core adds
+// POWER_PER_CORE. Power Cores are repeatable like Storage Extensions, capped at MAX_POWER_CORES.
+// Built-core count is derived: (powerCapacity - BASE_POWER) / POWER_PER_CORE.
+export const BASE_POWER = 100
+export const POWER_PER_CORE = 50
+export const MAX_POWER_CORES = 4
+
+// Power each section draws while operational. Power Core draws nothing (it produces capacity);
+// Storage Extensions draw per built pod. Tuned so the base modules fit under BASE_POWER and a few
+// Storage Extensions push the station to the cap, forcing Power Cores to keep expanding.
+export const SECTION_POWER: Record<SectionType, number> = {
+  command: 10,
+  research: 20,
+  engineering: 30,
+  storage: 10,
+  power: 0,
+  'storage-extension': 15
+}
+
 export interface StationSection {
   type: SectionType
   status: SectionStatus
@@ -27,7 +46,7 @@ export const SECTION_COSTS: Record<SectionType, Partial<Record<AsteroidMaterial,
   research: { iron: 20, copper: 10 },
   engineering: { iron: 30, titanium: 15 },
   storage: { iron: 25, carbon: 15 },
-  power: { copper: 20, uranium: 5 },
+  power: { copper: 10, uranium: 2 },
   'storage-extension': { iron: 20, carbon: 15 }
 }
 
@@ -72,7 +91,10 @@ export const SECTION_BLUEPRINT: Record<SectionType, SectionType | null> = {
   command: null,
   research: 'command',
   engineering: 'research',
-  power: 'engineering',
+  // Power Core anchors to the always-operational Command hub (not Engineering), so researching its
+  // blueprint makes it buildable right away — mirroring how Storage Extension unlocks off the
+  // pre-built Storage Hub. It also avoids a chicken-and-egg gate (Engineering itself draws power).
+  power: 'command',
   storage: 'engineering',
   'storage-extension': 'storage'
 }

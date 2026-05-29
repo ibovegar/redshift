@@ -1,10 +1,15 @@
 import type { Spacecraft, Station } from 'models'
+import type { BuildTask } from 'models/blueprint'
 import { BLUEPRINTS, getBlueprint, getModuleBlueprint } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
+import { computePower } from 'models/station'
 import type { SectionType } from 'models/station-section'
 import {
+  BASE_POWER,
   BASE_STORAGE_CAPACITY,
+  MAX_POWER_CORES,
   MAX_STORAGE_EXTENSIONS,
+  POWER_PER_CORE,
   SECTION_BLUEPRINT,
   SECTION_COSTS,
   STORAGE_EXTENSION_CAPACITY
@@ -24,7 +29,8 @@ const db = {
   station: {
     ...station,
     storage: [...station.storage],
-    researchedBlueprints: [...station.researchedBlueprints]
+    researchedBlueprints: [...station.researchedBlueprints],
+    buildInProgress: [...station.buildInProgress]
   } as Station
 }
 
@@ -39,20 +45,27 @@ const finalizeResearch = () => {
   }
 }
 
-// Completes the active section build once the wall clock passes its completesAt: flips the section
-// to operational (and bumps storage capacity for a storage extension), then clears the slot.
-// Mirrors finalizeResearch — called at the top of any read so progress resolves without polling.
+// Completes any section builds whose completesAt has passed: flips each section to operational (and
+// bumps the relevant capacity), then drops the finished tasks. Builds run concurrently (one per
+// section type), so this resolves each independently. Called at the top of any read.
 const finalizeBuild = () => {
-  const task = db.station.buildInProgress
-  if (!task) return
-  if (Date.parse(task.completesAt) <= Date.now()) {
+  const now = Date.now()
+  const remaining: BuildTask[] = []
+  for (const task of db.station.buildInProgress) {
+    if (Date.parse(task.completesAt) > now) {
+      remaining.push(task)
+      continue
+    }
     const section = db.station.sections.find((s) => s.type === task.sectionType)
     if (section) section.status = 'operational'
     if (task.sectionType === 'storage-extension') {
       db.station.storageCapacity += 500
     }
-    db.station.buildInProgress = null
+    if (task.sectionType === 'power') {
+      db.station.powerCapacity += POWER_PER_CORE
+    }
   }
+  db.station.buildInProgress = remaining
 }
 
 const deductCosts = (costs: Partial<Record<string, number>>) => {
@@ -149,19 +162,31 @@ export const handlers = [
     finalizeBuild()
     const { type } = (await request.json()) as { type: SectionType }
     const section = db.station.sections.find((s) => s.type === type)
-    // Storage Extension is repeatable: each build adds another 500 units of capacity, so it stays
+    // Storage Extension and Power Core are repeatable: each build adds capacity, so they stay
     // buildable even once operational. Every other section can only be built once.
-    if (!section || (section.status === 'operational' && type !== 'storage-extension')) {
+    const repeatable = type === 'storage-extension' || type === 'power'
+    if (!section || (section.status === 'operational' && !repeatable)) {
       return new HttpResponse(null, { status: 400 })
     }
-    // Storage Extensions are repeatable but capped — reject once the cap is reached.
+    // Repeatable sections are capped — reject once the cap is reached.
     if (type === 'storage-extension') {
       const built = Math.round((db.station.storageCapacity - BASE_STORAGE_CAPACITY) / STORAGE_EXTENSION_CAPACITY)
       if (built >= MAX_STORAGE_EXTENSIONS) {
         return new HttpResponse(null, { status: 400 })
       }
     }
-    if (db.station.buildInProgress) {
+    if (type === 'power') {
+      const built = Math.round((db.station.powerCapacity - BASE_POWER) / POWER_PER_CORE)
+      if (built >= MAX_POWER_CORES) {
+        return new HttpResponse(null, { status: 400 })
+      }
+    }
+    // Power gate (binary): at max power the station can only build Power Cores.
+    if (type !== 'power' && computePower(db.station).atMax) {
+      return new HttpResponse(null, { status: 400 })
+    }
+    // Concurrent builds, one per section type: reject only if THIS section is already building.
+    if (db.station.buildInProgress.some((t) => t.sectionType === type)) {
       return new HttpResponse(null, { status: 400 })
     }
     const blueprintType = SECTION_BLUEPRINT[type]
@@ -184,11 +209,11 @@ export const handlers = [
     // costs are charged now (so they can't be double-spent), the capacity bump lands when the
     // build completes (finalizeBuild), and the section flips to operational at the same time.
     const now = Date.now()
-    db.station.buildInProgress = {
+    db.station.buildInProgress.push({
       sectionType: type,
       startedAt: new Date(now).toISOString(),
       completesAt: new Date(now + BUILD_DURATION_MS).toISOString()
-    }
+    })
     return HttpResponse.json(db.station)
   }),
 
@@ -216,6 +241,11 @@ export const handlers = [
       return HttpResponse.text(`Research already in progress: ${db.station.researchInProgress.blueprintId}`, {
         status: 400
       })
+    }
+    // Power gate: at max power, research is blocked — except the Power Core blueprint, so a player
+    // who hit the cap without it researched can still unlock cores and recover.
+    if (blueprintId !== 'bp-mod-power' && computePower(db.station).atMax) {
+      return HttpResponse.text('Insufficient power: build a Power Core to free up capacity', { status: 400 })
     }
     if (blueprint.parentBlueprintId && !db.station.researchedBlueprints.includes(blueprint.parentBlueprintId)) {
       return HttpResponse.text(`Parent blueprint ${blueprint.parentBlueprintId} not yet researched`, { status: 400 })

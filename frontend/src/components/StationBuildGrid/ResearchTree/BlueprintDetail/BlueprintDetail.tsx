@@ -11,6 +11,8 @@ import { getBlueprintImage } from '../ResearchCard/ResearchCard'
 interface Props {
   blueprint: Blueprint
   status: ResearchStatus
+  /** True when at max power and this isn't the Power Core blueprint — research is blocked. */
+  powerBlocked?: boolean
   onResearch: () => void
   onClose: () => void
 }
@@ -31,7 +33,7 @@ const STATUS_COLOR_TOKEN: Record<ResearchStatus, string> = {
   locked: 'hud.statusLocked'
 }
 
-export const BlueprintDetail = ({ blueprint, status, onResearch, onClose }: Props) => {
+export const BlueprintDetail = ({ blueprint, status, powerBlocked = false, onResearch, onClose }: Props) => {
   const costEntries = Object.entries(blueprint.cost) as [string, number][]
   const image = getBlueprintImage(blueprint)
   return (
@@ -88,8 +90,13 @@ export const BlueprintDetail = ({ blueprint, status, onResearch, onClose }: Prop
           </Box>
         )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <HudButton onClick={onResearch} disabled={status !== 'available'}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
+          {powerBlocked && (
+            <Typography variant="hud-data" sx={{ color: 'hud.error' }}>
+              Insufficient power — build a Power Core
+            </Typography>
+          )}
+          <HudButton onClick={onResearch} disabled={status !== 'available' || powerBlocked}>
             Start Research
           </HudButton>
         </Box>

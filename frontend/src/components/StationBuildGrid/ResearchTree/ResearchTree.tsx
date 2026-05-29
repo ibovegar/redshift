@@ -29,9 +29,15 @@ const FIT_VIEW_DURATION_MS = 600
 interface Props {
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
+  /** When at max power, research is blocked — except the Power Core blueprint (the recovery path). */
+  atMaxPower: boolean
 }
 
-export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props) => {
+// The Power Core blueprint stays researchable even at max power so a player who hit the cap without
+// it can still unlock Power Cores and recover (mirrors the backend exemption in handlers.ts).
+const POWER_BLUEPRINT_ID = 'bp-mod-power'
+
+export const ResearchTree = ({ researchedBlueprints, researchInProgress, atMaxPower }: Props) => {
   const instanceRef = useRef<ReactFlowInstance | null>(null)
   const prevResearchedRef = useRef<string[]>(researchedBlueprints)
   const prevLayoutRef = useRef<ReturnType<typeof buildLayout> | null>(null)
@@ -66,11 +72,12 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props
   // researched".
   const handleResearchSelected = useCallback(() => {
     if (!selectedBlueprint || researchInProgress || startResearch.isPending) return
+    if (atMaxPower && selectedBlueprint.id !== POWER_BLUEPRINT_ID) return
     const status = getResearchStatus(selectedBlueprint, researchedBlueprints, researchInProgress)
     if (status !== 'available') return
     startResearch.mutate(selectedBlueprint.id)
     expand.close()
-  }, [selectedBlueprint, researchedBlueprints, researchInProgress, startResearch, expand.close])
+  }, [selectedBlueprint, researchedBlueprints, researchInProgress, startResearch, expand.close, atMaxPower])
 
   const nodes: Node[] = useMemo(
     () =>
@@ -264,6 +271,7 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress }: Props
             <BlueprintDetail
               blueprint={selectedBlueprint}
               status={getResearchStatus(selectedBlueprint, researchedBlueprints, researchInProgress)}
+              powerBlocked={atMaxPower && selectedBlueprint.id !== POWER_BLUEPRINT_ID}
               onResearch={handleResearchSelected}
               onClose={expand.close}
             />

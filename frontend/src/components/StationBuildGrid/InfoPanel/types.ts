@@ -1,5 +1,6 @@
 import type { BuildTask, ResearchTask } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
+import type { PowerStatus } from 'models/station'
 import type { SectionStatus, SectionType } from 'models/station-section'
 
 // Shared props the InfoPanel dispatcher forwards to every per-module sub-view. Some views only
@@ -10,9 +11,10 @@ export interface InfoPanelProps {
   status: SectionStatus
   storage: CargoItem[]
   storageCapacity: number
+  power: PowerStatus
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
-  buildInProgress: BuildTask | null
+  buildInProgress: BuildTask[]
   isPending: boolean
   onBuild: () => void
 }

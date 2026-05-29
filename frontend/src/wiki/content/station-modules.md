@@ -35,11 +35,19 @@ structural repairs on docked spacecraft. This module gates the entire ship tree.
 - **Requires:** Research Lab operational
 
 ### Power Core
-A reactor that provides additional power capacity to the station. High-draw modules
-depend on it to stay online.
+A reactor that adds **+50 power capacity** to the station. Power Cores are
+**repeatable** (like Storage Extensions): each one is a new grid item stacked below
+the Power Core slot, capped at **four**, and every module you run draws on the
+shared power pool they feed.
 
-- **Build cost:** 20 Copper, 5 Uranium
-- **Requires:** Engineering Bay operational
+Cores fill the column from the top — the first slot is **unavailable** until the
+blueprint is researched, then **available**; building one reveals the next slot down.
+Because building a Power Core *adds* capacity, it is the **only** thing you can build
+when the station is at max power.
+
+- **Build cost:** 10 Copper, 2 Uranium (per core)
+- **Requires:** Power Core blueprint researched
+- **Maximum:** 4 cores
 
 ### Storage Hub
 The station's central cargo hub. It holds all of your refined ores and processed
@@ -91,10 +99,31 @@ the first extension, then the next, and so on — so the lower sections fill bef
 the higher ones. If a single material crosses a section boundary, you will see part
 of it in one section and the remainder in the next.
 
+## Managing power
+
+Every operational module **draws power** from the station's shared pool. The station
+starts with a base capacity and each built **Power Core** adds more. Selecting the
+**Power Core** module opens the power view, which shows your total capacity, current
+consumption, and a breakdown of what is producing and drawing power.
+
+As you bring modules online, consumption climbs toward capacity. When **consumption
+reaches capacity**, the station is at max power and **cannot**:
+
+- perform research,
+- build ships or upgrades in the Engineering Bay,
+- or build new modules.
+
+The one exception is **Power Cores** — you can always build another core to raise
+capacity and unlock everything again. (The Power Core blueprint can also still be
+researched at max power, so you can never get stuck.) Balancing expansion against
+power is part of the game: build cores ahead of demand so a build never strands you.
+
 ## Building takes time
 
 Construction is not instant. When you start a build, the station charges the cost
-up front and the module enters a timed construction (a few seconds for now). Only
-**one build can run at a time** — the grid will block other Build buttons until the
-current one finishes. When it completes, the module flips to *operational* and any
-bonuses (such as the storage-capacity bump) are applied.
+up front and the module enters a timed construction (a few seconds for now).
+Different module types build **independently and in parallel** — for example a Power
+Core and a Storage Extension can be under construction at the same time. You just
+can't start a second build of the *same* type until the current one finishes. When a
+build completes, the module flips to *operational* and any bonuses (such as the
+storage- or power-capacity bump) are applied.

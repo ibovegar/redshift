@@ -40,18 +40,19 @@ export const station: Station = {
   id: 'station-1',
   name: 'Gateway Station',
   storageCapacity: 1000,
+  powerCapacity: 100,
   // Totals ≈ 850 units against the 1000-unit Internal Storage capacity, so the storage view's
   // Internal section reads as a realistic partial (~85%) fill. Building Storage Extensions grows
   // total capacity in 500-unit steps and overflow fills the new sections.
   storage: [
-    { material: 'iron', amount: 300 },
+    { material: 'iron', amount: 250 },
     { material: 'copper', amount: 120 },
     { material: 'carbon', amount: 150 },
     { material: 'titanium', amount: 80 },
     { material: 'silicates', amount: 100 },
     { material: 'water_ice', amount: 60 },
     { material: 'gold', amount: 20 },
-    { material: 'uranium', amount: 10 },
+    { material: 'uranium', amount: 60 },
     { material: 'helium3', amount: 8 },
     { material: 'antimatter', amount: 2 }
   ],
@@ -67,5 +68,5 @@ export const station: Station = {
   ],
   researchedBlueprints: [...PRE_RESEARCHED_BLUEPRINT_IDS],
   researchInProgress: null,
-  buildInProgress: null
+  buildInProgress: []
 }

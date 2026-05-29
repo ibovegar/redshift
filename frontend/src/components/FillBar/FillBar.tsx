@@ -1,8 +1,8 @@
 import { Box } from '@mui/material'
 import { hudColors } from 'ui/theme/typography'
 
-// Fullness-as-warning: plenty of free space reads green, filling up turns amber, near/at capacity
-// turns red so the bar signals "running out of space".
+// Fullness-as-warning: low fill reads green, filling up turns amber, near/at capacity turns red —
+// signalling "running out" of storage space or power headroom. Shared by the storage and power views.
 const fillColor = (pct: number): string => {
   if (pct >= 90) return hudColors.error
   if (pct >= 70) return hudColors.statusAvailable
@@ -13,7 +13,7 @@ interface Props {
   pct: number
 }
 
-export const StorageBar = ({ pct }: Props) => (
+export const FillBar = ({ pct }: Props) => (
   <Box
     sx={{
       position: 'relative',

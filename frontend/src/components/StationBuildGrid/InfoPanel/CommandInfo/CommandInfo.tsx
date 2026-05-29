@@ -11,10 +11,13 @@ export const CommandInfo = ({
   status,
   storage,
   storageCapacity,
+  power,
   researchedBlueprints,
   buildInProgress
 }: InfoPanelProps) => {
-  const buildingType = buildInProgress?.sectionType
+  // Builds run concurrently; the hub surfaces the first active one (the grid cells show each).
+  const activeBuild = buildInProgress[0] ?? null
+  const buildingType = activeBuild?.sectionType
   const usedStorage = storage.reduce((sum, item) => sum + item.amount, 0)
   const storagePct = storageCapacity > 0 ? Math.round((usedStorage / storageCapacity) * 100) : 0
   // Most counts here are synthetic for now (crew, fleet). The research total reflects the real
@@ -27,6 +30,11 @@ export const CommandInfo = ({
       label: 'Storage',
       value: `${usedStorage} / ${storageCapacity}`,
       valueColor: storagePct > 90 ? 'hud.error' : 'common.white'
+    },
+    {
+      label: 'Power',
+      value: `${power.consumption} / ${power.capacity}`,
+      valueColor: power.atMax ? 'hud.error' : 'common.white'
     },
     { label: 'Total Research', value: `${researchedBlueprints.length} / ${BLUEPRINTS.length}` },
     { label: 'Crew', value: '12' },
@@ -45,7 +53,7 @@ export const CommandInfo = ({
           grid cell shows the same task's progress inline. */}
       <Box sx={{ mt: 'auto' }}>
         <InProgressBlock
-          task={buildInProgress}
+          task={activeBuild}
           name={buildingType ? SECTION_NAMES[buildingType] : undefined}
           image={buildingType ? SECTION_IMAGES[buildingType] : null}
         />

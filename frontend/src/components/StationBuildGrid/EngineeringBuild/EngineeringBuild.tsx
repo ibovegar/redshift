@@ -6,9 +6,11 @@ import { SectionHeader } from '../SectionHeader'
 
 interface Props {
   researchedBlueprints: string[]
+  /** At max power the bay can't build ships/upgrades until a Power Core frees up capacity. */
+  atMaxPower: boolean
 }
 
-export const EngineeringBuild = ({ researchedBlueprints }: Props) => {
+export const EngineeringBuild = ({ researchedBlueprints, atMaxPower }: Props) => {
   const researchedShips = BLUEPRINTS.filter((bp) => bp.category === 'ship' && researchedBlueprints.includes(bp.id))
   const researchedAddons = BLUEPRINTS.filter(
     (bp) => bp.category === 'ship-addon' && researchedBlueprints.includes(bp.id)
@@ -17,6 +19,11 @@ export const EngineeringBuild = ({ researchedBlueprints }: Props) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <SectionHeader>Engineering Bay</SectionHeader>
+      {atMaxPower && (
+        <Typography variant="hud-data" sx={{ color: 'hud.error', mb: 2 }}>
+          Insufficient power — build a Power Core to resume manufacturing
+        </Typography>
+      )}
       <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 1 }}>
         {empty ? (
           <Typography sx={{ fontSize: 13, color: 'hud.textBrightSoft', mt: 2 }}>
@@ -24,8 +31,12 @@ export const EngineeringBuild = ({ researchedBlueprints }: Props) => {
           </Typography>
         ) : (
           <Stack spacing={3}>
-            {researchedShips.length > 0 && <BuildableSection title="Ships" blueprints={researchedShips} />}
-            {researchedAddons.length > 0 && <BuildableSection title="Upgrades" blueprints={researchedAddons} />}
+            {researchedShips.length > 0 && (
+              <BuildableSection title="Ships" blueprints={researchedShips} disabled={atMaxPower} />
+            )}
+            {researchedAddons.length > 0 && (
+              <BuildableSection title="Upgrades" blueprints={researchedAddons} disabled={atMaxPower} />
+            )}
           </Stack>
         )}
       </Box>
@@ -33,7 +44,15 @@ export const EngineeringBuild = ({ researchedBlueprints }: Props) => {
   )
 }
 
-const BuildableSection = ({ title, blueprints }: { title: string; blueprints: Blueprint[] }) => (
+const BuildableSection = ({
+  title,
+  blueprints,
+  disabled
+}: {
+  title: string
+  blueprints: Blueprint[]
+  disabled: boolean
+}) => (
   <Box>
     <Typography
       variant="hud-tag"
@@ -49,13 +68,13 @@ const BuildableSection = ({ title, blueprints }: { title: string; blueprints: Bl
       }}
     >
       {blueprints.map((bp) => (
-        <BuildableCard key={bp.id} blueprint={bp} />
+        <BuildableCard key={bp.id} blueprint={bp} disabled={disabled} />
       ))}
     </Box>
   </Box>
 )
 
-const BuildableCard = ({ blueprint }: { blueprint: Blueprint }) => {
+const BuildableCard = ({ blueprint, disabled }: { blueprint: Blueprint; disabled: boolean }) => {
   const image = getBlueprintImage(blueprint)
   // Placeholder build action — ship/upgrade construction isn't wired yet.
   const handleBuild = () => {
@@ -97,7 +116,7 @@ const BuildableCard = ({ blueprint }: { blueprint: Blueprint }) => {
           {blueprint.name}
         </Typography>
       </Box>
-      <HudButton variant="secondary" onClick={handleBuild}>
+      <HudButton variant="secondary" onClick={handleBuild} disabled={disabled}>
         Build
       </HudButton>
     </Box>

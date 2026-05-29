@@ -13,12 +13,12 @@ export const useStation = () => {
     queryFn: stationApi.get
   })
   const queryClient = useQueryClient()
-  // Safety-net refetch covering whichever task finishes first — research or section build. The
-  // mutations also schedule their own refetch, so this just guards against a task that started
-  // outside a mutation (e.g. a cache write from another tab/read).
+  // Safety-net refetch covering whichever task finishes first — research or any concurrent section
+  // build. The mutations also schedule their own refetch, so this just guards against a task that
+  // started outside a mutation (e.g. a cache write from another tab/read).
   const research = query.data.researchInProgress
-  const build = query.data.buildInProgress
-  const nextCompletesAt = [research?.completesAt, build?.completesAt].filter((t): t is string => !!t).sort()[0]
+  const buildTimes = query.data.buildInProgress.map((b) => b.completesAt)
+  const nextCompletesAt = [research?.completesAt, ...buildTimes].filter((t): t is string => !!t).sort()[0]
 
   useEffect(() => {
     if (!nextCompletesAt) return
@@ -50,9 +50,10 @@ export const useBuildSection = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (type: SectionType) => stationApi.buildSection(type),
-    onSuccess: (station) => {
+    onSuccess: (station, type) => {
       queryClient.setQueryData(queryKeys.station, station)
-      const task = station.buildInProgress
+      // Schedule the refetch for the build we just started; useStation's safety-net covers the rest.
+      const task = station.buildInProgress.find((b) => b.sectionType === type)
       if (task) {
         const delay = Math.max(0, Date.parse(task.completesAt) - Date.now())
         setTimeout(

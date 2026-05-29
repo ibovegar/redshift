@@ -231,16 +231,17 @@ export const TacticalBackground = () => {
     stationSceneRef.current?.applySections(station.sections)
   }, [station])
 
-  // Detects a section build completing — buildInProgress goes from a section back to null — and
-  // triggers the one-shot fade-in on the freshly-online grid cell. (Builds are timed; the cell
+  // Detects a section build completing — a type drops out of the concurrent buildInProgress list —
+  // and triggers the one-shot fade-in on the freshly-online grid cell. (Builds are timed; the cell
   // shows a progress bar while building, then this plays the reveal when it finishes.)
-  const prevBuildSectionRef = useRef<SectionType | null>(station.buildInProgress?.sectionType ?? null)
+  const prevBuildTypesRef = useRef<SectionType[]>(station.buildInProgress.map((b) => b.sectionType))
   useEffect(() => {
-    const current = station.buildInProgress?.sectionType ?? null
-    const prev = prevBuildSectionRef.current
-    prevBuildSectionRef.current = current
-    if (prev && !current) {
-      setJustBuiltSection(prev)
+    const current = station.buildInProgress.map((b) => b.sectionType)
+    const prev = prevBuildTypesRef.current
+    prevBuildTypesRef.current = current
+    const completed = prev.find((t) => !current.includes(t))
+    if (completed) {
+      setJustBuiltSection(completed)
       // Hold the flag past the 2s unblur reveal so the animation isn't cut short on re-render.
       const id = setTimeout(() => setJustBuiltSection(null), 2100)
       return () => clearTimeout(id)
@@ -1640,6 +1641,7 @@ export const TacticalBackground = () => {
           sections={station.sections}
           storage={station.storage}
           storageCapacity={station.storageCapacity}
+          powerCapacity={station.powerCapacity}
           researchedBlueprints={station.researchedBlueprints}
           researchInProgress={station.researchInProgress}
           buildInProgress={station.buildInProgress}
