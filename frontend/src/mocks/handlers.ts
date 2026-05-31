@@ -1,6 +1,6 @@
 import type { Spacecraft, Station } from 'models'
-import type { BuildTask } from 'models/blueprint'
 import { BLUEPRINTS, getBlueprint, getModuleBlueprint } from 'models/blueprint'
+import { type QueueItem, queuedBuildCount } from 'models/queue'
 import type { CargoItem } from 'models/spacecraft'
 import { computePower } from 'models/station'
 import type { SectionType } from 'models/station-section'
@@ -30,42 +30,47 @@ const db = {
     ...station,
     storage: [...station.storage],
     researchedBlueprints: [...station.researchedBlueprints],
-    buildInProgress: [...station.buildInProgress]
+    queue: [...station.queue]
   } as Station
 }
 
-const finalizeResearch = () => {
-  const task = db.station.researchInProgress
-  if (!task) return
-  if (Date.parse(task.completesAt) <= Date.now()) {
-    if (!db.station.researchedBlueprints.includes(task.blueprintId)) {
-      db.station.researchedBlueprints.push(task.blueprintId)
+// Applies a finished item's effect: research adds the blueprint; a build flips its section
+// operational and bumps the relevant capacity.
+const applyQueueItem = (item: QueueItem) => {
+  if (item.kind === 'research') {
+    if (!db.station.researchedBlueprints.includes(item.targetId)) {
+      db.station.researchedBlueprints.push(item.targetId)
     }
-    db.station.researchInProgress = null
+    return
   }
+  const type = item.targetId as SectionType
+  const section = db.station.sections.find((s) => s.type === type)
+  if (section) section.status = 'operational'
+  if (type === 'storage-extension') db.station.storageCapacity += 500
+  if (type === 'power') db.station.powerCapacity += POWER_PER_CORE
 }
 
-// Completes any section builds whose completesAt has passed: flips each section to operational (and
-// bumps the relevant capacity), then drops the finished tasks. Builds run concurrently (one per
-// section type), so this resolves each independently. Called at the top of any read.
-const finalizeBuild = () => {
+// Drives the unified queue: completes any active item whose completesAt has passed (applying its
+// effect), then activates the next pending item of each kind if that lane is idle — so at most one
+// research and one build run at a time, in queue order. Called at the top of any read/mutation.
+const processQueue = () => {
   const now = Date.now()
-  const remaining: BuildTask[] = []
-  for (const task of db.station.buildInProgress) {
-    if (Date.parse(task.completesAt) > now) {
-      remaining.push(task)
-      continue
+  db.station.queue = db.station.queue.filter((item) => {
+    if (item.completesAt && Date.parse(item.completesAt) <= now) {
+      applyQueueItem(item)
+      return false
     }
-    const section = db.station.sections.find((s) => s.type === task.sectionType)
-    if (section) section.status = 'operational'
-    if (task.sectionType === 'storage-extension') {
-      db.station.storageCapacity += 500
-    }
-    if (task.sectionType === 'power') {
-      db.station.powerCapacity += POWER_PER_CORE
-    }
+    return true
+  })
+  for (const kind of ['research', 'build'] as const) {
+    if (db.station.queue.some((i) => i.kind === kind && i.completesAt)) continue
+    const next = db.station.queue.find((i) => i.kind === kind && !i.completesAt)
+    if (!next) continue
+    const duration = kind === 'research' ? (getBlueprint(next.targetId)?.durationMs ?? 0) : BUILD_DURATION_MS
+    const start = Date.now()
+    next.startedAt = new Date(start).toISOString()
+    next.completesAt = new Date(start + duration).toISOString()
   }
-  db.station.buildInProgress = remaining
 }
 
 const deductCosts = (costs: Partial<Record<string, number>>) => {
@@ -76,6 +81,16 @@ const deductCosts = (costs: Partial<Record<string, number>>) => {
     if (item.amount <= 0) {
       db.station.storage = db.station.storage.filter((s) => s.material !== material)
     }
+  }
+}
+
+// Returns a cancelled item's materials to storage (costs are charged up-front at enqueue).
+const refundCosts = (costs: Partial<Record<string, number>>) => {
+  for (const [material, amount] of Object.entries(costs)) {
+    if (!amount) continue
+    const item = db.station.storage.find((s) => s.material === material)
+    if (item) item.amount += amount
+    else db.station.storage.push({ material: material as CargoItem['material'], amount })
   }
 }
 
@@ -134,8 +149,7 @@ export const handlers = [
 
   // Station
   http.get(`${url}/station`, () => {
-    finalizeResearch()
-    finalizeBuild()
+    processQueue()
     return HttpResponse.json(db.station)
   }),
 
@@ -153,40 +167,37 @@ export const handlers = [
     return HttpResponse.json(db.station)
   }),
 
-  // Starts a section build: deducts materials and sets `buildInProgress` with start/complete
-  // timestamps derived from BUILD_DURATION_MS (5s for now), the same way research derives them
-  // from `blueprint.durationMs`. The section flips to operational on a later read via
-  // finalizeBuild() once the wall clock passes `completesAt`. Queue capacity is 1.
+  // Enqueues a section build: validates, charges the cost up front, and pushes a pending QueueItem.
+  // processQueue() activates it if the build lane is idle; otherwise it waits its turn.
   http.post(`${url}/station/sections/build`, async ({ request }) => {
-    finalizeResearch()
-    finalizeBuild()
+    processQueue()
     const { type } = (await request.json()) as { type: SectionType }
     const section = db.station.sections.find((s) => s.type === type)
     // Storage Extension and Power Core are repeatable: each build adds capacity, so they stay
-    // buildable even once operational. Every other section can only be built once.
+    // buildable even once operational. Every other section can only be built (or queued) once.
     const repeatable = type === 'storage-extension' || type === 'power'
+    const queuedOfType = queuedBuildCount(db.station.queue, type)
     if (!section || (section.status === 'operational' && !repeatable)) {
       return new HttpResponse(null, { status: 400 })
     }
-    // Repeatable sections are capped — reject once the cap is reached.
+    if (!repeatable && queuedOfType > 0) {
+      return new HttpResponse(null, { status: 400 })
+    }
+    // Repeatable sections are capped — count built + already-queued so the queue can't exceed it.
     if (type === 'storage-extension') {
       const built = Math.round((db.station.storageCapacity - BASE_STORAGE_CAPACITY) / STORAGE_EXTENSION_CAPACITY)
-      if (built >= MAX_STORAGE_EXTENSIONS) {
+      if (built + queuedOfType >= MAX_STORAGE_EXTENSIONS) {
         return new HttpResponse(null, { status: 400 })
       }
     }
     if (type === 'power') {
       const built = Math.round((db.station.powerCapacity - BASE_POWER) / POWER_PER_CORE)
-      if (built >= MAX_POWER_CORES) {
+      if (built + queuedOfType >= MAX_POWER_CORES) {
         return new HttpResponse(null, { status: 400 })
       }
     }
     // Power gate (binary): at max power the station can only build Power Cores.
     if (type !== 'power' && computePower(db.station).atMax) {
-      return new HttpResponse(null, { status: 400 })
-    }
-    // Concurrent builds, one per section type: reject only if THIS section is already building.
-    if (db.station.buildInProgress.some((t) => t.sectionType === type)) {
       return new HttpResponse(null, { status: 400 })
     }
     const blueprintType = SECTION_BLUEPRINT[type]
@@ -205,15 +216,8 @@ export const handlers = [
       return new HttpResponse(null, { status: 400 })
     }
     deductCosts(costs)
-    // Material deduction + storageCapacity bump happen up-front and on finalize respectively:
-    // costs are charged now (so they can't be double-spent), the capacity bump lands when the
-    // build completes (finalizeBuild), and the section flips to operational at the same time.
-    const now = Date.now()
-    db.station.buildInProgress.push({
-      sectionType: type,
-      startedAt: new Date(now).toISOString(),
-      completesAt: new Date(now + BUILD_DURATION_MS).toISOString()
-    })
+    db.station.queue.push({ id: crypto.randomUUID(), kind: 'build', targetId: type })
+    processQueue()
     return HttpResponse.json(db.station)
   }),
 
@@ -223,12 +227,10 @@ export const handlers = [
   }),
 
   // Research
-  // Starts a research task: deducts materials and sets `researchInProgress` with start/complete
-  // timestamps derived from the blueprint's `durationMs`. The task is finalized on any subsequent
-  // read (`finalizeResearch()` is called at the top of GET /station etc.) once the wall clock
-  // passes `completesAt`. Queue capacity is 1 so we reject if another task is already active.
+  // Enqueues a research task: validates, charges the cost up front, and pushes a pending QueueItem.
+  // processQueue() activates it if the research lane is idle; otherwise it waits its turn.
   http.post(`${url}/research/start`, async ({ request }) => {
-    finalizeResearch()
+    processQueue()
     const { blueprintId } = (await request.json()) as { blueprintId: string }
     const blueprint = getBlueprint(blueprintId)
     if (!blueprint) {
@@ -237,10 +239,8 @@ export const handlers = [
     if (db.station.researchedBlueprints.includes(blueprintId)) {
       return HttpResponse.text(`Already researched: ${blueprintId}`, { status: 400 })
     }
-    if (db.station.researchInProgress) {
-      return HttpResponse.text(`Research already in progress: ${db.station.researchInProgress.blueprintId}`, {
-        status: 400
-      })
+    if (db.station.queue.some((i) => i.kind === 'research' && i.targetId === blueprintId)) {
+      return HttpResponse.text(`Already queued: ${blueprintId}`, { status: 400 })
     }
     // Power gate: at max power, research is blocked — except the Power Core blueprint, so a player
     // who hit the cap without it researched can still unlock cores and recover.
@@ -261,12 +261,25 @@ export const handlers = [
       return HttpResponse.text(`Insufficient materials: ${missing}`, { status: 400 })
     }
     deductCosts(blueprint.cost)
-    const now = Date.now()
-    db.station.researchInProgress = {
-      blueprintId,
-      startedAt: new Date(now).toISOString(),
-      completesAt: new Date(now + blueprint.durationMs).toISOString()
+    db.station.queue.push({ id: crypto.randomUUID(), kind: 'research', targetId: blueprintId })
+    processQueue()
+    return HttpResponse.json(db.station)
+  }),
+
+  // Removes a queued (or active) item and refunds its up-front cost, then re-activates the next.
+  http.post(`${url}/station/queue/cancel`, async ({ request }) => {
+    processQueue()
+    const { id } = (await request.json()) as { id: string }
+    const item = db.station.queue.find((i) => i.id === id)
+    if (!item) return new HttpResponse(null, { status: 404 })
+    if (item.kind === 'research') {
+      const blueprint = getBlueprint(item.targetId)
+      if (blueprint) refundCosts(blueprint.cost)
+    } else {
+      refundCosts(SECTION_COSTS[item.targetId as SectionType])
     }
+    db.station.queue = db.station.queue.filter((i) => i.id !== id)
+    processQueue()
     return HttpResponse.json(db.station)
   })
 ]

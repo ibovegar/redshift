@@ -1,6 +1,6 @@
 import { Box } from '@mui/material'
 import { DottedBackground } from 'components/DottedBackground/DottedBackground'
-import type { BuildTask, ResearchTask } from 'models/blueprint'
+import { activeResearchTask, type QueueItem, queuedResearchIds } from 'models/queue'
 import type { CargoItem } from 'models/spacecraft'
 import { computePower } from 'models/station'
 import type { SectionType, StationSection } from 'models/station-section'
@@ -23,8 +23,7 @@ interface Props {
   storageCapacity: number
   powerCapacity: number
   researchedBlueprints: string[]
-  researchInProgress: ResearchTask | null
-  buildInProgress: BuildTask[]
+  queue: QueueItem[]
   onBuild: (type: SectionType) => void
   isPending: boolean
   initialSection?: SectionType
@@ -38,8 +37,7 @@ export const StationBuildGrid = ({
   storageCapacity,
   powerCapacity,
   researchedBlueprints,
-  researchInProgress,
-  buildInProgress,
+  queue,
   onBuild,
   isPending,
   initialSection = 'command',
@@ -48,6 +46,8 @@ export const StationBuildGrid = ({
   const [selected, setSelected] = useState<SectionType>(initialSection)
 
   const power = computePower({ sections, storageCapacity, powerCapacity })
+  const researchInProgress = activeResearchTask(queue)
+  const inProgressResearchIds = queuedResearchIds(queue)
 
   const handleBuild = () => {
     setSelected('command')
@@ -87,7 +87,7 @@ export const StationBuildGrid = ({
         power={power}
         researchedBlueprints={researchedBlueprints}
         researchInProgress={researchInProgress}
-        buildInProgress={buildInProgress}
+        queue={queue}
         isPending={isPending}
         onBuild={handleBuild}
       />
@@ -98,6 +98,7 @@ export const StationBuildGrid = ({
         <ResearchTree
           researchedBlueprints={researchedBlueprints}
           researchInProgress={researchInProgress}
+          inProgressResearchIds={inProgressResearchIds}
           atMaxPower={power.atMax}
         />
       ) : selected === 'storage' ? (
@@ -114,7 +115,7 @@ export const StationBuildGrid = ({
           powerCapacity={powerCapacity}
           atMaxPower={power.atMax}
           researchedBlueprints={researchedBlueprints}
-          buildInProgress={buildInProgress}
+          queue={queue}
           isPending={isPending}
           justBuilt={justBuilt}
           onBuild={onBuild}

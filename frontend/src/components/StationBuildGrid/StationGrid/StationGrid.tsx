@@ -3,6 +3,7 @@ import { DottedBackground } from 'components/DottedBackground/DottedBackground'
 import { ExpandModal } from 'components/ExpandModal/ExpandModal'
 import { useCardExpandAnimation } from 'hooks/useCardExpandAnimation'
 import type { BuildTask } from 'models/blueprint'
+import { activeBuildTask, type QueueItem, queuedBuildCount } from 'models/queue'
 import type { CargoItem } from 'models/spacecraft'
 import type { SectionType, StationSection } from 'models/station-section'
 import {
@@ -44,7 +45,7 @@ interface Props {
   powerCapacity: number
   atMaxPower: boolean
   researchedBlueprints: string[]
-  buildInProgress: BuildTask[]
+  queue: QueueItem[]
   isPending: boolean
   justBuilt?: SectionType | null
   onBuild: (type: SectionType) => void
@@ -71,7 +72,7 @@ export const StationGrid = ({
   powerCapacity,
   atMaxPower,
   researchedBlueprints,
-  buildInProgress,
+  queue,
   isPending,
   justBuilt,
   onBuild
@@ -93,23 +94,30 @@ export const StationGrid = ({
     expand.close()
   }, [selectedType, onBuild, expand.close])
 
-  // Builds run concurrently, one per section type — a cell is only affected by a build of its OWN
-  // type (it shows that task's progress and hides its Build button), never by another type's build.
-  const buildTaskFor = (type: SectionType): BuildTask | null =>
-    buildInProgress.find((t) => t.sectionType === type) ?? null
+  // A cell only reflects an active build of ITS OWN type (building progress + suppressed button).
+  // Pending queued builds count toward caps but the cell stays "available" so the user can keep
+  // queuing — clicking the Build button enqueues regardless of what else is building.
+  const activeBuild = activeBuildTask(queue)
+  const buildTaskFor = (type: SectionType): BuildTask | null => (activeBuild?.sectionType === type ? activeBuild : null)
 
   const cells: RenderCell[] = []
 
   for (const type of MAIN_TYPES) {
     const { col, row } = MODULE_POS[type]
     const buildTask = buildTaskFor(type)
+    // Main (non-repeatable) modules can only be queued once.
+    const alreadyQueued = queuedBuildCount(queue, type) > 0
+    // Pending-but-not-active queued cells render as 'queued' (yellow overlay); the BuildingCell
+    // path covers the active case via buildTask.
+    const baseState = getCellState(sections, researchedBlueprints, type)
+    const state: CellState = !buildTask && alreadyQueued ? 'queued' : baseState
     cells.push({
       key: type,
       col,
       row,
       type,
-      state: getCellState(sections, researchedBlueprints, type),
-      canBuild: !buildTask && canBuildSection(sections, storage, researchedBlueprints, type, atMaxPower),
+      state,
+      canBuild: !alreadyQueued && canBuildSection(sections, storage, researchedBlueprints, type, atMaxPower),
       buildTask,
       justBuilt: justBuilt === type
     })
@@ -148,6 +156,12 @@ export const StationGrid = ({
     // (available/unavailable), not online — so map 'online' back to 'available'.
     const nextSlotState: CellState = rawSlotState === 'online' ? 'available' : rawSlotState
     const buildTask = buildTaskFor(stack.type)
+    // Cap counts BUILT + already-QUEUED units, so a stack can't accept enqueues past the cap.
+    const queuedOfType = queuedBuildCount(queue, stack.type)
+    const underCap = stack.built + queuedOfType < stack.cap
+    // The "next" slot reads as queued when a build of this type is pending but not yet active
+    // (the active path renders via buildTask). Yellow overlay flags it as queued.
+    const pendingOnly = !buildTask && queuedOfType > 0
     // Reveal the locked slots only once a unit is actually online — not while the first is still
     // building, so pressing Build doesn't immediately surface the rest of the column.
     const revealLockedSlots = stack.built >= 1
@@ -158,7 +172,7 @@ export const StationGrid = ({
       if (!isBuilt && !isNext && !revealLockedSlots) continue
       let state: CellState = 'unavailable'
       if (isBuilt) state = 'online'
-      else if (isNext) state = nextSlotState
+      else if (isNext) state = pendingOnly ? 'queued' : nextSlotState
       cells.push({
         key: `${stack.type}-${i}`,
         col: stack.col,
@@ -166,7 +180,7 @@ export const StationGrid = ({
         type: stack.type,
         state,
         canBuild:
-          isNext && !buildTask && canBuildSection(sections, storage, researchedBlueprints, stack.type, atMaxPower),
+          isNext && underCap && canBuildSection(sections, storage, researchedBlueprints, stack.type, atMaxPower),
         buildTask: isNext ? buildTask : null,
         // Only the most recently built unit plays the reveal animation.
         justBuilt: isBuilt && i === stack.built - 1 && justBuilt === stack.type

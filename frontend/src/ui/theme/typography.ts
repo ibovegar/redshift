@@ -47,6 +47,7 @@ export const hudColors = {
   statusResearched: '#4caf50',
   statusInProgress: '#26c6da',
   statusAvailable: '#ffb74d',
+  statusQueued: '#ffd54f',
   statusLocked: '#5a6675',
 
   // HUD progress bar — accent fill + bluish % label (both distinct from the bright text scale).
@@ -55,6 +56,8 @@ export const hudColors = {
 
   // Black-tinted overlay (single token covers modal backdrop, progress-bar track, dark cell underlays)
   overlayBlack: 'rgba(0, 0, 0, 0.55)',
+  // Yellow overlay marking a queued build / research item — sits on top of the cell or card.
+  overlayQueued: 'rgba(255, 213, 79, 0.22)',
 
   // Cyan glow used by the GridCell `moduleReveal` keyframe — kept here so the colour palette
   // stays in one place even though the values land inside a CSS keyframes template string.

@@ -10,6 +10,8 @@ export interface CardNodeData {
   blueprint: Blueprint
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
+  activeResearchId: string | null
+  inProgressResearchIds: string[]
   onCardClick: (blueprint: Blueprint, element: HTMLElement) => void
 }
 
@@ -17,8 +19,9 @@ const HIDDEN_HANDLE_STYLE = { opacity: 0, pointerEvents: 'none' as const }
 const CARD_HANDLE_TOP = `${getBoxCenterY(CARD_FRAME_HEIGHT)}px`
 
 export const CardNode = ({ data }: NodeProps<CardNodeData>) => {
-  const { blueprint, researchedBlueprints, researchInProgress, onCardClick } = data
-  const status = getResearchStatus(blueprint, researchedBlueprints, researchInProgress)
+  const { blueprint, researchedBlueprints, researchInProgress, activeResearchId, inProgressResearchIds, onCardClick } =
+    data
+  const status = getResearchStatus(blueprint, researchedBlueprints, activeResearchId, inProgressResearchIds)
   return (
     <>
       <Handle

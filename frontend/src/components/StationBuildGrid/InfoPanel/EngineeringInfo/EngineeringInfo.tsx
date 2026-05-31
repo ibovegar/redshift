@@ -1,6 +1,5 @@
 import { Box, Divider, Typography } from '@mui/material'
 import { HudList, type HudListItem } from 'components/HudList/HudList'
-import { InProgressBlock } from 'components/InProgressBlock/InProgressBlock'
 import { BLUEPRINTS } from 'models/blueprint'
 import { SECTION_DESCRIPTIONS, SECTION_NAMES } from 'models/station-section'
 import { SectionHeader } from '../../SectionHeader'
@@ -31,9 +30,6 @@ export const EngineeringInfo = ({ type, status, researchedBlueprints }: InfoPane
       </Typography>
       <Divider sx={{ borderColor: 'hud.borderSubtle' }} />
       <HudList items={items} />
-      <Box sx={{ mt: 'auto' }}>
-        <InProgressBlock task={null} />
-      </Box>
     </Box>
   )
 }

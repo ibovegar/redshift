@@ -2,13 +2,13 @@ import AddIcon from '@mui/icons-material/Add'
 import { Box, LinearProgress, Typography } from '@mui/material'
 import { keyframes, type SxProps, type Theme } from '@mui/material/styles'
 import { HudButton } from 'components/HudButton/HudButton'
-import { useTaskProgress } from 'components/InProgressBlock/InProgressBlock'
 import { NotchPanel } from 'components/NotchPanel/NotchPanel'
 import type { BuildTask } from 'models/blueprint'
 import type { SectionType } from 'models/station-section'
 import { SECTION_IMAGES, SECTION_NAMES } from 'models/station-section'
 import type { ReactNode } from 'react'
 import { hudColors } from 'ui/theme/typography'
+import { useTaskProgress } from '~/components/QueueList/QueueItem/QueueItem'
 import type { CellState } from '../../utils'
 
 export const CELL = 168
@@ -53,10 +53,17 @@ export const GridCell = ({ type, state, canBuild, buildTask, justBuilt, onBuild 
       return <OnlineCell type={type} justBuilt={justBuilt} />
     case 'unavailable':
       return <UnavailableCell />
+    case 'queued':
+      return <QueuedCell type={type} />
     default:
       return <AvailableCell type={type} canBuild={!!canBuild} onBuild={onBuild} />
   }
 }
+
+// Semi-transparent yellow layer that marks a cell as queued — sits on top of the cell content.
+const QueuedOverlay = () => (
+  <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'hud.overlayQueued', pointerEvents: 'none' }} />
+)
 
 const EmptyCell = () => (
   <NotchPanel
@@ -113,6 +120,24 @@ const OnlineCell = ({ type, justBuilt }: { type: SectionType; justBuilt?: boolea
   </NotchPanel>
 )
 
+// Pending-but-not-yet-active build: keeps the same blurred section image AvailableCell uses (so
+// the cell still reads as "not yet built") and stacks the yellow queued overlay + a "Queued" label
+// on top. Active builds use BuildingCell, which also wears the queued overlay.
+const QueuedCell = ({ type }: { type: SectionType }) => (
+  <NotchPanel sx={cellBaseSx}>
+    <Box sx={{ position: 'absolute', inset: -8, opacity: 0.35, filter: `blur(${CARD_BLUR_PX}px)` }}>
+      <SectionImage type={type} />
+    </Box>
+    <QueuedOverlay />
+    <Box sx={{ position: 'absolute', top: 8, left: 0, right: 0 }}>
+      <CellLabel color="hud.statusQueued">Queued</CellLabel>
+    </Box>
+    <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, pt: 2, pb: 2 }}>
+      <CellLabel color="common.white">{SECTION_NAMES[type]}</CellLabel>
+    </Box>
+  </NotchPanel>
+)
+
 const BuildingCell = ({ type, task }: { type: SectionType; task: BuildTask }) => {
   const pct = useTaskProgress(task)
   return (
@@ -149,6 +174,8 @@ const BuildingCell = ({ type, task }: { type: SectionType; task: BuildTask }) =>
       <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, pt: 2, pb: 2 }}>
         <CellLabel color="common.white">{SECTION_NAMES[type]}</CellLabel>
       </Box>
+      {/* The active build is also "in the queue" — flag it with the same yellow overlay. */}
+      <QueuedOverlay />
     </NotchPanel>
   )
 }

@@ -20,6 +20,7 @@ interface Props {
 const STATUS_LABEL: Record<ResearchStatus, string> = {
   researched: 'Researched',
   'in-progress': 'In progress',
+  queued: 'Queued',
   available: 'Available',
   locked: 'Locked'
 }
@@ -29,6 +30,7 @@ const STATUS_LABEL: Record<ResearchStatus, string> = {
 const STATUS_COLOR_TOKEN: Record<ResearchStatus, string> = {
   researched: 'hud.statusResearched',
   'in-progress': 'hud.statusInProgress',
+  queued: 'hud.statusQueued',
   available: 'hud.statusAvailable',
   locked: 'hud.statusLocked'
 }

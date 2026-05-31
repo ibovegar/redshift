@@ -12,6 +12,8 @@ export interface ShipGroupNodeData {
   addons: Blueprint[]
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
+  activeResearchId: string | null
+  inProgressResearchIds: string[]
   onCardClick: (blueprint: Blueprint, element: HTMLElement) => void
 }
 
@@ -25,8 +27,16 @@ const HIDDEN_HANDLE_STYLE = { opacity: 0, pointerEvents: 'none' as const }
 const SHIP_HANDLE_TOP = `${getBoxCenterY(SHIP_FRAME_HEIGHT)}px`
 
 export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
-  const { ship, addons, researchedBlueprints, researchInProgress, onCardClick } = data
-  const shipStatus = getResearchStatus(ship, researchedBlueprints, researchInProgress)
+  const {
+    ship,
+    addons,
+    researchedBlueprints,
+    researchInProgress,
+    activeResearchId,
+    inProgressResearchIds,
+    onCardClick
+  } = data
+  const shipStatus = getResearchStatus(ship, researchedBlueprints, activeResearchId, inProgressResearchIds)
   // Upgrades only appear once the ship itself has been researched — until then we only render
   // the ship card on the left, and the right-hand slot in the node bbox stays empty.
   const shipResearched = researchedBlueprints.includes(ship.id)
@@ -59,7 +69,7 @@ export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
               <NodeFrame key={addon.id} label={addon.name} width={CARD_WIDTH} height={CARD_FRAME_HEIGHT}>
                 <ResearchCard
                   blueprint={addon}
-                  status={getResearchStatus(addon, researchedBlueprints, researchInProgress)}
+                  status={getResearchStatus(addon, researchedBlueprints, activeResearchId, inProgressResearchIds)}
                   task={researchInProgress}
                   onClick={(el) => onCardClick(addon, el)}
                 />

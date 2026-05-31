@@ -13,6 +13,7 @@ import {
   useUser
 } from 'hooks'
 import type { Asteroid } from 'models/asteroid'
+import type { QueueItem } from 'models/queue'
 import type { SectionType } from 'models/station-section'
 import { SECTION_NAMES } from 'models/station-section'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -62,6 +63,10 @@ interface ScanResultState {
   showMining: boolean
   isRemote: boolean
 }
+
+// Active (timestamped) build items, as {id, targetId} — used to detect a build finishing.
+const activeBuildItems = (queue: QueueItem[]) =>
+  queue.filter((i) => i.kind === 'build' && i.completesAt).map((i) => ({ id: i.id, targetId: i.targetId }))
 
 export const TacticalBackground = () => {
   const { data: spacecraft } = useSpacecraft('3')
@@ -231,22 +236,22 @@ export const TacticalBackground = () => {
     stationSceneRef.current?.applySections(station.sections)
   }, [station])
 
-  // Detects a section build completing — a type drops out of the concurrent buildInProgress list —
-  // and triggers the one-shot fade-in on the freshly-online grid cell. (Builds are timed; the cell
-  // shows a progress bar while building, then this plays the reveal when it finishes.)
-  const prevBuildTypesRef = useRef<SectionType[]>(station.buildInProgress.map((b) => b.sectionType))
+  // Detects a section build finishing — an ACTIVE build item leaves the queue — and triggers the
+  // one-shot fade-in on the freshly-online grid cell. Tracked by item id (not type) so completing
+  // one of several queued same-type builds still fires the reveal as the next one activates.
+  const prevActiveBuildsRef = useRef(activeBuildItems(station.queue))
   useEffect(() => {
-    const current = station.buildInProgress.map((b) => b.sectionType)
-    const prev = prevBuildTypesRef.current
-    prevBuildTypesRef.current = current
-    const completed = prev.find((t) => !current.includes(t))
+    const current = activeBuildItems(station.queue)
+    const prev = prevActiveBuildsRef.current
+    prevActiveBuildsRef.current = current
+    const completed = prev.find((p) => !current.some((c) => c.id === p.id))
     if (completed) {
-      setJustBuiltSection(completed)
+      setJustBuiltSection(completed.targetId as SectionType)
       // Hold the flag past the 2s unblur reveal so the animation isn't cut short on re-render.
       const id = setTimeout(() => setJustBuiltSection(null), 2100)
       return () => clearTimeout(id)
     }
-  }, [station.buildInProgress])
+  }, [station.queue])
 
   useEffect(() => {
     const container = containerRef.current
@@ -1643,8 +1648,7 @@ export const TacticalBackground = () => {
           storageCapacity={station.storageCapacity}
           powerCapacity={station.powerCapacity}
           researchedBlueprints={station.researchedBlueprints}
-          researchInProgress={station.researchInProgress}
-          buildInProgress={station.buildInProgress}
+          queue={station.queue}
           isPending={buildSection.isPending}
           justBuilt={justBuiltSection}
           onBuild={(type: SectionType) => {

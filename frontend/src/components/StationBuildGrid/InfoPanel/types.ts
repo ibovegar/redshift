@@ -1,4 +1,5 @@
-import type { BuildTask, ResearchTask } from 'models/blueprint'
+import type { ResearchTask } from 'models/blueprint'
+import type { QueueItem } from 'models/queue'
 import type { CargoItem } from 'models/spacecraft'
 import type { PowerStatus } from 'models/station'
 import type { SectionStatus, SectionType } from 'models/station-section'
@@ -14,7 +15,7 @@ export interface InfoPanelProps {
   power: PowerStatus
   researchedBlueprints: string[]
   researchInProgress: ResearchTask | null
-  buildInProgress: BuildTask[]
+  queue: QueueItem[]
   isPending: boolean
   onBuild: () => void
 }

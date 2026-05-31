@@ -29,6 +29,7 @@ export const CATEGORY_COLORS: Record<BlueprintCategory, { base: string; active: 
 const STATUS_INDICATOR_COLORS: Record<ResearchStatus, string | null> = {
   researched: hudColors.statusResearched,
   'in-progress': hudColors.statusInProgress,
+  queued: hudColors.statusQueued,
   available: hudColors.statusAvailable,
   locked: hudColors.statusLocked
 }
@@ -64,6 +65,9 @@ export const ResearchCard = ({ blueprint, status, task, onClick }: Props) => {
   const isResearched = status === 'researched'
   const image = getBlueprintImage(blueprint)
   const isInProgress = status === 'in-progress' && !!task && task.blueprintId === blueprint.id
+  // Both active and pending-queued items wear the yellow "queued" overlay — the active one also
+  // shows the progress bar underneath it.
+  const isQueued = status === 'in-progress' || status === 'queued'
   useCardProgressTick(isInProgress)
   const progress = isInProgress && task ? getResearchProgress(task) : 0
 
@@ -91,6 +95,16 @@ export const ResearchCard = ({ blueprint, status, task, onClick }: Props) => {
             position: 'absolute',
             inset: 0,
             backgroundImage: UNRESEARCHED_STRIPES,
+            pointerEvents: 'none'
+          }}
+        />
+      )}
+      {isQueued && (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            bgcolor: 'hud.overlayQueued',
             pointerEvents: 'none'
           }}
         />

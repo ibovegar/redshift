@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-30
+
+- Unified research + build queue. `Station.researchInProgress` + `Station.buildInProgress[]` are replaced by a single ordered `Station.queue: QueueItem[]` (`models/queue.ts`). Clicking **Build** or **Research** now **enqueues** an item — materials are charged up front; the new `processQueue()` on the mock backend activates the first pending research and the first pending build whenever their lane is idle (so a research and a build still run in parallel, one of each kind at a time), advancing automatically as items complete. Multiple items of either kind can be lined up
+- Queue UI: extended `InProgressBlock` with a new `QueueList` that renders the full unified queue (active research + active build + pending items). Active rows show a live progress bar; pending rows read **Queued**. Each row has a × **cancel** control (`POST /station/queue/cancel`) that removes the item and **refunds its cost**. CommandInfo now shows the queue list in place of the single in-progress block. The research tree also marks queued blueprints as in-progress so a card can't be queued twice (`getResearchStatus` now takes `inProgressResearchIds`)
+- Repeatable-stack caps (Storage Extensions, Power Cores) now count built + queued items, so the queue can't push past `MAX_STORAGE_EXTENSIONS` / `MAX_POWER_CORES`
+- Note: prerequisites are validated **at enqueue time**, so dependency chains (queue B before A finishes) aren't supported yet — but you can queue multiple independent researches, multiple builds of different types, and research alongside a build
+
 ## 2026-05-28
 
 - Builds are now concurrent and independent per section type: `Station.buildInProgress` changed from a single `BuildTask | null` to `BuildTask[]`. Building one section (e.g. a Power Core) no longer suppresses or blocks building another (e.g. a Storage Extension) — each grid cell only reflects a build of its own type, and the backend rejects only a second build of the *same* type. Storage and power are fully separate. `finalizeBuild` resolves each task independently; `useStation`/`useBuildSection` schedule refetches across all active tasks; `TacticalBackground` detects completion by a type dropping out of the list

@@ -27,3 +27,13 @@ export const buildSection = async (type: SectionType): Promise<Station> => {
   if (!response.ok) throw new Error('Build failed')
   return response.json()
 }
+
+export const cancelQueueItem = async (id: string): Promise<Station> => {
+  const response = await fetch(`${url}/station/queue/cancel`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  })
+  if (!response.ok) throw new Error('Cancel failed')
+  return response.json()
+}

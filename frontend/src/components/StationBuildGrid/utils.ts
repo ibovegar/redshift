@@ -5,8 +5,8 @@ import type { CargoItem } from 'models/spacecraft'
 import type { SectionStatus, SectionType, StationSection } from 'models/station-section'
 import { SECTION_BLUEPRINT, SECTION_COSTS } from 'models/station-section'
 
-export type CellState = 'online' | 'available' | 'unavailable'
-export type ResearchStatus = 'researched' | 'in-progress' | 'available' | 'locked'
+export type CellState = 'online' | 'available' | 'unavailable' | 'queued'
+export type ResearchStatus = 'researched' | 'in-progress' | 'queued' | 'available' | 'locked'
 
 type CostMap = Partial<Record<string, number>>
 
@@ -65,10 +65,13 @@ export const canBuildSection = (
 export const getResearchStatus = (
   blueprint: Blueprint,
   researchedBlueprints: string[],
-  researchInProgress: ResearchTask | null
+  activeResearchId: string | null,
+  inProgressResearchIds: string[]
 ): ResearchStatus => {
   if (researchedBlueprints.includes(blueprint.id)) return 'researched'
-  if (researchInProgress?.blueprintId === blueprint.id) return 'in-progress'
+  // The active research shows in-progress (with progress bar); pending items show queued.
+  if (blueprint.id === activeResearchId) return 'in-progress'
+  if (inProgressResearchIds.includes(blueprint.id)) return 'queued'
   if (blueprint.parentBlueprintId && !researchedBlueprints.includes(blueprint.parentBlueprintId)) return 'locked'
   return 'available'
 }

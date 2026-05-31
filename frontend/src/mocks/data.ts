@@ -67,6 +67,5 @@ export const station: Station = {
     { type: 'storage-extension', status: 'locked' }
   ],
   researchedBlueprints: [...PRE_RESEARCHED_BLUEPRINT_IDS],
-  researchInProgress: null,
-  buildInProgress: []
+  queue: []
 }

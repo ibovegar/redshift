@@ -1,4 +1,4 @@
-import type { BuildTask, ResearchTask } from './blueprint'
+import type { QueueItem } from './queue'
 import type { CargoItem } from './spacecraft'
 import type { StationSection } from './station-section'
 import { BASE_STORAGE_CAPACITY, SECTION_POWER, STORAGE_EXTENSION_CAPACITY } from './station-section'
@@ -17,10 +17,9 @@ export interface Station {
   powerCapacity: number
   sections: StationSection[]
   researchedBlueprints: string[]
-  researchInProgress: ResearchTask | null
-  /** Active section constructions. Builds run concurrently, at most one per section type, so e.g.
-   *  a Power Core and a Storage Extension can build at the same time without blocking each other. */
-  buildInProgress: BuildTask[]
+  /** Unified work queue (research + section builds). The station runs at most one active research
+   *  and one active build at a time, in queue order; everything else waits. See models/queue.ts. */
+  queue: QueueItem[]
 }
 
 export interface PowerStatus {

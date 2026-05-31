@@ -28,7 +28,10 @@ const FIT_VIEW_DURATION_MS = 600
 
 interface Props {
   researchedBlueprints: string[]
+  /** The active research task — drives the live progress bar on its card. */
   researchInProgress: ResearchTask | null
+  /** blueprintIds of every research in the queue (active + pending) — they read as in-progress. */
+  inProgressResearchIds: string[]
   /** When at max power, research is blocked — except the Power Core blueprint (the recovery path). */
   atMaxPower: boolean
 }
@@ -37,7 +40,12 @@ interface Props {
 // it can still unlock Power Cores and recover (mirrors the backend exemption in handlers.ts).
 const POWER_BLUEPRINT_ID = 'bp-mod-power'
 
-export const ResearchTree = ({ researchedBlueprints, researchInProgress, atMaxPower }: Props) => {
+export const ResearchTree = ({
+  researchedBlueprints,
+  researchInProgress,
+  inProgressResearchIds,
+  atMaxPower
+}: Props) => {
   const instanceRef = useRef<ReactFlowInstance | null>(null)
   const prevResearchedRef = useRef<string[]>(researchedBlueprints)
   const prevLayoutRef = useRef<ReturnType<typeof buildLayout> | null>(null)
@@ -70,14 +78,25 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress, atMaxPo
   // flight — otherwise the React Query cache hasn't updated yet, status looks `available` from a
   // stale read, and the backend then (correctly) rejects the second mutation with "Already
   // researched".
+  const activeResearchId = researchInProgress?.blueprintId ?? null
+
   const handleResearchSelected = useCallback(() => {
-    if (!selectedBlueprint || researchInProgress || startResearch.isPending) return
+    if (!selectedBlueprint || startResearch.isPending) return
     if (atMaxPower && selectedBlueprint.id !== POWER_BLUEPRINT_ID) return
-    const status = getResearchStatus(selectedBlueprint, researchedBlueprints, researchInProgress)
+    // Enqueues — allowed even while other research runs; 'available' already excludes queued items.
+    const status = getResearchStatus(selectedBlueprint, researchedBlueprints, activeResearchId, inProgressResearchIds)
     if (status !== 'available') return
     startResearch.mutate(selectedBlueprint.id)
     expand.close()
-  }, [selectedBlueprint, researchedBlueprints, researchInProgress, startResearch, expand.close, atMaxPower])
+  }, [
+    selectedBlueprint,
+    researchedBlueprints,
+    activeResearchId,
+    inProgressResearchIds,
+    startResearch,
+    expand.close,
+    atMaxPower
+  ])
 
   const nodes: Node[] = useMemo(
     () =>
@@ -89,17 +108,32 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress, atMaxPo
             id: n.id,
             type: 'shipGroup',
             position: { x: n.x, y: n.y },
-            data: { ship: blueprint, addons, researchedBlueprints, researchInProgress, onCardClick: handleCardClick }
+            data: {
+              ship: blueprint,
+              addons,
+              researchedBlueprints,
+              researchInProgress,
+              activeResearchId,
+              inProgressResearchIds,
+              onCardClick: handleCardClick
+            }
           }
         }
         return {
           id: n.id,
           type: 'card',
           position: { x: n.x, y: n.y },
-          data: { blueprint, researchedBlueprints, researchInProgress, onCardClick: handleCardClick }
+          data: {
+            blueprint,
+            researchedBlueprints,
+            researchInProgress,
+            activeResearchId,
+            inProgressResearchIds,
+            onCardClick: handleCardClick
+          }
         }
       }),
-    [layout, researchedBlueprints, researchInProgress, handleCardClick]
+    [layout, researchedBlueprints, researchInProgress, activeResearchId, inProgressResearchIds, handleCardClick]
   )
 
   // Re-fit whenever the layout's node set changes. To make the camera feel like it zooms OUT
@@ -270,7 +304,12 @@ export const ResearchTree = ({ researchedBlueprints, researchInProgress, atMaxPo
           >
             <BlueprintDetail
               blueprint={selectedBlueprint}
-              status={getResearchStatus(selectedBlueprint, researchedBlueprints, researchInProgress)}
+              status={getResearchStatus(
+                selectedBlueprint,
+                researchedBlueprints,
+                activeResearchId,
+                inProgressResearchIds
+              )}
               powerBlocked={atMaxPower && selectedBlueprint.id !== POWER_BLUEPRINT_ID}
               onResearch={handleResearchSelected}
               onClose={expand.close}

@@ -1,8 +1,9 @@
 import { Box, Divider, Typography } from '@mui/material'
 import { HudList, type HudListItem } from 'components/HudList/HudList'
-import { InProgressBlock } from 'components/InProgressBlock/InProgressBlock'
+import { QueueList } from 'components/QueueList/QueueList'
+import { useCancelQueueItem } from 'hooks/useStation'
 import { BLUEPRINTS } from 'models/blueprint'
-import { SECTION_DESCRIPTIONS, SECTION_IMAGES, SECTION_NAMES } from 'models/station-section'
+import { SECTION_DESCRIPTIONS, SECTION_NAMES } from 'models/station-section'
 import { SectionHeader } from '../../SectionHeader'
 import { CONDITION_LABEL, type InfoPanelProps, STATUS_COLOR, STATUS_LABEL } from '../types'
 
@@ -13,13 +14,12 @@ export const CommandInfo = ({
   storageCapacity,
   power,
   researchedBlueprints,
-  buildInProgress
+  queue
 }: InfoPanelProps) => {
-  // Builds run concurrently; the hub surfaces the first active one (the grid cells show each).
-  const activeBuild = buildInProgress[0] ?? null
-  const buildingType = activeBuild?.sectionType
   const usedStorage = storage.reduce((sum, item) => sum + item.amount, 0)
   const storagePct = storageCapacity > 0 ? Math.round((usedStorage / storageCapacity) * 100) : 0
+  const cancelQueueItem = useCancelQueueItem()
+  const buildQueue = queue.filter((item) => item.kind === 'build')
   // Most counts here are synthetic for now (crew, fleet). The research total reflects the real
   // store so it ticks up as the user researches blueprints from the tree.
   const items: HudListItem[] = [
@@ -49,13 +49,14 @@ export const CommandInfo = ({
       <Divider sx={{ borderColor: 'hud.borderSubtle' }} />
       <HudList items={items} />
 
-      {/* Command is the station hub view, so it surfaces the active section build (if any) — the
-          grid cell shows the same task's progress inline. */}
+      {/* The hub surfaces just the BUILD lane of the unified queue — research has its own panel in
+          the Research Development view. Each row shows live progress and a cancel control. */}
       <Box sx={{ mt: 'auto' }}>
-        <InProgressBlock
-          task={activeBuild}
-          name={buildingType ? SECTION_NAMES[buildingType] : undefined}
-          image={buildingType ? SECTION_IMAGES[buildingType] : null}
+        <QueueList
+          queue={buildQueue}
+          onCancel={(id) => cancelQueueItem.mutate(id)}
+          isCancelling={cancelQueueItem.isPending}
+          title="Build Queue"
         />
       </Box>
     </Box>

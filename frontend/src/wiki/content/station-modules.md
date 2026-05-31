@@ -118,12 +118,21 @@ capacity and unlock everything again. (The Power Core blueprint can also still b
 researched at max power, so you can never get stuck.) Balancing expansion against
 power is part of the game: build cores ahead of demand so a build never strands you.
 
-## Building takes time
+## Building and the work queue
 
-Construction is not instant. When you start a build, the station charges the cost
-up front and the module enters a timed construction (a few seconds for now).
-Different module types build **independently and in parallel** — for example a Power
-Core and a Storage Extension can be under construction at the same time. You just
-can't start a second build of the *same* type until the current one finishes. When a
-build completes, the module flips to *operational* and any bonuses (such as the
-storage- or power-capacity bump) are applied.
+Construction is not instant. Clicking **Build** or **Research** adds the item to a
+single unified **work queue** — the station charges the cost up front and the item
+waits its turn. The queue runs **two lanes in parallel**:
+
+- One research at a time (the next research item in the queue activates as soon as
+  the lab is idle).
+- One section build at a time (the next build item activates as soon as the bay is
+  idle).
+
+So a research and a build can run side-by-side; everything else of either kind waits
+its turn and auto-advances when its lane frees up. The In Progress panel on the
+**Command Module** view lists the full queue — every active item shows a live
+progress bar, every pending item is labelled *Queued*. Each row has a **×** cancel
+control that removes the item and refunds its materials. When a build completes the
+section flips to *operational* and any bonuses (storage / power capacity) are
+applied.

@@ -1,22 +1,22 @@
 import { Box, Divider, Typography } from '@mui/material'
 import { HudList, type HudListItem } from 'components/HudList/HudList'
-import { InProgressBlock } from 'components/InProgressBlock/InProgressBlock'
-import { BLUEPRINTS, getBlueprint } from 'models/blueprint'
+import { useCancelQueueItem } from 'hooks/useStation'
+import { BLUEPRINTS } from 'models/blueprint'
 import { SECTION_DESCRIPTIONS, SECTION_NAMES } from 'models/station-section'
-import { getBlueprintImage } from '../../ResearchTree/ResearchCard/ResearchCard'
+import { QueueList } from '~/components/QueueList/QueueList'
 import { SectionHeader } from '../../SectionHeader'
 import { CONDITION_LABEL, type InfoPanelProps, STATUS_COLOR, STATUS_LABEL } from '../types'
 
-export const ResearchInfo = ({ type, status, researchedBlueprints, researchInProgress }: InfoPanelProps) => {
+export const ResearchInfo = ({ type, status, researchedBlueprints, queue }: InfoPanelProps) => {
   const totalBlueprints = BLUEPRINTS.length
   const researchedCount = researchedBlueprints.length
-  const inProgressBp = researchInProgress ? getBlueprint(researchInProgress.blueprintId) : null
+  const cancelQueueItem = useCancelQueueItem()
+  const researchQueue = queue.filter((item) => item.kind === 'research')
 
   const items: HudListItem[] = [
     { label: 'Status', value: STATUS_LABEL[status], valueColor: STATUS_COLOR[status] },
     { label: 'Condition', value: CONDITION_LABEL[status] },
-    { label: 'Total Researched', value: `${researchedCount} / ${totalBlueprints}` },
-    { label: 'Queue Capacity', value: '1 slot', valueColor: 'hud.textBrightSoft' }
+    { label: 'Total Researched', value: `${researchedCount} / ${totalBlueprints}` }
   ]
 
   return (
@@ -27,11 +27,14 @@ export const ResearchInfo = ({ type, status, researchedBlueprints, researchInPro
       </Typography>
       <Divider sx={{ borderColor: 'hud.borderSubtle' }} />
       <HudList items={items} />
+
+      {/* Research lane of the unified queue — mirrors the Build Queue in CommandInfo. */}
       <Box sx={{ mt: 'auto' }}>
-        <InProgressBlock
-          task={researchInProgress}
-          name={inProgressBp?.name}
-          image={inProgressBp ? getBlueprintImage(inProgressBp) : null}
+        <QueueList
+          queue={researchQueue}
+          onCancel={(id) => cancelQueueItem.mutate(id)}
+          isCancelling={cancelQueueItem.isPending}
+          title="Research Queue"
         />
       </Box>
     </Box>
