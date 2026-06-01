@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { MATERIAL_STORAGE_COST } from 'data/materials'
 import {
   useBuildSection,
@@ -15,7 +15,7 @@ import {
 import type { Asteroid } from 'models/asteroid'
 import type { QueueItem } from 'models/queue'
 import type { SectionType } from 'models/station-section'
-import { SECTION_NAMES } from 'models/station-section'
+import { ENGINEERING_LEVELS, SECTION_NAMES } from 'models/station-section'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
@@ -36,6 +36,7 @@ import {
   ShipStats,
   StationBuildGrid
 } from '~/components'
+import { currentEngineeringLevel } from '~/components/StationBuildGrid/utils'
 import { AsteroidBelts, BELT_SPEED } from './scene/asteroid-belts'
 import { AsteroidHighlight } from './scene/asteroid-highlight'
 import { BuildBarController } from './scene/build-bar'
@@ -84,6 +85,8 @@ export const TacticalBackground = () => {
   const stationDataRef = useRef(station)
   stationDataRef.current = station
   const containerRef = useRef<HTMLDivElement>(null)
+  // FPS HUD — updated directly from the animation loop (no React re-renders).
+  const fpsRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const menuLineRef = useRef<SVGLineElement>(null)
@@ -880,6 +883,10 @@ export const TacticalBackground = () => {
     let frameId: number
     let elapsed = 0
     const clock = new THREE.Timer()
+    // FPS HUD state — exponential moving average of dt updated every frame, text refreshed at 4 Hz
+    // so the readout stays legible. Direct ref/DOM updates avoid forcing a React re-render.
+    let fpsAvgDt = 1 / 60
+    let fpsLastWrite = 0
 
     // Pre-compile all shaders to avoid frame stutters on first render
     renderer.compile(scene, camera)
@@ -891,9 +898,19 @@ export const TacticalBackground = () => {
       clock.update()
       const dt = clock.getDelta()
       elapsed += dt
-      // Detail zoom
-      detailZoom.update()
+      // FPS HUD — EMA of dt for smooth read, refreshed at 4 Hz so the text isn't jittery.
+      if (dt > 0) fpsAvgDt = fpsAvgDt * 0.9 + dt * 0.1
+      const nowMs = performance.now()
+      if (fpsRef.current && nowMs - fpsLastWrite > 250) {
+        fpsLastWrite = nowMs
+        fpsRef.current.textContent = `${Math.round(1 / fpsAvgDt)} fps`
+      }
+      // Detail zoom — scale by dt so the animation feels the same regardless of fps.
+      detailZoom.update(dt)
       const t = detailZoom.t
+      // 1.0 at 60 fps; clamped so a long stall can't make pan/zoom snap. Reused below for all
+      // per-frame lerps that aren't already dt-aware via clock.getDelta directly.
+      const dtFactor = Math.min(2, dt * 60)
 
       // Hide docked asteroid when zoomed in to avoid it clipping in front of ship
       if (dockedMesh && dockedInstanceId >= 0) {
@@ -911,14 +928,14 @@ export const TacticalBackground = () => {
 
       const prevPanX = panX
       const prevPanY = panY
-      panX += (panTargetX - panX) * 0.03
-      panY += (panTargetY - panY) * 0.03
+      panX += (panTargetX - panX) * 0.03 * dtFactor
+      panY += (panTargetY - panY) * 0.03 * dtFactor
       detailZoom.applyToCamera(camera, panX, panY, defaultCamZ)
 
       // Asteroid zoom: nudge camera toward the inspected asteroid
-      asteroidZoom.apply(camera)
-      scanZoom.apply(camera)
-      miningZoom.apply(camera)
+      asteroidZoom.apply(camera, dt)
+      scanZoom.apply(camera, dt)
+      miningZoom.apply(camera, dt)
 
       // Reduce apparent pan on asteroids and sun by partially following the camera
       const panChanged = Math.abs(panX - prevPanX) > 0.00001 || Math.abs(panY - prevPanY) > 0.00001
@@ -931,12 +948,12 @@ export const TacticalBackground = () => {
         starsObj.applyParallax(panX, panY)
       }
 
-      planetRotY += 0.00005
+      planetRotY += 0.00005 * dtFactor
       if (!isDragging) {
-        planetVelX *= 1 - DAMPING_FACTOR
-        planetVelY *= 1 - DAMPING_FACTOR
-        planetRotX += planetVelX
-        planetRotY += planetVelY
+        planetVelX *= (1 - DAMPING_FACTOR) ** dtFactor
+        planetVelY *= (1 - DAMPING_FACTOR) ** dtFactor
+        planetRotX += planetVelX * dtFactor
+        planetRotY += planetVelY * dtFactor
       }
       planetObj.planet.rotation.x = 0.3 + planetRotX
       planetObj.planet.rotation.y = planetRotY
@@ -1544,6 +1561,26 @@ export const TacticalBackground = () => {
       <LoadingScreen progress={loadingProgress} loaded={loaded} />
       <RadiationWarning phase={solarPhase} countdown={solarCountdown} />
       <FullscreenLayer ref={containerRef} sx={{ zIndex: 0, pointerEvents: 'auto' }} />
+      <Box
+        ref={fpsRef}
+        sx={{
+          position: 'fixed',
+          bottom: 8,
+          right: 8,
+          px: 1,
+          py: 0.25,
+          fontFamily: 'monospace',
+          fontSize: 12,
+          color: 'hud.statusInProgress',
+          bgcolor: 'rgba(0, 0, 0, 0.45)',
+          border: '1px solid',
+          borderColor: 'hud.borderSubtle',
+          zIndex: 10000,
+          pointerEvents: 'none'
+        }}
+      >
+        — fps
+      </Box>
       {isMining && miningAsteroid && (
         <DrillOverlay
           asteroid={miningAsteroid}
@@ -1595,17 +1632,22 @@ export const TacticalBackground = () => {
             // One button per built (operational) module — clicking opens the build menu jumped
             // straight to that module's submenu. New modules show up here as soon as their
             // section flips to `operational`.
+            // Engineering upgrade tiers don't appear here — the base Engineering Bay entry surfaces
+            // the current level instead.
             ...station.sections
-              .filter((s) => s.status === 'operational')
-              .map((s) => ({
-                label: SECTION_NAMES[s.type],
-                id: `station-section-${s.type}`,
-                onClick: () => {
-                  zoomIntoStationRef.current?.()
-                  setBuildMenuInitialSection(s.type)
-                  setBuildMenuOpen(true)
+              .filter((s) => s.status === 'operational' && !ENGINEERING_LEVELS.includes(s.type))
+              .map((s) => {
+                const level = s.type === 'engineering' ? currentEngineeringLevel(station.sections) : 0
+                return {
+                  label: level > 0 ? `${SECTION_NAMES[s.type]} LVL ${level}` : SECTION_NAMES[s.type],
+                  id: `station-section-${s.type}`,
+                  onClick: () => {
+                    zoomIntoStationRef.current?.()
+                    setBuildMenuInitialSection(s.type)
+                    setBuildMenuOpen(true)
+                  }
                 }
-              }))
+              })
           ]}
         />
       </HudPanel>

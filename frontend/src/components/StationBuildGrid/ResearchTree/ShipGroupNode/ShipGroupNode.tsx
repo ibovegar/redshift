@@ -1,7 +1,8 @@
 import { Box } from '@mui/material'
 import type { Blueprint, ResearchTask } from 'models/blueprint'
+import type { CargoItem } from 'models/spacecraft'
 import { Handle, type NodeProps, Position } from 'reactflow'
-import { getResearchStatus } from '../../utils'
+import { canAfford, getResearchStatus } from '../../utils'
 import { CARD_FRAME_HEIGHT, CARD_FRAME_WIDTH, SHIP_FRAME_HEIGHT, SHIP_FRAME_WIDTH } from '../constants'
 import { getBoxCenterY } from '../layout'
 import { NodeFrame } from '../NodeFrame/NodeFrame'
@@ -14,6 +15,7 @@ export interface ShipGroupNodeData {
   researchInProgress: ResearchTask | null
   activeResearchId: string | null
   inProgressResearchIds: string[]
+  storage: CargoItem[]
   onCardClick: (blueprint: Blueprint, element: HTMLElement) => void
 }
 
@@ -34,9 +36,11 @@ export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
     researchInProgress,
     activeResearchId,
     inProgressResearchIds,
+    storage,
     onCardClick
   } = data
   const shipStatus = getResearchStatus(ship, researchedBlueprints, activeResearchId, inProgressResearchIds)
+  const shipAffordable = canAfford(ship.cost, storage)
   // Upgrades only appear once the ship itself has been researched — until then we only render
   // the ship card on the left, and the right-hand slot in the node bbox stays empty.
   const shipResearched = researchedBlueprints.includes(ship.id)
@@ -52,6 +56,7 @@ export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
           <ResearchCard
             blueprint={ship}
             status={shipStatus}
+            affordable={shipAffordable}
             task={researchInProgress}
             onClick={(el) => onCardClick(ship, el)}
           />
@@ -70,6 +75,7 @@ export const ShipGroupNode = ({ data }: NodeProps<ShipGroupNodeData>) => {
                 <ResearchCard
                   blueprint={addon}
                   status={getResearchStatus(addon, researchedBlueprints, activeResearchId, inProgressResearchIds)}
+                  affordable={canAfford(addon.cost, storage)}
                   task={researchInProgress}
                   onClick={(el) => onCardClick(addon, el)}
                 />

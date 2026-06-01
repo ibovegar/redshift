@@ -3,10 +3,22 @@ import { BarButton } from 'components/BarButton/BarButton'
 
 interface HudButtonProps {
   children: React.ReactNode
-  variant?: 'primary' | 'secondary'
+  variant?: 'primary' | 'secondary' | 'error'
   id?: string
   onClick?: ButtonProps['onClick']
   disabled?: boolean
+}
+
+const BACKGROUND: Record<NonNullable<HudButtonProps['variant']>, string> = {
+  primary: '#fff',
+  secondary: 'primary.main',
+  error: 'error.main'
+}
+
+const FOREGROUND: Record<NonNullable<HudButtonProps['variant']>, string> = {
+  primary: '#000',
+  secondary: '#fff',
+  error: '#fff'
 }
 
 export const HudButton = ({ children, variant = 'primary', id, onClick, disabled }: HudButtonProps) => (
@@ -21,8 +33,8 @@ export const HudButton = ({ children, variant = 'primary', id, onClick, disabled
       size="small"
       sx={{
         px: 4,
-        backgroundColor: variant === 'primary' ? '#fff' : 'primary.main',
-        color: variant === 'primary' ? '#000' : '#fff',
+        backgroundColor: BACKGROUND[variant],
+        color: FOREGROUND[variant],
         position: 'relative',
         zIndex: 2,
         boxShadow: 'none',

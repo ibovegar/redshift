@@ -25,6 +25,10 @@ interface GridCellProps {
   type?: SectionType
   state?: CellState
   canBuild?: boolean
+  /** Set together with `state === 'available'` when the player can't afford the section cost. The
+   *  cell shows a disabled "Insufficient" tag in place of the Build button so the unaffordable-
+   *  but-otherwise-reachable case stays visible. */
+  affordable?: boolean
   /** Active build task when THIS cell's section is under construction, else null. Drives the
    *  in-cell progress bar and takes precedence over the available/build affordance. */
   buildTask?: BuildTask | null
@@ -44,7 +48,7 @@ const moduleReveal = keyframes`
   to   { filter: blur(0px); }
 `
 
-export const GridCell = ({ type, state, canBuild, buildTask, justBuilt, onBuild }: GridCellProps) => {
+export const GridCell = ({ type, state, canBuild, affordable, buildTask, justBuilt, onBuild }: GridCellProps) => {
   if (!type) return <EmptyCell />
   // A build in progress on this section overrides the available/build affordance — show progress.
   if (buildTask) return <BuildingCell type={type} task={buildTask} />
@@ -56,7 +60,7 @@ export const GridCell = ({ type, state, canBuild, buildTask, justBuilt, onBuild 
     case 'queued':
       return <QueuedCell type={type} />
     default:
-      return <AvailableCell type={type} canBuild={!!canBuild} onBuild={onBuild} />
+      return <AvailableCell type={type} canBuild={!!canBuild} affordable={affordable !== false} onBuild={onBuild} />
   }
 }
 
@@ -183,30 +187,51 @@ const BuildingCell = ({ type, task }: { type: SectionType; task: BuildTask }) =>
 const AvailableCell = ({
   type,
   canBuild,
+  affordable,
   onBuild
 }: {
   type: SectionType
   canBuild: boolean
+  affordable: boolean
   onBuild?: (element: HTMLElement) => void
-}) => (
-  <NotchPanel sx={cellBaseSx}>
-    <Box sx={{ position: 'absolute', inset: -8, opacity: 0.35, filter: `blur(${CARD_BLUR_PX}px)` }}>
-      <SectionImage type={type} />
-    </Box>
-    <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, pt: 2, pb: 2 }}>
-      <CellLabel color="common.white">{SECTION_NAMES[type]}</CellLabel>
-    </Box>
-    {canBuild && onBuild && (
-      <CenteredOverlay>
-        <Box onClick={(e) => e.stopPropagation()}>
-          <HudButton variant="secondary" onClick={(e) => onBuild(e.currentTarget as HTMLElement)}>
-            Available
-          </HudButton>
+}) => {
+  // The Build affordance still opens the ModuleDetail modal on click — that's also the right place
+  // to show the missing materials breakdown when unaffordable. So on an insufficient-materials cell
+  // we keep the button live (re-labelled "Details") and wrap the cell in the red overlay so the
+  // gating reason reads at a glance, mirroring the yellow "queued" overlay pattern.
+  const insufficient = !affordable
+  const buttonVisible = (canBuild || insufficient) && !!onBuild
+  return (
+    <NotchPanel sx={cellBaseSx}>
+      <Box sx={{ position: 'absolute', inset: -8, opacity: 0.35, filter: `blur(${CARD_BLUR_PX}px)` }}>
+        <SectionImage type={type} />
+      </Box>
+      {insufficient && (
+        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'hud.overlayInsufficient', pointerEvents: 'none' }} />
+      )}
+      {insufficient && (
+        <Box sx={{ position: 'absolute', top: 8, left: 0, right: 0 }}>
+          <CellLabel color="hud.error">Insufficient resources</CellLabel>
         </Box>
-      </CenteredOverlay>
-    )}
-  </NotchPanel>
-)
+      )}
+      <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, pt: 2, pb: 2 }}>
+        <CellLabel color="common.white">{SECTION_NAMES[type]}</CellLabel>
+      </Box>
+      {buttonVisible && (
+        <CenteredOverlay>
+          <Box onClick={(e) => e.stopPropagation()}>
+            <HudButton
+              variant={insufficient ? 'error' : 'secondary'}
+              onClick={(e) => onBuild(e.currentTarget as HTMLElement)}
+            >
+              {insufficient ? 'Details' : 'Available'}
+            </HudButton>
+          </Box>
+        </CenteredOverlay>
+      )}
+    </NotchPanel>
+  )
+}
 
 const SectionImage = ({ type }: { type: SectionType }) => (
   <Box

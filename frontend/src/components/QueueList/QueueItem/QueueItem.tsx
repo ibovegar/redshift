@@ -23,13 +23,20 @@ const computeProgress = (task: InProgressTask, now: number = Date.now()): number
 // Live 0–100 progress for a time-based task. Re-renders on a 200ms tick while a task is active
 // (the value is wall-clock derived) — smooth enough without burning frames. Returns 0 when idle.
 // Exported so any view (e.g. the in-cell BuildingCell progress bar) can render its own progress.
+//
+// The interval is keyed off the task's start/complete timestamps (primitive strings), NOT the task
+// object reference. Callers commonly rebuild the task object each render (e.g. `activeBuildTask` in
+// the queue model), which used to clear+recreate the setInterval on every 200 ms tick. Keying off
+// the timestamps lets the interval persist across ticks for the same underlying task.
 export const useTaskProgress = (task: InProgressTask | null): number => {
   const [, setTick] = useState(0)
+  const startedAt = task?.startedAt
+  const completesAt = task?.completesAt
   useEffect(() => {
-    if (!task) return
+    if (!startedAt || !completesAt) return
     const id = setInterval(() => setTick((n) => n + 1), 200)
     return () => clearInterval(id)
-  }, [task])
+  }, [startedAt, completesAt])
   return task ? Math.round(computeProgress(task) * 100) : 0
 }
 

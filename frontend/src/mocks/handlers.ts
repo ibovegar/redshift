@@ -35,12 +35,16 @@ const db = {
 }
 
 // Applies a finished item's effect: research adds the blueprint; a build flips its section
-// operational and bumps the relevant capacity.
+// operational and bumps the relevant capacity. The item's cost is also deducted here (NOT at
+// enqueue) so the player's storage only drops once the previous module is actually online — that's
+// what drives the "Insufficient materials" indicator on the next module in the chain.
 const applyQueueItem = (item: QueueItem) => {
   if (item.kind === 'research') {
     if (!db.station.researchedBlueprints.includes(item.targetId)) {
       db.station.researchedBlueprints.push(item.targetId)
     }
+    const blueprint = getBlueprint(item.targetId)
+    if (blueprint) deductCosts(blueprint.cost)
     return
   }
   const type = item.targetId as SectionType
@@ -48,6 +52,7 @@ const applyQueueItem = (item: QueueItem) => {
   if (section) section.status = 'operational'
   if (type === 'storage-extension') db.station.storageCapacity += 500
   if (type === 'power') db.station.powerCapacity += POWER_PER_CORE
+  deductCosts(SECTION_COSTS[type])
 }
 
 // Drives the unified queue: completes any active item whose completesAt has passed (applying its
@@ -84,21 +89,37 @@ const deductCosts = (costs: Partial<Record<string, number>>) => {
   }
 }
 
-// Returns a cancelled item's materials to storage (costs are charged up-front at enqueue).
-const refundCosts = (costs: Partial<Record<string, number>>) => {
-  for (const [material, amount] of Object.entries(costs)) {
-    if (!amount) continue
-    const item = db.station.storage.find((s) => s.material === material)
-    if (item) item.amount += amount
-    else db.station.storage.push({ material: material as CargoItem['material'], amount })
-  }
+const costForQueueItem = (item: QueueItem): Partial<Record<string, number>> => {
+  if (item.kind === 'research') return getBlueprint(item.targetId)?.cost ?? {}
+  return SECTION_COSTS[item.targetId as SectionType] ?? {}
 }
 
-const hasMaterials = (costs: Partial<Record<string, number>>) =>
-  Object.entries(costs).every(([material, amount]) => {
+// Total cost of every item currently waiting in the queue (active + pending). Used at enqueue to
+// reject items the queue can't pay for once all the already-queued items complete — even though
+// the actual deduction now happens at completion (applyQueueItem), not at enqueue.
+const sumQueuedCosts = (): Partial<Record<string, number>> => {
+  const totals: Partial<Record<string, number>> = {}
+  for (const queued of db.station.queue) {
+    for (const [material, amount] of Object.entries(costForQueueItem(queued))) {
+      if (!amount) continue
+      totals[material] = (totals[material] ?? 0) + amount
+    }
+  }
+  return totals
+}
+
+// At-enqueue affordability: current storage minus everything already in the queue must still cover
+// the new item's cost. Prevents queueing a chain the player can't actually pay for once each item
+// completes — the deduction itself happens at completion in applyQueueItem.
+const hasMaterials = (costs: Partial<Record<string, number>>) => {
+  const reserved = sumQueuedCosts()
+  return Object.entries(costs).every(([material, amount]) => {
     const item = db.station.storage.find((s) => s.material === material)
-    return !!item && item.amount >= (amount ?? 0)
+    const have = item?.amount ?? 0
+    const alreadyReserved = reserved[material] ?? 0
+    return have - alreadyReserved >= (amount ?? 0)
   })
+}
 
 export const handlers = [
   // User
@@ -167,8 +188,11 @@ export const handlers = [
     return HttpResponse.json(db.station)
   }),
 
-  // Enqueues a section build: validates, charges the cost up front, and pushes a pending QueueItem.
-  // processQueue() activates it if the build lane is idle; otherwise it waits its turn.
+  // Enqueues a section build: validates against (current storage − already-queued reservations),
+  // then pushes a pending QueueItem. processQueue() activates it if the build lane is idle. The
+  // actual cost deduction happens at completion in applyQueueItem, NOT here — so the storage panel
+  // only drops once a module finishes and "Insufficient materials" only surfaces on the next item
+  // once the previous one is online.
   http.post(`${url}/station/sections/build`, async ({ request }) => {
     processQueue()
     const { type } = (await request.json()) as { type: SectionType }
@@ -215,7 +239,6 @@ export const handlers = [
     if (!hasMaterials(costs)) {
       return new HttpResponse(null, { status: 400 })
     }
-    deductCosts(costs)
     db.station.queue.push({ id: crypto.randomUUID(), kind: 'build', targetId: type })
     processQueue()
     return HttpResponse.json(db.station)
@@ -227,8 +250,9 @@ export const handlers = [
   }),
 
   // Research
-  // Enqueues a research task: validates, charges the cost up front, and pushes a pending QueueItem.
-  // processQueue() activates it if the research lane is idle; otherwise it waits its turn.
+  // Enqueues a research task: validates against (current storage − already-queued reservations),
+  // then pushes a pending QueueItem. processQueue() activates it if the research lane is idle. Cost
+  // is deducted at completion in applyQueueItem (see the build handler above for the rationale).
   http.post(`${url}/research/start`, async ({ request }) => {
     processQueue()
     const { blueprintId } = (await request.json()) as { blueprintId: string }
@@ -260,24 +284,18 @@ export const handlers = [
         .join(', ')
       return HttpResponse.text(`Insufficient materials: ${missing}`, { status: 400 })
     }
-    deductCosts(blueprint.cost)
     db.station.queue.push({ id: crypto.randomUUID(), kind: 'research', targetId: blueprintId })
     processQueue()
     return HttpResponse.json(db.station)
   }),
 
-  // Removes a queued (or active) item and refunds its up-front cost, then re-activates the next.
+  // Removes a queued (or active) item from the queue and re-activates the next. No refund: costs
+  // are now deducted at completion (applyQueueItem), so a cancelled item never paid anything.
   http.post(`${url}/station/queue/cancel`, async ({ request }) => {
     processQueue()
     const { id } = (await request.json()) as { id: string }
     const item = db.station.queue.find((i) => i.id === id)
     if (!item) return new HttpResponse(null, { status: 404 })
-    if (item.kind === 'research') {
-      const blueprint = getBlueprint(item.targetId)
-      if (blueprint) refundCosts(blueprint.cost)
-    } else {
-      refundCosts(SECTION_COSTS[item.targetId as SectionType])
-    }
     db.station.queue = db.station.queue.filter((i) => i.id !== id)
     processQueue()
     return HttpResponse.json(db.station)

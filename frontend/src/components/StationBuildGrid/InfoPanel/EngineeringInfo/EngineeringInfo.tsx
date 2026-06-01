@@ -1,11 +1,12 @@
 import { Box, Divider, Typography } from '@mui/material'
 import { HudList, type HudListItem } from 'components/HudList/HudList'
 import { BLUEPRINTS } from 'models/blueprint'
-import { SECTION_DESCRIPTIONS, SECTION_NAMES } from 'models/station-section'
+import { MAX_ENGINEERING_LEVEL, SECTION_DESCRIPTIONS, SECTION_NAMES } from 'models/station-section'
 import { SectionHeader } from '../../SectionHeader'
+import { currentEngineeringLevel } from '../../utils'
 import { CONDITION_LABEL, type InfoPanelProps, STATUS_COLOR, STATUS_LABEL } from '../types'
 
-export const EngineeringInfo = ({ type, status, researchedBlueprints }: InfoPanelProps) => {
+export const EngineeringInfo = ({ type, status, sections, researchedBlueprints }: InfoPanelProps) => {
   const shipBpUnlocked = BLUEPRINTS.filter(
     (bp) => bp.category === 'ship' && researchedBlueprints.includes(bp.id)
   ).length
@@ -14,9 +15,15 @@ export const EngineeringInfo = ({ type, status, researchedBlueprints }: InfoPane
     (bp) => bp.category === 'ship-addon' && researchedBlueprints.includes(bp.id)
   ).length
   const addonBpTotal = BLUEPRINTS.filter((bp) => bp.category === 'ship-addon').length
+  const level = currentEngineeringLevel(sections)
   const items: HudListItem[] = [
     { label: 'Status', value: STATUS_LABEL[status], valueColor: STATUS_COLOR[status] },
     { label: 'Condition', value: CONDITION_LABEL[status] },
+    {
+      label: 'Level',
+      value: `${level} / ${MAX_ENGINEERING_LEVEL}`,
+      valueColor: level === MAX_ENGINEERING_LEVEL ? 'hud.success' : 'common.white'
+    },
     { label: 'Ship Blueprints', value: `${shipBpUnlocked} / ${shipBpTotal}` },
     { label: 'Upgrade Blueprints', value: `${addonBpUnlocked} / ${addonBpTotal}` },
     { label: 'Build Queue', value: 'Idle', valueColor: 'hud.textBrightDim' },

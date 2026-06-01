@@ -46,7 +46,7 @@ function generateActiveColors(count: number, color: string): string[] {
 interface BarButtonProps {
   children: ReactNode
   active?: boolean
-  color?: 'primary' | 'secondary'
+  color?: 'primary' | 'secondary' | 'error'
 }
 
 const barRise = keyframes`
@@ -130,7 +130,20 @@ export const BarButton = (props: BarButtonProps) => {
     const width = el.offsetWidth
     const barCount = Math.max(1, Math.round(width / BAR_WIDTH))
 
-    if (color === 'secondary') {
+    if (color === 'error') {
+      // Red-hued ambient bars for destructive / blocked actions (e.g. "Insufficient resources").
+      const colors = generateColors(barCount, 0)
+      const shuffled = colors.sort(() => Math.random() - 0.5)
+      setBars(
+        shuffled.map((c, i) => ({
+          key: `${i}-${c}`,
+          color: c,
+          delay: Math.round(Math.random() * 100),
+          easing: randomEasing()
+        }))
+      )
+      setActiveBars(Array.from({ length: barCount }, (_, i) => ({ key: `a${i}`, color: theme.palette.error.main })))
+    } else if (color === 'secondary') {
       const primaryHue = hexToHue(theme.palette.primary.main)
       const colors = generateColors(barCount, primaryHue)
       const shuffled = colors.sort(() => Math.random() - 0.5)
@@ -158,7 +171,7 @@ export const BarButton = (props: BarButtonProps) => {
       const activeColors = generateActiveColors(barCount, theme.palette.primary.main)
       setActiveBars(activeColors.map((c, i) => ({ key: `a${i}-${c}`, color: c })))
     }
-  }, [theme.palette.primary.main, color])
+  }, [theme.palette.primary.main, theme.palette.error.main, color])
 
   const handleMouseEnter = useCallback(() => {
     setAnimate(false)

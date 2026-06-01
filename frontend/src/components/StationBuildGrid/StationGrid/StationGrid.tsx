@@ -9,15 +9,17 @@ import type { SectionType, StationSection } from 'models/station-section'
 import {
   BASE_POWER,
   BASE_STORAGE_CAPACITY,
+  ENGINEERING_LEVELS,
   MAX_POWER_CORES,
   MAX_STORAGE_EXTENSIONS,
   POWER_PER_CORE,
+  SECTION_COSTS,
   SECTION_ORDER,
   STORAGE_EXTENSION_CAPACITY
 } from 'models/station-section'
 import { useCallback, useState } from 'react'
 import { SectionHeader } from '../SectionHeader'
-import { type CellState, canBuildSection, getCellState, isOperational } from '../utils'
+import { type CellState, canAfford, canBuildSection, getCellState, isOperational } from '../utils'
 import { CELL, GridCell } from './GridCell/GridCell'
 import { ModuleDetail } from './ModuleDetail/ModuleDetail'
 
@@ -25,18 +27,24 @@ const GAP = 10
 const COLS = 5
 const MIN_ROWS = 4
 
-// Row 0 holds the always-present modules. The two repeatable types each grow a vertical stack:
-// Storage Extensions downward from (1, 1), Power Cores downward from (4, 0).
+// Row 0 holds the always-present modules. Repeatable / chained types grow vertical stacks below
+// their base: Storage Extensions from (1, 1), Power Cores from (4, 0), Engineering tiers 2-4 from
+// (3, 1) downward (each level appears only once its blueprint is researched).
 const MODULE_POS: Record<SectionType, { col: number; row: number }> = {
   command: { col: 0, row: 0 },
   research: { col: 2, row: 0 },
   engineering: { col: 3, row: 0 },
+  'engineering-2': { col: 3, row: 1 },
+  'engineering-3': { col: 3, row: 2 },
+  'engineering-4': { col: 3, row: 3 },
   power: { col: 4, row: 0 },
   storage: { col: 1, row: 0 },
   'storage-extension': { col: 1, row: 1 }
 }
 
-const MAIN_TYPES = SECTION_ORDER.filter((t) => t !== 'storage-extension' && t !== 'power')
+const MAIN_TYPES = SECTION_ORDER.filter(
+  (t) => t !== 'storage-extension' && t !== 'power' && !ENGINEERING_LEVELS.includes(t)
+)
 
 interface Props {
   sections: StationSection[]
@@ -58,6 +66,9 @@ interface RenderCell {
   type: SectionType
   state: CellState
   canBuild: boolean
+  /** Whether the player can pay this section's cost right now — drives the "Insufficient" tag on
+   *  available cells where the Build affordance is otherwise reachable. */
+  affordable: boolean
   buildTask: BuildTask | null
   justBuilt: boolean
 }
@@ -118,9 +129,36 @@ export const StationGrid = ({
       type,
       state,
       canBuild: !alreadyQueued && canBuildSection(sections, storage, researchedBlueprints, type, atMaxPower),
+      affordable: canAfford(SECTION_COSTS[type], storage),
       buildTask,
       justBuilt: justBuilt === type
     })
+  }
+
+  // Engineering upgrade tiers stack beneath the base bay (col 3, rows 1-3). They appear as soon as
+  // the base Engineering Bay is operational — initially as `unavailable` (blueprint not researched),
+  // then `available` once each tier's blueprint is researched. Hidden entirely before the base bay
+  // is online so the column doesn't reveal future content prematurely.
+  const engineeringOnline = isOperational(sections, 'engineering')
+  if (engineeringOnline) {
+    for (const type of ENGINEERING_LEVELS) {
+      const { col, row } = MODULE_POS[type]
+      const buildTask = buildTaskFor(type)
+      const alreadyQueued = queuedBuildCount(queue, type) > 0
+      const baseState = getCellState(sections, researchedBlueprints, type)
+      const state: CellState = !buildTask && alreadyQueued ? 'queued' : baseState
+      cells.push({
+        key: type,
+        col,
+        row,
+        type,
+        state,
+        canBuild: !alreadyQueued && canBuildSection(sections, storage, researchedBlueprints, type, atMaxPower),
+        affordable: canAfford(SECTION_COSTS[type], storage),
+        buildTask,
+        justBuilt: justBuilt === type
+      })
+    }
   }
 
   // Repeatable stacks (Storage Extension, Power Core). Each renders one online cell per built unit,
@@ -181,6 +219,7 @@ export const StationGrid = ({
         state,
         canBuild:
           isNext && underCap && canBuildSection(sections, storage, researchedBlueprints, stack.type, atMaxPower),
+        affordable: canAfford(SECTION_COSTS[stack.type], storage),
         buildTask: isNext ? buildTask : null,
         // Only the most recently built unit plays the reveal animation.
         justBuilt: isBuilt && i === stack.built - 1 && justBuilt === stack.type
@@ -217,6 +256,7 @@ export const StationGrid = ({
                 type={cell.type}
                 state={cell.state}
                 canBuild={cell.canBuild}
+                affordable={cell.affordable}
                 buildTask={cell.buildTask}
                 justBuilt={cell.justBuilt}
                 onBuild={(element) => handleAvailableClick(cell.type, element)}

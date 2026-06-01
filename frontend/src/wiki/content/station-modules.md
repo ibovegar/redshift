@@ -31,8 +31,18 @@ it opens the rest of the tree.
 A heavy fabrication bay for manufacturing ships and ship upgrades. It also performs
 structural repairs on docked spacecraft. This module gates the entire ship tree.
 
-- **Build cost:** 30 Iron, 15 Titanium
-- **Requires:** Research Lab operational
+The Engineering Bay can be upgraded through **four levels**. Each level beyond the
+base bay has its own blueprint chained off the previous one — research Engineering
+Bay to unlock **Engineering LVL 2**, then LVL 3, then LVL 4. Once a level is researched
+a new grid slot appears beneath the base bay (rows 1–3 of the Engineering column);
+build it to bring that tier online. Each tier is a separate one-time build (not
+repeatable) and adds its own power draw on top of the base bay.
+
+- **Build cost:** 30 Iron, 15 Titanium (base bay)
+- **LVL 2 build cost:** 25 Iron, 10 Titanium — requires the LVL 2 blueprint researched
+- **LVL 3 build cost:** 40 Iron, 15 Titanium, 10 Copper — requires LVL 3 researched
+- **LVL 4 build cost:** 60 Iron, 25 Titanium, 15 Copper, 2 Uranium — requires LVL 4 researched
+- **Requires:** Research Lab operational (base bay); the previous tier operational (each upgrade tier — LVL 2 requires base bay built, LVL 3 requires LVL 2 built, LVL 4 requires LVL 3 built)
 
 ### Power Core
 A reactor that adds **+50 power capacity** to the station. Power Cores are

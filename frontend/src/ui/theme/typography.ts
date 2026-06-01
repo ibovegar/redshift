@@ -58,6 +58,8 @@ export const hudColors = {
   overlayBlack: 'rgba(0, 0, 0, 0.55)',
   // Yellow overlay marking a queued build / research item — sits on top of the cell or card.
   overlayQueued: 'rgba(255, 213, 79, 0.22)',
+  // Red overlay marking an "Insufficient materials" build cell — same overlay pattern as queued.
+  overlayInsufficient: 'rgba(244, 67, 54, 0.22)',
 
   // Cyan glow used by the GridCell `moduleReveal` keyframe — kept here so the colour palette
   // stays in one place even though the values land inside a CSS keyframes template string.

@@ -1,6 +1,9 @@
 import type * as THREE from 'three'
 
+// Tuned for 60 fps. update(dt) scales by `dt * 60` so the zoom progresses at the same wall-clock
+// rate regardless of frame rate — if fps dips, each frame advances proportionally more.
 const ZOOM_SPEED = 0.01
+const REFERENCE_FPS = 60
 
 export interface Selectable {
   isSelected: boolean
@@ -49,15 +52,19 @@ export class SelectionZoom {
     this.activeTarget = null
   }
 
-  update() {
+  update(dt = 1 / REFERENCE_FPS) {
+    // Scale progress by dt*REFERENCE_FPS so the zoom takes the same wall-clock time at any fps.
+    // Clamped so a long stall (tab hidden, GC pause) can't make a single frame jump by >2 reference
+    // frames' worth of progress.
+    const step = Math.min(2, dt * REFERENCE_FPS)
     if (this.isZoomed && this.activeTarget) {
       this.target.copy(this.activeTarget.getCamTarget())
     }
     if (this.isZoomed) {
-      this.progress = Math.min(1, this.progress + ZOOM_SPEED)
+      this.progress = Math.min(1, this.progress + ZOOM_SPEED * step)
       this.t = Math.min(this.maxZoom, 1 - (1 - this.progress) ** 9)
     } else {
-      this.progress = Math.max(0, this.progress - ZOOM_SPEED * 2.5 * Math.max(0.3, this.progress))
+      this.progress = Math.max(0, this.progress - ZOOM_SPEED * 2.5 * Math.max(0.3, this.progress) * step)
       const p = 1 - this.progress
       this.t = 1 - (6 * p ** 5 - 15 * p ** 4 + 10 * p ** 3)
     }

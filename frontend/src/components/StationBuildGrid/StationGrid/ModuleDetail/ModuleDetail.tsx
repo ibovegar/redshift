@@ -74,7 +74,12 @@ export const ModuleDetail = ({ type, storage, isPending, onBuild, onClose }: Pro
           </Box>
         )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
+          {!affordable && (
+            <Typography variant="hud-data" sx={{ color: 'hud.error' }}>
+              Insufficient materials
+            </Typography>
+          )}
           <HudButton onClick={onBuild} disabled={!affordable || isPending}>
             Build Module
           </HudButton>

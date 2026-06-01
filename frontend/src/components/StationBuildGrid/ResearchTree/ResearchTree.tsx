@@ -4,8 +4,10 @@ import { useStartResearch } from 'hooks/useBlueprints'
 import { useCardExpandAnimation } from 'hooks/useCardExpandAnimation'
 import type { Blueprint, ResearchTask } from 'models/blueprint'
 import { getBlueprint, getBlueprintChildren } from 'models/blueprint'
+import type { CargoItem } from 'models/spacecraft'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactFlow, { type Node, type ReactFlowInstance } from 'reactflow'
+import { canAfford } from '../utils'
 import 'reactflow/dist/style.css'
 import { DottedBackground } from 'components/DottedBackground/DottedBackground'
 import { SectionHeader } from '../SectionHeader'
@@ -34,6 +36,9 @@ interface Props {
   inProgressResearchIds: string[]
   /** When at max power, research is blocked — except the Power Core blueprint (the recovery path). */
   atMaxPower: boolean
+  /** Storage used to compute per-blueprint affordability — drives the "Insufficient" badge on the
+   *  research card and the "Insufficient materials" hint in the BlueprintDetail modal. */
+  storage: CargoItem[]
 }
 
 // The Power Core blueprint stays researchable even at max power so a player who hit the cap without
@@ -44,7 +49,8 @@ export const ResearchTree = ({
   researchedBlueprints,
   researchInProgress,
   inProgressResearchIds,
-  atMaxPower
+  atMaxPower,
+  storage
 }: Props) => {
   const instanceRef = useRef<ReactFlowInstance | null>(null)
   const prevResearchedRef = useRef<string[]>(researchedBlueprints)
@@ -83,6 +89,7 @@ export const ResearchTree = ({
   const handleResearchSelected = useCallback(() => {
     if (!selectedBlueprint || startResearch.isPending) return
     if (atMaxPower && selectedBlueprint.id !== POWER_BLUEPRINT_ID) return
+    if (!canAfford(selectedBlueprint.cost, storage)) return
     // Enqueues — allowed even while other research runs; 'available' already excludes queued items.
     const status = getResearchStatus(selectedBlueprint, researchedBlueprints, activeResearchId, inProgressResearchIds)
     if (status !== 'available') return
@@ -95,7 +102,8 @@ export const ResearchTree = ({
     inProgressResearchIds,
     startResearch,
     expand.close,
-    atMaxPower
+    atMaxPower,
+    storage
   ])
 
   const nodes: Node[] = useMemo(
@@ -115,6 +123,7 @@ export const ResearchTree = ({
               researchInProgress,
               activeResearchId,
               inProgressResearchIds,
+              storage,
               onCardClick: handleCardClick
             }
           }
@@ -129,11 +138,20 @@ export const ResearchTree = ({
             researchInProgress,
             activeResearchId,
             inProgressResearchIds,
+            storage,
             onCardClick: handleCardClick
           }
         }
       }),
-    [layout, researchedBlueprints, researchInProgress, activeResearchId, inProgressResearchIds, handleCardClick]
+    [
+      layout,
+      researchedBlueprints,
+      researchInProgress,
+      activeResearchId,
+      inProgressResearchIds,
+      storage,
+      handleCardClick
+    ]
   )
 
   // Re-fit whenever the layout's node set changes. To make the camera feel like it zooms OUT
@@ -310,6 +328,7 @@ export const ResearchTree = ({
                 activeResearchId,
                 inProgressResearchIds
               )}
+              storage={storage}
               powerBlocked={atMaxPower && selectedBlueprint.id !== POWER_BLUEPRINT_ID}
               onResearch={handleResearchSelected}
               onClose={expand.close}

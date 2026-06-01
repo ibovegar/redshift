@@ -6,10 +6,13 @@ import { SECTION_ICONS, SECTION_NAMES } from 'models/station-section'
 interface ModuleListItemProps {
   type: SectionType
   selected: boolean
+  /** Overrides the default `SECTION_NAMES[type]` label — used to suffix the Engineering Bay entry
+   *  with its current upgrade level (e.g. "Engineering Bay LVL 3"). */
+  label?: string
   onSelect: () => void
 }
 
-export const ModuleListItem = ({ type, selected, onSelect }: ModuleListItemProps) => (
+export const ModuleListItem = ({ type, selected, label, onSelect }: ModuleListItemProps) => (
   <Box
     onClick={onSelect}
     sx={{
@@ -38,7 +41,7 @@ export const ModuleListItem = ({ type, selected, onSelect }: ModuleListItemProps
 
       <Box sx={{ flex: 1, px: 1.5, py: 2.5, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <Typography variant="hud-heading" sx={{ color: 'common.white' }}>
-          {SECTION_NAMES[type]}
+          {label ?? SECTION_NAMES[type]}
         </Typography>
         <Box
           sx={{

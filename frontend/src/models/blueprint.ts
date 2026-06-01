@@ -39,6 +39,7 @@ export interface BuildTask {
  *   bp-mod-command
  *     └── bp-mod-research
  *           ├── bp-mod-engineering
+ *           │     ├── bp-mod-engineering-2 → bp-mod-engineering-3 → bp-mod-engineering-4
  *           │     ├── bp-ship-tellrx5   (Tellus RX 5 — support)    → engine, stabilizer, weapons
  *           │     ├── bp-ship-cygf35    (Cygnus F-35 — fighter)    → deflector, stabilizer, weapons
  *           │     ├── bp-ship-drax22    (Drax 22 — interceptor)    → engine, stabilizer, weapons
@@ -152,6 +153,38 @@ export const BLUEPRINTS: Blueprint[] = [
     cost: { iron: 15, copper: 5 },
     durationMs: 3_000,
     parentBlueprintId: 'bp-mod-research'
+  },
+  // Engineering upgrade chain: each level unlocks the next blueprint and adds a stacked grid item
+  // beneath the base bay once researched & built. Up to level 4.
+  {
+    id: 'bp-mod-engineering-2',
+    category: 'module',
+    name: 'Engineering LVL 2',
+    description: 'Schematics expanding the Engineering Bay to tier 2 — a second hull rig for mid-sized hulls.',
+    targetId: 'engineering-2',
+    cost: { iron: 20, copper: 10 },
+    durationMs: 3_000,
+    parentBlueprintId: 'bp-mod-engineering'
+  },
+  {
+    id: 'bp-mod-engineering-3',
+    category: 'module',
+    name: 'Engineering LVL 3',
+    description: 'Schematics for tier 3 Engineering — heavy-frame jigs and parallel addon assembly lines.',
+    targetId: 'engineering-3',
+    cost: { iron: 30, copper: 15, titanium: 5 },
+    durationMs: 3_000,
+    parentBlueprintId: 'bp-mod-engineering-2'
+  },
+  {
+    id: 'bp-mod-engineering-4',
+    category: 'module',
+    name: 'Engineering LVL 4',
+    description: 'Schematics for tier 4 Engineering — capital-grade jigs and full automated upgrade throughput.',
+    targetId: 'engineering-4',
+    cost: { iron: 40, copper: 20, titanium: 10 },
+    durationMs: 3_000,
+    parentBlueprintId: 'bp-mod-engineering-3'
   },
   {
     id: 'bp-mod-power',

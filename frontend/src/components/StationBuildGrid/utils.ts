@@ -3,7 +3,7 @@ import type { Blueprint, ResearchTask } from 'models/blueprint'
 import { getModuleBlueprint } from 'models/blueprint'
 import type { CargoItem } from 'models/spacecraft'
 import type { SectionStatus, SectionType, StationSection } from 'models/station-section'
-import { SECTION_BLUEPRINT, SECTION_COSTS } from 'models/station-section'
+import { ENGINEERING_LEVELS, SECTION_BLUEPRINT, SECTION_COSTS } from 'models/station-section'
 
 export type CellState = 'online' | 'available' | 'unavailable' | 'queued'
 export type ResearchStatus = 'researched' | 'in-progress' | 'queued' | 'available' | 'locked'
@@ -21,6 +21,17 @@ export const statusOf = (sections: StationSection[], type: SectionType): Section
 
 export const isOperational = (sections: StationSection[], type: SectionType): boolean =>
   statusOf(sections, type) === 'operational'
+
+// Top Engineering tier currently operational on the station: 0 if the base bay isn't built yet,
+// 1 for just the base, 2/3/4 for each upgrade tier. Used for the "Level" readout in the module
+// list and EngineeringInfo (the upgrade tiers don't show as separate modules).
+export const currentEngineeringLevel = (sections: StationSection[]): number => {
+  if (!isOperational(sections, 'engineering')) return 0
+  for (let i = ENGINEERING_LEVELS.length - 1; i >= 0; i--) {
+    if (isOperational(sections, ENGINEERING_LEVELS[i])) return i + 2
+  }
+  return 1
+}
 
 const isParentOperational = (sections: StationSection[], type: SectionType): boolean => {
   const parent = SECTION_BLUEPRINT[type]

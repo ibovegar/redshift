@@ -1,5 +1,5 @@
 import ImageIcon from '@mui/icons-material/Image'
-import { Box, LinearProgress } from '@mui/material'
+import { Box, LinearProgress, Typography } from '@mui/material'
 import type { Blueprint, BlueprintCategory, ResearchTask } from 'models/blueprint'
 import type { SectionType } from 'models/station-section'
 import { SECTION_IMAGES } from 'models/station-section'
@@ -54,6 +54,10 @@ export const getBlueprintImage = (bp: Blueprint): string | null => {
 interface Props {
   blueprint: Blueprint
   status: ResearchStatus
+  /** When the blueprint is available but the player can't pay the cost, a small "INSUFFICIENT"
+   *  badge surfaces the gating reason directly on the card (the BlueprintDetail modal echoes the
+   *  same hint next to the disabled Start Research button). */
+  affordable?: boolean
   /** When provided, the card renders a thin progress bar at the bottom edge if this task targets
    *  the same blueprint as `blueprint.id`. Pulled from the same `researchInProgress` value that
    *  the InfoPanel uses, so the tree and the side panel stay in sync. */
@@ -61,13 +65,14 @@ interface Props {
   onClick: (element: HTMLElement) => void
 }
 
-export const ResearchCard = ({ blueprint, status, task, onClick }: Props) => {
+export const ResearchCard = ({ blueprint, status, affordable = true, task, onClick }: Props) => {
   const isResearched = status === 'researched'
   const image = getBlueprintImage(blueprint)
   const isInProgress = status === 'in-progress' && !!task && task.blueprintId === blueprint.id
   // Both active and pending-queued items wear the yellow "queued" overlay — the active one also
   // shows the progress bar underneath it.
   const isQueued = status === 'in-progress' || status === 'queued'
+  const showInsufficient = status === 'available' && !affordable
   useCardProgressTick(isInProgress)
   const progress = isInProgress && task ? getResearchProgress(task) : 0
 
@@ -108,6 +113,42 @@ export const ResearchCard = ({ blueprint, status, task, onClick }: Props) => {
             pointerEvents: 'none'
           }}
         />
+      )}
+      {status === 'queued' && (
+        <Typography
+          variant="hud-badge"
+          sx={{
+            position: 'absolute',
+            top: 4,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            color: 'hud.statusQueued',
+            letterSpacing: 1,
+            textTransform: 'uppercase',
+            pointerEvents: 'none'
+          }}
+        >
+          Queued
+        </Typography>
+      )}
+      {showInsufficient && (
+        <Typography
+          variant="hud-badge"
+          sx={{
+            position: 'absolute',
+            bottom: 4,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            color: 'hud.error',
+            letterSpacing: 1,
+            textTransform: 'uppercase',
+            pointerEvents: 'none'
+          }}
+        >
+          Insufficient
+        </Typography>
       )}
       <StatusCorner status={status} />
       {isInProgress && (

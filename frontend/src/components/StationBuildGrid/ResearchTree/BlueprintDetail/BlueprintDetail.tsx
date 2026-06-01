@@ -5,12 +5,14 @@ import { HudButton } from 'components/HudButton/HudButton'
 import { MATERIAL_ICONS, MATERIAL_NAMES } from 'data/materials'
 import type { AsteroidMaterial } from 'models/asteroid'
 import type { Blueprint } from 'models/blueprint'
-import type { ResearchStatus } from '../../utils'
+import type { CargoItem } from 'models/spacecraft'
+import { canAfford, type ResearchStatus } from '../../utils'
 import { getBlueprintImage } from '../ResearchCard/ResearchCard'
 
 interface Props {
   blueprint: Blueprint
   status: ResearchStatus
+  storage: CargoItem[]
   /** True when at max power and this isn't the Power Core blueprint — research is blocked. */
   powerBlocked?: boolean
   onResearch: () => void
@@ -35,9 +37,11 @@ const STATUS_COLOR_TOKEN: Record<ResearchStatus, string> = {
   locked: 'hud.statusLocked'
 }
 
-export const BlueprintDetail = ({ blueprint, status, powerBlocked = false, onResearch, onClose }: Props) => {
+export const BlueprintDetail = ({ blueprint, status, storage, powerBlocked = false, onResearch, onClose }: Props) => {
   const costEntries = Object.entries(blueprint.cost) as [string, number][]
   const image = getBlueprintImage(blueprint)
+  const affordable = canAfford(blueprint.cost, storage)
+  const showInsufficient = status === 'available' && !powerBlocked && !affordable
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box
@@ -98,7 +102,12 @@ export const BlueprintDetail = ({ blueprint, status, powerBlocked = false, onRes
               Insufficient power — build a Power Core
             </Typography>
           )}
-          <HudButton onClick={onResearch} disabled={status !== 'available' || powerBlocked}>
+          {showInsufficient && (
+            <Typography variant="hud-data" sx={{ color: 'hud.error' }}>
+              Insufficient materials
+            </Typography>
+          )}
+          <HudButton onClick={onResearch} disabled={status !== 'available' || powerBlocked || !affordable}>
             Start Research
           </HudButton>
         </Box>

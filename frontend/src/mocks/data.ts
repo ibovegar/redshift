@@ -59,6 +59,11 @@ export const station: Station = {
   sections: [
     { type: 'command', status: 'operational' },
     { type: 'engineering', status: 'locked' },
+    // Engineering upgrade tiers — each becomes buildable once its own blueprint is researched
+    // (chained off the base Engineering Bay blueprint). Hidden from the grid until then.
+    { type: 'engineering-2', status: 'locked' },
+    { type: 'engineering-3', status: 'locked' },
+    { type: 'engineering-4', status: 'locked' },
     { type: 'research', status: 'available' },
     { type: 'power', status: 'locked' },
     { type: 'storage', status: 'operational' },
